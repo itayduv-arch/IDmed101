@@ -91,7 +91,7 @@
 
 <div class="container">
     <button class="theme-toggle" onclick="toggleDarkMode()">🌙 תצוגה</button>
-    <h1>מבחן ידע 101 - מאגר שחזורים</h1>
+    <h1>Mivchan Yeda 101</h1>
     
     <div class="tabs">
         <button class="tab active" id="tab-flashcards" onclick="showSection('flashcards')">כרטיסיות</button>
@@ -163,14 +163,17 @@
 </div>
 
 <script>
-    // --- Data Base ---
+    // --- Data Base (Extended to 28 items) ---
     const dbFlashcards = [
         { id: "fc1", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "מה מתאר ערך ה-Km (קבוע מיכאליס) בקינטיקת אנזימים?", back: "ה-Km הוא ריכוז הסובסטרט שבו מהירות התגובה שווה למחצית מהמהירות המקסימלית (Vmax/2).", explanation: "ערך ה-Km מהווה מדד (הפוך) לזיקה של האנזים לסובסטרט. ככל שה-Km נמוך יותר, הזיקה גבוהה יותר.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
         { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שינוע והפרשת חלבונים", front: "מהו תפקידו של חלבון ה-SRP (Signal Recognition Particle)?", back: "זיהוי רצף הסיגנל של חלבון המיועד ל-ER, עצירת התרגום, והכוונת הריבוזום לקרום ה-ER.", explanation: "כאשר פפטיד חדש נוצר ובו רצף סיגנל הידרופובי, ה-SRP נקשר אליו, עוצר את תהליך התרגום בציטוזול, ומלווה אותו ל-ER.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 12." },
         { id: "fc3", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "איזה מהחומרים הבאים - Phalloidin, Nocodazole, Colchicine - מייצב את סיבי האקטין ומונע את הפירוק שלהם?", back: "פלואידין (Phalloidin).", explanation: "פלואידין הוא טוקסין שנקשר לסיבי אקטין (F-actin) ומייצב אותם, מה שמונע דה-פולימריזציה. קולכיצין ונוקודזול קשורים למיקרוטובולי ולא לאקטין.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 16." },
         { id: "fc4", subject: "ביוכימיה", subtopic: "מטבוליזם חומצות אמינו", front: "מה התפקיד של הקואנזים PLP (Pyridoxal phosphate) בריאקציית האמינוטרנספראזות?", back: "נשיאת קבוצות אמין והעברתן בין חומצות אמינו לחומצות אלפא-קטו.", explanation: "ויטמין B6 בצורתו הפעילה כ-PLP משמש כנשא זמני לקבוצת האמין במהלך הריאקציה, תוך יצירת קשר קוולנטי (בסיס שיף).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 18." },
         { id: "fc5", subject: "מולקולרית", subtopic: "שכפול DNA", front: "איזה אנזים מבצע את עיקר סינתזת ה-DNA (שכפול) בתאי חיידקי E. coli?", back: "DNA Polymerase III.", explanation: "בחיידקים, DNA Pol III הוא האנזים העיקרי המבצע את הארכת הגדילים בשכפול. לעומתו, DNA Pol I משמש בעיקר להחלפת הפריימרים (RNA) ב-DNA ולתיקון.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
-        { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "באיזה שלב של מחזור התא מתבצעת הכפלת ה-DNA (רפליקציה)?", back: "שלב S (Synthesis).", explanation: "מחזור התא מחולק לשלבי G1, S, G2, ו-M. בשלב ה-S, ה-DNA משוכפל לחלוטין כך שכל כרומוזום מורכב משתי כרומטידות אחיות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." }
+        { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "באיזה שלב של מחזור התא מתבצעת הכפלת ה-DNA (רפליקציה)?", back: "שלב S (Synthesis).", explanation: "מחזור התא מחולק לשלבי G1, S, G2, ו-M. בשלב ה-S, ה-DNA משוכפל לחלוטין כך שכל כרומוזום מורכב משתי כרומטידות אחיות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
+        // --- כרטיסיות חדשות ---
+        { id: "fc7", subject: "ביוכימיה", subtopic: "מסלולים מטבוליים", front: "מדוע תגובות מטבוליות בתא מאורגנות בדרך כלל במסלולים רב-שלביים (Pathways) ולא בתגובה אחת בודדת?", back: "כדי למנוע הגעה לשיווי משקל תרמודינמי ולהגביר את יעילות הבקרה.", explanation: "אילולא הארגון במסלולים המניעים מוצרים קדימה, הריאקציות היו מגיעות לשיווי משקל (שבו לא ניתן להפיק עבודה). בנוסף, זה מאפשר בקרה עדינה בנקודות מפתח ספציפיות.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 15." },
+        { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "לאיזה מהאנזימים הבאים יש יכולת הגהה עצמית (Proofreading) של 3' ל-5' נוקלאז: DNA Polymerase או RNA Polymerase?", back: "רק ל-DNA Polymerase.", explanation: "ל-DNA פולימראז יש אתר אקסונוקלאז שמזהה טעויות בזיווג הבסיסים בזמן השכפול ומתקן אותן מייד. ל-RNA פולימראז אין מנגנון הגהה עצמי כזה, ולכן שיעור השגיאות שלו בשעתוק גבוה בהרבה.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." }
     ];
 
     const dbQuestions = [
@@ -183,18 +186,76 @@
         { id: "q7", subject: "מולקולרית", subtopic: "הנדסה גנטית", text: "מה שמה של מערכת ההגנה בחיידקים נגד בקטריופאג'ים, אשר עושה שימוש במולקולת RNA ובחלבון לחיתוך DNA?", options: ["אנזימי רסטריקציה", "siRNA", "miRNA", "CRISPR-Cas9"], answer: 3, explanation: "מערכת CRISPR-Cas9 משתמשת ב-RNA מדריך (gRNA) המזהה רצפי DNA נגיפיים, ומכוונת את הנוקלאז Cas9 לחתוך אותם.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 8." },
         { id: "q8", subject: "ביולוגיה של התא", subtopic: "אנדוציטוזה", text: "מה תהיה התוצאה של פגיעה תפקודית בחלבון דינמין (Dynamin) במהלך תהליך האנדוציטוזה?", options: ["לא תהיה הסרה של מעטפת הקלתרין (Uncoating).", "תהליך האקסוציטוזה ייפגע לחלוטין.", "הבועיות המצופות (Coated pits) ייווצרו, אך לא יתנתקו מממברנת התא.", "מולקולות הקלתרין לא יוכלו להתחבר לממברנה כלל."], answer: 2, explanation: "הדינמין הוא GTPase האחראי על הניתוק (Pinching off) של בועית האנדוציטוזה מממברנת התא. ללא דינמין, השקע יווצר אך הבועית לא תשתחרר לציטוזול.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 13." },
         { id: "q9", subject: "פיזיולוגיה", subtopic: "מבנה השריר", text: "כיצד נקראת שכבת רקמת החיבור העוטפת סיב שריר (תא שריר) בודד?", options: ["אפימיזיום (Epimysium)", "פרימיזיום (Perimysium)", "אנדומיזיום (Endomysium)", "סרקולמה (Sarcolemma)"], answer: 2, explanation: "האנדומיזיום עוטף כל סיב שריר בודד. הפרימיזיום עוטף קבוצות (Fascicles), והאפימיזיום עוטף את השריר כולו. הסרקולמה היא ממברנת התא עצמה.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 6." },
-        { id: "q10", subject: "ביוכימיה", subtopic: "פחמימות", text: "איזה דו-סוכר מורכב מגלוקוז ופרוקטוז?", options: ["לקטוז", "סוכרוז", "מלטוז", "צלוביוז"], answer: 1, explanation: "סוכרוז (סוכר השולחן) הוא דו-סוכר המורכב מגלוקוז ופרוקטוז בקשר גליקוזידי אלפא 1 לביתא 2. לקטוז מורכב מגלוקוז וגלקטוז, ומלטוז/צלוביוז מורכבים משתי מולקולות גלוקוז.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 7." },
-        { id: "q11", subject: "ביוכימיה", subtopic: "בקרה אנזימטית", text: "מה ההבדל העיקרי בין בקרה אלוסטרית על אנזים לבין בקרה באמצעות זרחון (Phosphorylation)?", options: ["רק בקרה אלוסטרית גורמת לשינוי קונפורמציה של האנזים.", "רק זרחון יכול להגביר פעילות אנזימטית, בעוד בקרה אלוסטרית רק מעכבת.", "רק בבקרה באמצעות זרחון נוצר קשר קוולנטי בין הקבוצה המבקרת לאנזים.", "בקרה אלוסטרית מתרחשת רק בחלבונים בעלי מבנה רביעוני."], answer: 2, explanation: "זרחון הוא מודיפיקציה קוולנטית שבה קבוצת זרחה נקשרת לאנזים (לרוב לשיירי סרין/תריאונין/טירוזין). בקרה אלוסטרית מבוססת על קישור לא-קוולנטי והפיך.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
+        { id: "q10", subject: "ביוכימיה", subtopic: "פחמימות", text: "איזה דו-סוכר מורכב מגלוקוז ופרוקטוז?", options: ["לקטוז", "סוכרוז", "מלטוז", "צלוביוז"], answer: 1, explanation: "סוכרוז (סוכר השולחן) הוא דו-סוכר המורכב מגלוקוז ופרוקטוז בקשר גליקוזידי אלפא 1 לביתא 2.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 7." },
+        { id: "q11", subject: "ביוכימיה", subtopic: "בקרה אנזימטית", text: "מה ההבדל העיקרי בין בקרה אלוסטרית על אנזים לבין בקרה באמצעות זרחון (Phosphorylation)?", options: ["רק בקרה אלוסטרית גורמת לשינוי קונפורמציה של האנזים.", "רק זרחון יכול להגביר פעילות אנזימטית, בעוד בקרה אלוסטרית רק מעכבת.", "רק בבקרה באמצעות זרחון נוצר קשר קוולנטי בין הקבוצה המבקרת לאנזים.", "בקרה אלוסטרית מתרחשת רק בחלבונים בעלי מבנה רביעוני."], answer: 2, explanation: "זרחון הוא מודיפיקציה קוולנטית שבה קבוצת זרחה נקשרת לאנזים. בקרה אלוסטרית מבוססת על קישור לא-קוולנטי והפיך.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
         { id: "q12", subject: "ביוכימיה", subtopic: "מטבוליזם (תסיסה)", text: "כמה מולקולות ATP (נטו) מתקבלות מפירוק של מולקולת גלוקוז אחת במסלול של תסיסה לקטית ביונקים?", options: ["2 מולקולות ATP מהגליקוליזה ו-3 מולקולות מחמצון ה-NADH.", "4 מולקולות ATP מהגליקוליזה ו-0 מולקולות מחמצון ה-NADH.", "2 מולקולות ATP מהגליקוליזה ו-0 מולקולות מחמצון ה-NADH.", "36 מולקולות ATP בסך הכל."], answer: 2, explanation: "בתסיסה לקטית, מופקות 2 מולקולות ATP נטו בתהליך הגליקוליזה. ה-NADH אינו מפיק ATP אלא משמש לחיזור הפירובט ללקטט על מנת למחזר NAD+.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 14." },
-        { id: "q13", subject: "ביולוגיה של התא", subtopic: "מבנה הממברנה", text: "מהי אחת ההשפעות המרכזיות של כולסטרול על ממברנת התא ביונקים?", options: ["מוריד את חדירות הממברנה למולקולות קטנות ומסיסות במים.", "מורכב רק מפחמן ומימן ולכן הופך את הממברנה להידרופובית לחלוטין.", "יוצר קריסטליזציה מלאה של הממברנה בטמפרטורת הגוף.", "אינו יכול לעבור כלל בין עלעלי הממברנה (Flip-flop)."], answer: 0, explanation: "הכולסטרול 'אוטם' את הרווחים הקטנים בין הפוספוליפידים, ובכך מקטין את חדירות הממברנה למולקולות קטנות ומסיסות במים.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 10." },
-        { id: "q14", subject: "ביוכימיה", subtopic: "מים וסביבה מימית", text: "מה קורה למים שעוברים תהליך התכה (ממצב מוצק לנוזל)?", options: ["מספר קשרי המימן למולקולה עולה.", "האנטרופיה (אי-סדר) של המים יורדת.", "האנתלפיה של המים עולה (תהליך אנדותרמי).", "זווית הקשר H-O-H במולקולה יורדת."], answer: 2, explanation: "מעבר מקרח (מוצק) למים (נוזל) דורש השקעת אנרגיה לשבירת קשרי מימן, ולכן האנתלפיה עולה (ΔH חיובי). בנוסף האנטרופיה עולה ומספר קשרי המימן הממוצע יורד מ-4 לכ-3.4.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 2." },
-        { id: "q15", subject: "ביוכימיה", subtopic: "חומצות אמינו וסטריאוכימיה", text: "מה מאפיין תמיד איזומרים גיאומטריים (כמו איזומרי ציס/טראנס)?", options: ["חייב להיות בהם לפחות מרכז כיראלי אחד.", "כדי לעבור ביניהם חייבים לשבור קשר קוולנטי באופן זמני.", "מעבר ביניהם יכול להתרחש על ידי סיבוב פשוט סביב קשר יחיד.", "אין הבדל ביכולת של אנזימים לזהות אותם."], answer: 1, explanation: "איזומרים גיאומטריים נוצרים סביב קשר כפול. כדי להמיר צורה אחת לאחרת חובה לשבור את קשר הפאי באופן זמני. סיבוב חופשי קורה רק סביב קשר יחיד (קונפורמציות).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 1." },
-        { id: "q16", subject: "מולקולרית", subtopic: "מבנה הכרומטין", text: "חוקר בודד מולקולת כרומטין והפריד את מרכיביה. איזה חלק מהמסה החלבונית הכוללת מהווים חלבוני ההיסטונים?", options: ["כ-10%", "כ-33%", "כ-50%", "כ-90%"], answer: 2, explanation: "המסה של החלבונים בכרומטין מתחלקת שווה בשווה: כ-50% היסטונים (הבונים את הנוקלאוזומים), וכ-50% חלבונים שאינם היסטונים (כגון פקטורי שעתוק).", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 4." },
-        { id: "q17", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מדוע מעטפת המיאלין מגבירה את מהירות ההולכה של פוטנציאל הפעולה לאורך האקסון?", options: ["היא מורידה את הקיבול החשמלי ואת התנגדות הממברנה.", "היא מורידה את הקיבול החשמלי ומעלה את התנגדות הממברנה.", "היא מעלה את הקיבול החשמלי ומוריד את התנגדות הממברנה.", "היא מעלה את הקיבול החשמלי ואת התנגדות הממברנה."], answer: 1, explanation: "המיאלין פועל כמבודד: הוא מעלה את התנגדות הממברנה (מונע זליגת יונים) ומגדיל את העובי שלה, מה שמוריד את הקיבול החשמלי. כך הזרם מתקדם מהר יותר.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
-        { id: "q18", subject: "פיזיולוגיה", subtopic: "מערכת העצבים", text: "מה מגדיר נכון את ההבדל העקרוני בין אוליגודנדרוציטים לתאי שוואן?", options: ["אוליגודנדרוציטים מייצרים מיאלין במערכת העצבים ההיקפית (PNS), ואילו תאי שוואן במערכת המרכזית (CNS).", "אוליגודנדרוציטים עוטפים אקסונים של מספר נוירונים שונים ב-CNS, ואילו כל תא שוואן עוטף מקטע של אקסון בודד ב-PNS.", "אוליגודנדרוציטים משמשים לתמיכה תזונתית, ואילו תאי שוואן להולכה חשמלית.", "אין ביניהם הבדל תפקודי, שניהם ממוקמים באזורים שונים במוח."], answer: 1, explanation: "ב-CNS אוליגודנדרוציט אחד עוטף מקטעי מיאלין של אקסונים רבים. ב-PNS כל תא שוואן עוטף מקטע אחד בלבד של אקסון בודד.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 22." }
+        { id: "q13", subject: "ביולוגיה של התא", subtopic: "מבנה הממברנה", text: "מהי אחת ההשפעות המרכזיות של כולסטרול על ממברנת התא ביונקים?", options: ["מוריד את חדירות הממברנה למולקולות קטנות ומסיסות במים.", "מורכב רק מפחמן ומימן ולכן הופך את הממברנה להידרופובית לחלוטין.", "יוצר קריסטליזציה מלאה של הממברנה בטמפרטורת הגוף.", "אינו יכול לעבור כלל בין עלעלי הממברנה (Flip-flop)."], answer: 0, explanation: "הכולסטרול 'אוטם' את הרווחים קטנים בין הפוספוליפידים, ובכך מקטין את חדירות הממברנה למולקולות קטנות ומסיסות במים.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 10." },
+        { id: "q14", subject: "ביוכימיה", subtopic: "מים וסביבה מימית", text: "מה קורה למים שעוברים תהליך התכה (ממצב מוצק לנוזל)?", options: ["מספר קשרי המימן למולקולה עולה.", "האנטרופיה (אי-סדר) של המים יורדת.", "האנתלפיה של המים עולה (תהליך אנדותרמי).", "זווית הקשר H-O-H במולקולה יורדת."], answer: 2, explanation: "מעבר מקרח לנוזל דורש השקעת אנרגיה לשבירת קשרי מימן, ולכן האנתלפיה עולה (ΔH חיובי). בנוסף האנטרופיה עולה ומספר קשרי המימן הממוצע יורד מ-4 לכ-3.4.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 2." },
+        { id: "q15", subject: "ביוכימיה", subtopic: "חומצות אמינו וסטריאוכימיה", text: "מה מאפיין תמיד איזומרים גיאומטריים (כמו איזומרי ציס/טראנס)?", options: ["חייב להיות בהם לפחות מרכז כיראלי אחד.", "כדי לעבור ביניהם חייבים לשבור קשר קוולנטי באופן זמני.", "מעבר ביניהם יכול להתרחש על ידי סיבוב פשוט סביב קשר יחיד.", "אין הבדל ביכולת של אנזימים לזהות אותם."], answer: 1, explanation: "איזומרים גיאומטריים נוצרים סביב קשר כפול. כדי להמיר צורה אחת לאחרת חובה לשבור את קשר הפאי באופן זמני.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 1." },
+        { id: "q16", subject: "מולקולרית", subtopic: "מבנה הכרומטין", text: "חוקר בודד מולקולת כרומטין והפריד את מרכיביה. איזה חלק מהמסה החלבונית הכוללת מהווים חלבוני ההיסטונים?", options: ["כ-10%", "כ-33%", "כ-50%", "כ-90%"], answer: 2, explanation: "המסה של החלבונים בכרומטין מתחלקת שווה בשווה: כ-50% היסטונים וכ-50% חלבונים שאינם היסטונים.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 4." },
+        { id: "q17", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מדוע מעטפת המיאלין מגבירה את מהירות ההולכה של פוטנציאל הפעולה לאורך האקסון?", options: ["היא מורידה את הקיבול החשמלי ואת התנגדות הממברנה.", "היא מורידה את הקיבול החשמלי ומעלה את התנגדות הממברנה.", "היא מעלה את הקיבול החשמלי ומוריד את התנגדות הממברנה.", "היא מעלה את הקיבול החשמלי ואת התנגדות הממברנה."], answer: 1, explanation: "המיאלין פועל כמבודד: הוא מעעל את התנגדות הממברנה (מונע זליגת יונים) ומגדיל את העوבי שלה, מה שמוריד את הקיבול החשמלי. כך הזרם מתקדם מהר יותר.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
+        { id: "q18", subject: "פיזיולוגיה", subtopic: "מערכת העצבים", text: "מה מגדיר נכון את ההבדל העקרוני בין אוליגודנדרוציטים לתאי שוואן?", options: ["אוליגודנדרוציטים מייצרים מיאלין במערכת העצבים ההיקפית (PNS), ואילו תאי שוואן במערכת המרכזית (CNS).", "אוליגודנדרוציטים עוטפים אקסונים של מספר נוירונים שונים ב-CNS, ואילו כל תא שוואן עוטף מקטע של אקסון בודד ב-PNS.", "אוליגודנדרוציטים משמשים לתמיכה תזונתית, ואילו תאי שוואן להולכה חשמלית.", "אין ביניהם הבדל תפקודי, שניהם ממוקמים באזורים שונים במוח."], answer: 1, explanation: "ב-CNS אוליגודנדרוציט אחד עוטף מקטעי מיאלין של אקסונים רבים. ב-PNS כל תא שוואן עוטף מקטע אחד בלבד של אקסון בודד.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 22." },
+        
+        // --- 10 השאלות החדשות מהמקבץ הרחב של 2026 ---
+        {
+            id: "q_ext_1", subject: "ביוכימיה", subtopic: "חומצות אמינו ומבנה חלבונים",
+            text: "מדוע סלילי אלפא (Alpha helices) בחלבונים כמעט ואינם מכילים את חומצת האמינו פרולין (Proline)?",
+            options: ["משום שהיא הידרופובית מדי ומשבשת את פנים החלבון.", "משום שאין לה מימן חופשי הקשור לחנקן ליצירת קשרי מימן של השלד.", "משום שיש לה מסה מולקולרית גבוהה מאוד היוצרת הפרעה סטרית.", "משום שהקבוצה הפונקציונלית שלה טבעתית ומונעת קיפול."],
+            answer: 1,
+            explanation: "פרולין היא חומצת אמינו ייחודית (אימינו-חומצה) שבה שייר הצד נקשר חזרה לחנקן האמיני. כתוצאה מכך, כאשר היא משתלבת בקשר פפטידי, אין לחנקן שלה מימן פנוי שיכול לתרום לקשרי המימן התוך-שרשרתיים שמייצבים את סליל האלפא. בנוסף, המבנה הטבעתי הקשיח שלה מייצר עיוות זוויתי חריף (Helix breaker).",
+            reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 4: The Three-Dimensional Structure of Proteins."
+        },
+        {
+            id: "q_ext_2", subject: "ביוכימיה", subtopic: "ויטמינים ומאזן חומצות אמינו",
+            text: "כיצד פגיעה חמורה בזמינות של ויטמין B6 תשפיע באופן ישיר על מאזן חומצות האמינו בתא?",
+            options: ["היא תגרום לעיכוב מוחלט של כל אנזימי מעגל האוריאה.", "היא תביא לפגיעה קשה בספיגת חומצות אמינו חיוניות מהמזון.", "היא תגרום לירידה חדה בפעילות של אנזימי טרנסאמינזות (אמינוטרנספראזות).", "היא תפגע במקורות של השלד הפחמני של הפירובט בלבד."],
+            answer: 2,
+            explanation: "ויטמין B6 משמש כחומר המוצא הבלעדי לסינתזה של הקואנזים PLP (Pyridoxal phosphate). קואנזים זה חיוני לפעילותם של כל אנזימי הטרנסאמינזות, האחראיים על העברת קבוצות אמין מחומצות אמינו לצורך פירוקן או בנייתן. פגיעה בוויטמין זה תוריד ישירות את פעילות האנזימים האלו.",
+            reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 18: Amino Acid Oxidation and the Production of Urea."
+        },
+        {
+            id: "q_ext_3", subject: "ביוכימיה", subtopic: "קינטיקה ואתר פעיל",
+            text: "מדוע קיים יון מגנזיום (Mg2+) קשור באופן קבוע באתר הפעיל של האנזים הקסוקינאז (Hexokinase)?",
+            options: ["כדי לנטרל את המטענים השליליים של קבוצות הפוספט ב-ATP ובכך להקל על ההתקפה הנוקלאופילית.", "כדי למנוע לחלוטין כניסה של מולקולות מים לאתר הפעיל של האנזים.", "כדי למנוע ממים לתקוף נוקלאופילית את מולקולת הגלוקוז עצמה.", "כדי לשנות את ה-pH המקומי באתר הפעיל לבסיסי."],
+            answer: 0,
+            explanation: "קבוצות הפוספט של מולקולת ה-ATP נושאות מטען שלילי חזק הדוחה נוקלאופילים. יון המגנזיום (Mg2+) יוצר קומפלקס קואורדינציה עם החמצנים הטעונים שלילית של ה-ATP, מנטרל את המטען ומייצב את הקונפורמציה, מה שמאפשר לקבוצת ההידרוקסיל של הגלוקוז לבצע התקפה נוקלאופילית יעילה על פוספט הגמא.",
+            reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 14: Glycolysis, Gluconeogenesis, and the Pentose Phosphate Pathway."
+        },
+        {
+            id: "q_ext_4", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית",
+            text: "מהי המשמעות המדויקת של הגעה למצב יציב (Steady State) בקינטיקה לפי מודל מיכאליס-מנטן?",
+            options: ["ריכוז הסובסטרט בתמיסה אזל לחלוטין.", "קצב יצירת קומפלקס האנזים-סובסטרט (ES) שווה לקצב הפירוק שלו, ולכן ריכוזו נותר קבוע ויציב.", "אין יותר עליה בריכוז התוצר הסופי (P).", "המהירות של התגובה הגיעה בדיוק למחצית מהמהירות המקסימלית."],
+            answer: 1,
+            explanation: "הנחת המצב היציב (Steady-state assumption) היא אבן היסוד של הקינטיקה האנזימטית. היא קובעת כי במהלך הריאקציה, ריכוז קומפלקס הביניים [ES] נשאר קבוע לאורך זמן משום שקצב הסינתזה שלו (מאנזים חופשי וסובסטרט) שווה בדיוק לקצב הפירוק שלו (חזרה למגיבים או קדימה לתוצר).",
+            reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6: Enzymes."
+        },
+        {
+            id: "q_ext_5", subject: "מולקולרית", subtopic: "מנגנוני תיקון DNA",
+            text: "מחלת סרטן המעי הגס התורשתית (HNPCC) קשורה לפגם בגן Msh2. גן זה מקודד לחלבון המשתתף באיזה מנגנון תיקון DNA?",
+            options: ["Mismatch repair (MMR)", "Base Excision Repair (BER)", "Nucleotide Excision Repair (NER)", "Non-Homologous End Joining (NHEJ)"],
+            answer: 0,
+            explanation: "הקומפלקס MutS (המורכב ביונקים מחלבוני MSH2 ו-MSH6) אחראי על הזיהוי הראשוני של עיוותים הנובעים מזיווג בסיסים שגוי (Mismatch) או החלקות של הפולימראז שלא תוקנו בזמן השכפול. פגם בגנים אלו מוביל לצבירת מוטציות מהירה (Microsatellite instability) ולסרטן המעי הגס.",
+            reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 5: Expression of the Genome / DNA Repair."
+        },
+        {
+            id: "q_ext_6", subject: "ביולוגיה של התא", subtopic: "עקת תאים (Cell Stress)",
+            text: "במהלך תגובת עקה של חלבונים לא מקופלים ברשתית האנדופלזמטית (ER UPR), הפעלה של איזה חיישן ממברנלי מערבת תהליך מבוקר של פרוטאוליזה בתוך הממברנה (Regulated Intramembrane Proteolysis - RIP)?",
+            options: ["IRE1", "PERK", "ATF6", "XBP1"],
+            answer: 2,
+            explanation: "בעת עקה ב-ER, החלבון ATF6 משתחרר מהקישור לחלבון הביקורת BiP ונודד באמצעות וזיקולות אל הגולג'י. בגולג'י הוא עובר חיתוך פרוטאוליטי מבוקר בשני אתרים (על ידי פרוטאזות S1P ו-S2P), המשחרר את החלק הציטוזולי שלו שפועל כפקטור שעתוק בגרעין להפעלת גני הגנה.",
+            reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 12: Intracellular Compartments and Protein Sorting."
+        },
+        {
+            id: "q_ext_7", subject: "פיזיולוגיה", subtopic: "מערכת העצבים והסינפסה",
+            text: "מה מתרחש מייד ובאופן ישיר לאחר קישור של שני אצטילכולין (ACh) לקולטן הניקוטיני בצומת העצב-שריר (Neuromuscular junction)?",
+            options: ["שחרור מיידי של יוני סידן מתוך הסרקופלזמיק רטיקולום (SR).", "דה-פולריזציה מקומית של הממברנה הפוסט-סינפטית הנקראת End-Plate Potential (EPP).", "התפשטות מיידית של פוטנציאל הפעולה לתוך ה-T-tubules.", "הידרוליזה אנזימטית של האצטילכולין במרווח הסינפטי."],
+            answer: 1,
+            explanation: "הקולטן הניקוטיני לאצטילכולין הוא תעלת יונים תלויית-ליגנד (Inotropic). קישור ACh פותח תעלה חיובית המאפשרת כניסה מאסיבית של יוני נתרן (Na+) לתא השריר. זרם נכנס זה מייצר דה-פולריזציה מקומית מדורגת הנקראת End-Plate Potential (EPP), שהיא זו שמפעילה בהמשך תעלות נתרן תלויות-מתח ליצירת פוטנציאל פעולה.",
+            reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 7: Excitation of Skeletal Muscle."
+        }
     ];
 
-    // --- Safe Initialization for v8 ---
+    // --- Safe Storage Initialization (v8) ---
     const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
     const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     let appData = { cards: {}, questions: {}, mistakes: {} };
@@ -210,15 +271,11 @@
             }
         }
     } catch (e) {
-        console.error("Local Storage Error, loading fresh state.");
+        console.error("Local Storage Error");
     }
 
     function saveData() { 
-        try {
-            localStorage.setItem('med101_v8', JSON.stringify(appData)); 
-        } catch (e) {
-            console.error("Could not save to Local Storage.");
-        }
+        try { localStorage.setItem('med101_v8', JSON.stringify(appData)); } catch (e) {}
     }
 
     let showingFront = true; let currentFC = null; let currentQ = null;
@@ -226,19 +283,15 @@
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
     function showSection(sectionId) {
-        try {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            
-            document.getElementById('tab-' + sectionId).classList.add('active');
-            document.getElementById(sectionId).classList.add('active');
-            
-            if(sectionId === 'flashcards') loadFlashcard();
-            if(sectionId === 'questions') loadQuestion();
-            if(sectionId === 'weakpoints') updateWeakPoints();
-        } catch (e) {
-            console.error("Error switching tabs:", e);
-        }
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        
+        document.getElementById('tab-' + sectionId).classList.add('active');
+        document.getElementById(sectionId).classList.add('active');
+        
+        if(sectionId === 'flashcards') loadFlashcard();
+        if(sectionId === 'questions') loadQuestion();
+        if(sectionId === 'weakpoints') updateWeakPoints();
     }
 
     function getDueItems(dbArray, trackingDict) {
@@ -251,40 +304,32 @@
         return array[Math.floor(Math.random() * array.length)];
     }
 
-    // --- Flashcards ---
+    // --- Flashcards Logic ---
     function loadFlashcard() {
-        try {
-            let dueCards = getDueItems(dbFlashcards, appData.cards);
-            
-            if (dueCards.length === 0) {
-                document.getElementById('fc-working-area').classList.add('hidden');
-                document.getElementById('fc-done-area').classList.remove('hidden');
-                return; 
-            }
-
-            document.getElementById('fc-working-area').classList.remove('hidden');
-            document.getElementById('fc-done-area').classList.add('hidden');
-
-            currentFC = getRandomItem(dueCards);
-            if (!currentFC) return;
-
-            document.getElementById('fc-subject').innerText = "תחום: " + currentFC.subject;
-            document.getElementById('fc-subtopic').innerText = "נושא: " + currentFC.subtopic;
-            document.getElementById('fc-front').innerText = currentFC.front;
-            document.getElementById('fc-back').innerText = currentFC.back;
-            
-            let explHtml = `<strong>הסבר: </strong> ${currentFC.explanation}`;
-            if(currentFC.reference) explHtml += `<div class="reference">📚 ${currentFC.reference}</div>`;
-            document.getElementById('fc-explanation').innerHTML = explHtml;
-            
-            document.getElementById('fc-front').classList.remove('hidden');
-            document.getElementById('fc-back').classList.add('hidden');
-            document.getElementById('fc-explanation').classList.add('hidden');
-            document.getElementById('fc-controls').classList.add('hidden');
-            showingFront = true;
-        } catch (e) {
-            console.error("Error loading flashcard:", e);
+        let dueCards = getDueItems(dbFlashcards, appData.cards);
+        if (dueCards.length === 0) {
+            document.getElementById('fc-working-area').classList.add('hidden');
+            document.getElementById('fc-done-area').classList.remove('hidden');
+            return; 
         }
+        document.getElementById('fc-working-area').classList.remove('hidden');
+        document.getElementById('fc-done-area').classList.add('hidden');
+
+        currentFC = getRandomItem(dueCards);
+        document.getElementById('fc-subject').innerText = "תחום: " + currentFC.subject;
+        document.getElementById('fc-subtopic').innerText = "נושא: " + currentFC.subtopic;
+        document.getElementById('fc-front').innerText = currentFC.front;
+        document.getElementById('fc-back').innerText = currentFC.back;
+        
+        let explHtml = `<strong>הסבר: </strong> ${currentFC.explanation}`;
+        if(currentFC.reference) explHtml += `<div class="reference">📚 ${currentFC.reference}</div>`;
+        document.getElementById('fc-explanation').innerHTML = explHtml;
+        
+        document.getElementById('fc-front').classList.remove('hidden');
+        document.getElementById('fc-back').classList.add('hidden');
+        document.getElementById('fc-explanation').classList.add('hidden');
+        document.getElementById('fc-controls').classList.add('hidden');
+        showingFront = true;
     }
 
     function flipCard() {
@@ -297,58 +342,46 @@
     }
 
     function processFlashcard(knewIt) {
-        if (!currentFC) return;
-        if (knewIt) { 
-            appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; 
-        } else { 
+        if (knewIt) { appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; } 
+        else { 
             appData.cards[currentFC.id] = Date.now() + TWO_DAYS;
             appData.mistakes[currentFC.subtopic] = (appData.mistakes[currentFC.subtopic] || 0) + 1;
         }
-        saveData(); 
-        loadFlashcard();
+        saveData(); loadFlashcard();
     }
 
-    // --- Questions ---
+    // --- Questions Logic ---
     function loadQuestion() {
-        try {
-            let dueQuestions = getDueItems(dbQuestions, appData.questions);
-            
-            if (dueQuestions.length === 0) {
-                document.getElementById('q-working-area').classList.add('hidden');
-                document.getElementById('q-done-area').classList.remove('hidden');
-                return;
-            }
-
-            document.getElementById('q-working-area').classList.remove('hidden');
-            document.getElementById('q-done-area').classList.add('hidden');
-
-            currentQ = getRandomItem(dueQuestions);
-            if (!currentQ) return;
-
-            document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
-            document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
-            document.getElementById('q-text').innerText = currentQ.text;
-            
-            let optionsHtml = "";
-            currentQ.options.forEach((opt, idx) => {
-                optionsHtml += `<button class="option" id="opt-${idx}" onclick="checkAnswer(${idx})">${opt}</button>`;
-            });
-            document.getElementById('q-options').innerHTML = optionsHtml;
-            
-            let explHtml = `<strong>הסבר: </strong> ${currentQ.explanation}`;
-            if(currentQ.reference) explHtml += `<div class="reference">📚 ${currentQ.reference}</div>`;
-            document.getElementById('q-explanation').innerHTML = explHtml;
-
-            document.getElementById('q-feedback').classList.add('hidden');
-            document.getElementById('q-explanation').classList.add('hidden');
-            document.getElementById('q-next').classList.add('hidden');
-        } catch (e) {
-            console.error("Error loading question:", e);
+        let dueQuestions = getDueItems(dbQuestions, appData.questions);
+        if (dueQuestions.length === 0) {
+            document.getElementById('q-working-area').classList.add('hidden');
+            document.getElementById('q-done-area').classList.remove('hidden');
+            return;
         }
+        document.getElementById('q-working-area').classList.remove('hidden');
+        document.getElementById('q-done-area').classList.add('hidden');
+
+        currentQ = getRandomItem(dueQuestions);
+        document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
+        document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
+        document.getElementById('q-text').innerText = currentQ.text;
+        
+        let optionsHtml = "";
+        currentQ.options.forEach((opt, idx) => {
+            optionsHtml += `<button class="option" id="opt-${idx}" onclick="checkAnswer(${idx})">${opt}</button>`;
+        });
+        document.getElementById('q-options').innerHTML = optionsHtml;
+        
+        let explHtml = `<strong>הסבר: </strong> ${currentQ.explanation}`;
+        if(currentQ.reference) explHtml += `<div class="reference">📚 ${currentQ.reference}</div>`;
+        document.getElementById('q-explanation').innerHTML = explHtml;
+
+        document.getElementById('q-feedback').classList.add('hidden');
+        document.getElementById('q-explanation').classList.add('hidden');
+        document.getElementById('q-next').classList.add('hidden');
     }
 
     function checkAnswer(selectedIndex) {
-        if (!currentQ) return;
         let feedback = document.getElementById('q-feedback');
         let expl = document.getElementById('q-explanation');
         document.getElementById('q-next').classList.remove('hidden');
@@ -379,28 +412,22 @@
     function nextQuestion() { loadQuestion(); }
 
     function updateWeakPoints() {
-        try {
-            let list = document.getElementById('weak-list');
-            list.innerHTML = "";
-            let keys = Object.keys(appData.mistakes);
-            if (keys.length === 0) { list.innerHTML = "<li>מעולה! אין טעויות בינתיים.</li>"; return; }
-            keys.sort((a, b) => appData.mistakes[b] - appData.mistakes[a]);
-            keys.forEach(subtopic => {
-                let score = appData.mistakes[subtopic];
-                let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
-                list.innerHTML += `<li>זיהינו קושי ב<strong>${subtopic}</strong> (${severity}).</li>`;
-            });
-        } catch (e) {
-            console.error("Error updating weak points:", e);
-        }
+        let list = document.getElementById('weak-list');
+        list.innerHTML = "";
+        let keys = Object.keys(appData.mistakes);
+        if (keys.length === 0) { list.innerHTML = "<li>מעולה! אין טעויות בינתיים.</li>"; return; }
+        keys.sort((a, b) => appData.mistakes[b] - appData.mistakes[a]);
+        keys.forEach(subtopic => {
+            let score = appData.mistakes[subtopic];
+            let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
+            list.innerHTML += `<li>זיהינו קושי ב<strong>${subtopic}</strong> (${severity}).</li>`;
+        });
     }
 
     function resetStats() {
-        if(confirm("לאפס את הנתונים? כל השאלות יחזרו להופיע כעת.")) {
+        if(confirm("לאפס את הנתונים?")) {
             appData = { cards: {}, questions: {}, mistakes: {} };
-            saveData(); 
-            showSection('flashcards'); 
-            alert("הנתונים אופסו!");
+            saveData(); showSection('flashcards'); alert("הנתונים אופסו!");
         }
     }
 
@@ -409,17 +436,15 @@
         try {
             const dataStr = btoa(unescape(encodeURIComponent(JSON.stringify(appData))));
             navigator.clipboard.writeText(dataStr).then(() => {
-                alert("קוד הנתונים הועתק בהצלחה! הדבק אותו כדי להעביר למכשיר השני.");
+                alert("קוד הנתונים הועתק בהצלחה! העבר אותו למכשיר השני.");
             }).catch(err => {
-                prompt("הדפדפן מנע העתקה אוטומטית. העתק את הקוד הבא ידנית:", dataStr);
+                prompt("העתק ידנית:", dataStr);
             });
-        } catch(e) {
-            alert("שגיאה בייצוא הנתונים.");
-        }
+        } catch(e) { alert("שגיאה בייצוא."); }
     }
 
     function importData() {
-        const input = prompt("הדבק כאן את קוד הנתונים שהעתקת מהמכשיר השני:");
+        const input = prompt("הדבק כאן את קוד הנתונים:");
         if (!input) return;
         try {
             const parsed = JSON.parse(decodeURIComponent(escape(atob(input))));
@@ -427,22 +452,12 @@
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
                 appData.mistakes = parsed.mistakes || {};
-                saveData();
-                alert("הנתונים סונכרנו בהצלחה! העמוד יתרענן כעת כדי לטעון את ההתקדמות.");
-                location.reload();
-            } else {
-                alert("הקוד שהוזן אינו תקין.");
+                saveData(); alert("סונכרן בהצלחה!"); location.reload();
             }
-        } catch(e) {
-            alert("שגיאה בפענוח הקוד. ודא שהעתקת את כל הקוד בשלמותו ללא רווחים נוספים.");
-        }
+        } catch(e) { alert("שגיאה בפענוח."); }
     }
 
-    // Start App
-    window.onload = () => { 
-        loadFlashcard(); 
-        loadQuestion(); 
-    };
+    window.onload = () => { loadFlashcard(); loadQuestion(); };
 </script>
 </body>
 </html>
