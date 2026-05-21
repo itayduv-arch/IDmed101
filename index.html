@@ -85,6 +85,9 @@
         .done-message { font-size: 22px; color: #27ae60; font-weight: bold; padding: 40px; }
         
         .sync-box { margin-top: 30px; padding: 20px; background: var(--option-bg); border-radius: 10px; border: 1px dashed #7f8c8d; }
+        .weakpoint-item { background: var(--option-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #e74c3c; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .book-ref { display: block; margin-top: 8px; font-size: 15px; color: #2980b9; font-weight: bold; }
+        .dark-mode .book-ref { color: #3498db; }
     </style>
 </head>
 <body class="dark-mode">
@@ -147,9 +150,9 @@
     </div>
 
     <div id="weakpoints" class="section">
-        <h2>מיקוד חולשות</h2>
-        <ul id="weak-list" style="text-align: right; font-size: 18px; line-height: 1.8;">
-            <li>התחל לתרגל כדי לצבור נתונים!</li>
+        <h2>מיקוד חולשות והמלצות קריאה</h2>
+        <ul id="weak-list" style="text-align: right; font-size: 18px; line-height: 1.8; list-style-type: none; padding: 0;">
+            <li>התחל לתרגל כדי שהמערכת תנתח את הביצועים שלך!</li>
         </ul>
         <button class="btn btn-danger" onclick="resetStats()" style="margin-top: 20px;">איפוס זמנים וסטטיסטיקות (התחל מחדש)</button>
 
@@ -163,7 +166,50 @@
 </div>
 
 <script>
-    // --- Data Base ---
+    // --- Topic To Book Chapters Dictionary ---
+    const topicReferences = {
+        "מטבוליזם (גליקוליזה)": "Lehninger Principles of Biochemistry, Chapter 15",
+        "חומצות אמינו וחלבונים": "Lehninger Principles of Biochemistry, Chapters 3-4",
+        "מבנה ותפקוד חלבונים": "Lehninger Principles of Biochemistry, Chapter 5",
+        "מטבוליזם ליפידים": "Lehninger Principles of Biochemistry, Chapter 17",
+        "זרחון חמצוני": "Lehninger Principles of Biochemistry, Chapter 19",
+        "מערכת הדם (קרישה)": "Guyton and Hall Physiology, Chapter 37",
+        "הנדסה גנטית": "Alberts Molecular Biology of the Cell, Chapter 8",
+        "אנדוציטוזה": "Alberts Molecular Biology of the Cell, Chapter 13",
+        "מבנה השריר": "Guyton and Hall Physiology, Chapter 6",
+        "פחמימות": "Lehninger Principles of Biochemistry, Chapter 7",
+        "בקרה אנזימטית": "Lehninger Principles of Biochemistry, Chapter 6",
+        "מטבוליזם (תסיסה)": "Lehninger Principles of Biochemistry, Chapter 14",
+        "מבנה הממברנה": "Alberts Molecular Biology of the Cell, Chapter 10",
+        "מים וסביבה מימית": "Lehninger Principles of Biochemistry, Chapter 2",
+        "חומצות אמינו וסטריאוכימיה": "Lehninger Principles of Biochemistry, Chapter 1",
+        "מבנה הכרומטין": "Alberts Molecular Biology of the Cell, Chapter 4",
+        "פוטנציאל פעולה והולכה": "Guyton and Hall Physiology, Chapter 5",
+        "מערכת העצבים": "Alberts Chapter 22 / Guyton Chapter 46",
+        "בקרה הורמונלית (אינסולין)": "Lehninger Principles of Biochemistry, Chapter 23",
+        "שעתוק (Transcription)": "Watson Molecular Biology of the Gene, Chapter 12",
+        "מבנה ה-DNA": "Watson Molecular Biology of the Gene, Chapter 4",
+        "שעתוק ועיבוד RNA": "Alberts Molecular Biology of the Cell, Chapter 6",
+        "אפופטוזיס": "Alberts Molecular Biology of the Cell, Chapter 18",
+        "שלד התא": "Alberts Molecular Biology of the Cell, Chapter 16",
+        "צומתי מעבר": "Alberts Molecular Biology of the Cell, Chapter 19",
+        "מערכת העצבים המרכזית": "Guyton and Hall Physiology, Chapter 46",
+        "שריר הלב (היפרקלמיה)": "Guyton and Hall Physiology, Chapter 5",
+        "בקרה על ביטוי גנים (אופרונים)": "Watson Molecular Biology of the Gene, Chapter 16",
+        "מחזור התא": "Alberts Molecular Biology of the Cell, Chapter 17",
+        "מיקרוצירקולציה": "Guyton and Hall Physiology, Chapter 16",
+        "מסלול הפנטוזות (PPP)": "Lehninger Principles of Biochemistry, Chapter 14",
+        "קינטיקה אנזימטית": "Lehninger Principles of Biochemistry, Chapter 6",
+        "שינוע והפרשת חלבונים": "Alberts Molecular Biology of the Cell, Chapter 12",
+        "מטבוליזם חומצות אמינו": "Lehninger Principles of Biochemistry, Chapter 18",
+        "שכפול DNA": "Watson Molecular Biology of the Gene, Chapter 9",
+        "מסלולים מטבוליים": "Lehninger Principles of Biochemistry, Chapter 15",
+        "מנגנוני הגהה": "Watson Molecular Biology of the Gene, Chapter 9",
+        "איתות תאי (Signaling)": "Alberts Molecular Biology of the Cell, Chapter 15",
+        "מיון חלבונים (Protein Sorting)": "Alberts Molecular Biology of the Cell, Chapter 12"
+    };
+
+    // --- Data Base (43 Items) ---
     const dbFlashcards = [
         { id: "fc1", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "מה מתאר ערך ה-Km (קבוע מיכאליס) בקינטיקת אנזימים?", back: "ה-Km הוא ריכוז הסובסטרט שבו מהירות התגובה שווה למחצית מהמהירות המקסימלית (Vmax/2).", explanation: "ערך ה-Km מהווה מדד (הפוך) לזיקה של האנזים לסובסטרט. ככל שה-Km נמוך יותר, הזיקה גבוהה יותר.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
         { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שינוע והפרשת חלבונים", front: "מהו תפקידו של חלבון ה-SRP (Signal Recognition Particle)?", back: "זיהוי רצף הסיגנל של חלבון המיועד ל-ER, עצירת התרגום, והכוונת הריבוזום לקרום ה-ER.", explanation: "כאשר פפטיד חדש נוצר ובו רצף סיגנל הידרופובי, ה-SRP נקשר אליו, עוצר את תהליך התרגום בציטוזול, ומלווה אותו ל-ER.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 12." },
@@ -172,7 +218,13 @@
         { id: "fc5", subject: "מולקולרית", subtopic: "שכפול DNA", front: "איזה אנזים מבצע את עיקר סינתזת ה-DNA (שכפול) בתאי חיידקי E. coli?", back: "DNA Polymerase III.", explanation: "בחיידקים, DNA Pol III הוא האנזים העיקרי המבצע את הארכת הגדילים בשכפול. לעומתו, DNA Pol I משמש בעיקר להחלפת הפריימרים (RNA) ב-DNA ולתיקון.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
         { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "באיזה שלב של מחזור התא מתבצעת הכפלת ה-DNA (רפליקציה)?", back: "שלב S (Synthesis).", explanation: "מחזור התא מחולק לשלבי G1, S, G2, ו-M. בשלב ה-S, ה-DNA משוכפל לחלוטין כך שכל כרומוזום מורכב משתי כרומטידות אחיות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
         { id: "fc7", subject: "ביוכימיה", subtopic: "מסלולים מטבוליים", front: "מדוע תגובות מטבוליות בתא מאורגנות בדרך כלל במסלולים רב-שלביים (Pathways)?", back: "כדי למנוע הגעה לשיווי משקל תרמודינמי ולהגביר את יעילות הבקרה.", explanation: "הארגון במסלולים המניעים מוצרים קדימה מונע הגעה לשיווי משקל, ומאפשר בקרה עדינה באנזימי מפתח ספציפיים לאורך המסלול.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 15." },
-        { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "לאיזה מהאנזימים הבאים יש יכולת הגהה עצמית (Proofreading): ל-DNA פולימראז או ל-RNA פולימראז?", back: "רק ל-DNA Polymerase.", explanation: "ל-DNA פולימראז יש אתר אקסונוקלאז שמזהה טעויות ומתקן אותן מייד. ל-RNA פולימראז אין מנגנון הגהה עצמי כזה, ולכן שיעור השגיאות שלו בשעתוק גבוה יותר.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." }
+        { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "לאיזה מהאנזימים הבאים יש יכולת הגהה עצמית (Proofreading): ל-DNA פולימראז או ל-RNA פולימראז?", back: "רק ל-DNA Polymerase.", explanation: "ל-DNA פולימראז יש אתר אקסונוקלאז שמזהה טעויות ומתקן אותן מייד. ל-RNA פולימראז אין מנגנון הגהה עצמי כזה, ולכן שיעור השגיאות שלו בשעתוק גבוה יותר.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
+        // --- 5 New Flashcards ---
+        { id: "fc9", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "במסלול האיתות של חלבוני G מסוג Gs, איזה אנזים מופעל כדי לייצר את השליח השניוני cAMP?", back: "Adenylyl Cyclase (אדניליל ציקלאז).", explanation: "כאשר קולטן GPCR מופעל, תת-היחידה אלפא של Gs משחלפת GDP ל-GTP, ניתקת ומפעילה את האנזים הממברנלי אדניליל ציקלאז, המייצר cAMP מ-ATP.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 15." },
+        { id: "fc10", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", front: "מדוע מחסור בוויטמין C מוביל למחלת הצפדינה (Scurvy)?", back: "ויטמין C חיוני לפעילות האנזים פרוליל-הידרוקסילאז המייצב את מבנה הקולגן.", explanation: "ויטמין C נדרש כקופקטור ליצירת הידרוקסי-פרולין. ללא חומצת אמינו מותמרת זו, סיבי הקולגן ברקמות החיבור חלשים ומתפרקים (דימומים מהחניכיים, פצעים שלא מגלידים).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 4." },
+        { id: "fc11", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "למה גורמת פתיחת תעלות אשלגן (K+) תלויות-מתח במהלך פוטנציאל הפעולה?", back: "לתהליך הרה-פולריזציה (Repolarization) וחזרה למתח המנוחה.", explanation: "לאחר הדה-פולריזציה שנגרמה מנתרן, פתיחת תעלות האשלגן גורמת ליציאת יונים חיוביים מהתא, מה שמחזיר את הממברנה למתח שלילי (ואף להיפר-פולריזציה זמנית).", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
+        { id: "fc12", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "מהו תפקידו העיקרי של החלבון p53 בתא?", back: "בקרת נזקי DNA ועצירת מחזור התא או הפעלת אפופטוזיס.", explanation: "p53 מכונה \"שומר הגנום\". כשיש נזק ל-DNA, הוא מזורחן ומייצב, גורם לעצירת מחזור התא (על ידי יצירת p21) כדי לאפשר תיקון, או מפעיל מסלול מוות תאי אם הנזק חמור מדי.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
+        { id: "fc13", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "כיצד עיכוב תחרותי (Competitive Inhibition) משפיע על פרמטרי הקינטיקה Vmax ו-Km?", back: "ה-Vmax לא משתנה, אך ה-Km עולה (הזיקה יורדת).", explanation: "המעכב מתחרה על האתר הפעיל. הוספת ריכוז גבוה מאוד של סובסטרט תתגבר על המעכב (לכן Vmax לא משתנה), אבל נדרש יותר סובסטרט כדי להגיע לחצי המהירות (Km עולה).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." }
     ];
 
     const dbQuestions = [
@@ -204,22 +256,26 @@
         { id: "q26", subject: "ביולוגיה של התא", subtopic: "שלד התא", text: "איזה מבנה משמש כמרכז ארגון המיקרוטובולים (MTOC) הראשי בתא האנימלי?", options: ["צנטרוזום", "סיליה", "קומפלקס גמא-TuRC", "קורטקס התא (Cell cortex)"], answer: 0, explanation: "הצנטרוזום הוא ה-MTOC העיקרי. הוא מכיל טבעות גמא-טובולין (Gamma-TuRC) שמהן צומחים סיבי המיקרוטובולי.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 16." },
         { id: "q27", subject: "ביולוגיה של התא", subtopic: "צומתי מעבר", text: "אילו מהמולקולות הבאות יכולות לעבור באופן חופשי דרך צומת מעבר (Gap Junction) בין שני תאים סמוכים?", options: ["חלבונים ו-RNA", "יונים וחומצות אמינו", "נוקלאוטידים ו-DNA", "רב-סוכרים בלבד"], answer: 1, explanation: "Gap junctions מאפשרים מעבר רק של מולקולות קטנות המסיסות במים (עד כ-1000 דלתון), כגון יונים, חומצות אמינו וחד-סוכרים.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 19." },
         { id: "q28", subject: "פיזיולוגיה", subtopic: "מערכת העצבים המרכזית", text: "מהו אחד התפקידים העיקריים של האסטרוציטים במערכת העצבים המרכזית (CNS)?", options: ["ויסות הריכוז החוץ-תאי של יוני אשלגן (K+) ופינוי נוירוטרנסמיטורים מהסינפסה.", "ייצור מעטפת המיאלין סביב האקסונים.", "תפקוד כתאי חיסון לפאגוציטוזה.", "הפרשת נוזל המוח והשדרה (CSF) לתוך החדרים."], answer: 0, explanation: "האסטרוציטים מתחזקים את הסביבה הכימית לנוירונים. הם קולטים עודפי אשלגן ומפנים נוירוטרנסמיטורים (כמו גלוטמט ו-GABA) מהמרווח הסינפטי.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 46." },
-        
-        // --- 5 שאלות חזקות חדשות ---
-        { id: "q29", subject: "פיזיולוגיה", subtopic: "שריר הלב (היפרקלמיה)", text: "מטופל מגיע למיון עם חולשה והפרעות בקצב הלב. בבדיקות דם נמצא K+ חוץ תאי ברמה גבוהה (היפרקלמיה). מה יקרה בהתכווצות שריר הלב?", options: ["היפרפולריזציה ולכן קושי לייצר פוטנציאל פעולה.", "דה-פולריזציה שמקלה בתחילה לייצר פ\"פ, אך רה-פולריזציה לא תקינה ולכן קושי בייצור פ\"פ נוספים.", "ללא שינוי במתח, רק שינוי בכוח הכיווץ.", "רה-פולריזציה מוגברת כך שייווצרו יותר פוטנציאלי פעולה."], answer: 1, explanation: "אשלגן חוץ תאי גבוה מקטין את מפל הריכוזים, מה שגורם למתח המנוחה להיות חיובי יותר (דה-פולריזציה קלה). למרות שזה מקרב למתח הסף, זה גם גורם לאינאקטיבציה של תעלות נתרן מהירות, ולכן פוגע ביכולת לייצר פוטנציאלי פעולה נוספים (חולשה והפרעות קצב).", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
-        { id: "q30", subject: "מולקולרית", subtopic: "בקרה על ביטוי גנים (אופרונים)", text: "למה תגרום מוטציה באופרון הלקטוז (Lac Operon) שמונעת מהרפרסור (Repressor) להיקשר לאזור ה-Operator?", options: ["ביטוי האופרון יפעל באופן רציף גם בהיעדר לקטוז.", "ביטוי האופרון לעולם לא יתבטא, גם לא בנוכחות לקטוז.", "ייווצר חלבון לקטאז מוטנטי שאינו מתפקד.", "האופרון לא יהיה תלוי יותר ברמות ה-cAMP."], answer: 0, explanation: "תפקיד הרפרסור הוא לחסום את השעתוק כאשר אין לקטוז בסביבה. אם הוא פגום ולא מסוגל להיקשר לאופרטור, RNA פולימראז יוכל לשעתק את הגנים ללא הפרעה (ביטוי קונסטיטוטיבי), גם כשאין לקטוז.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 16." },
-        { id: "q31", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "באיזה שלב של מחזור התא הליקאז מסוג MCM עובר אקטיבציה מלאה ומתחיל לפרום את ה-DNA?", options: ["שלב G1", "שלב S", "שלב G2", "שלב הטלופאזה"], answer: 1, explanation: "הקומפלקס MCM נטען על ה-DNA כבר בשלב G1 (בניית קומפלקס קדם-רפליקציה), אך הוא הופך לפעיל ומתחיל את פרימת הסליל (אקטיבציה) רק בתחילת שלב S, בעקבות זרחון על ידי קינאזות (S-Cdk).", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
-        { id: "q32", subject: "פיזיולוגיה", subtopic: "מיקרוצירקולציה", text: "איזה מהמדדים הבאים אינו משפיע על מעבר מים דרך קפילרות הדם (לפי כוחות סטארלינג)?", options: ["הלחץ ההידרוסטטי בתוך הקפילרות.", "הלחץ האוסמוטי/אונקוטי של נוזל הרקמה (אינטרסטיציום).", "מקדם הרפלקציה (Reflection coefficient).", "גודל המולקולות הלא חדירות שאינן מעורבות באוסמוזה."], answer: 3, explanation: "משוואת סטארלינג מתחשבת בלחץ ההידרוסטטי בקפילרה וברקמה, ובלחץ הקולואיד-אוסמוטי (אונקוטי) בקפילרה וברקמה, וכן במקדם הרפלקציה שמגדיר עד כמה הממברנה חדירה לחלבונים. גודל פיזי של חלקיקים לא חדירים (ללא הקשר הריכוז האוסמוטי שלהם) אינו פרמטר במשוואה.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 16." },
-        { id: "q33", subject: "ביוכימיה", subtopic: "מסלול הפנטוזות (PPP)", text: "איזה מצב מטבולי ידחוף את התא למסלול הפנטוז פוספט ויפעיל גם את הפאזה החמצונית וגם את הלא-חמצונית?", options: ["עודף בריבוז-5-פוספט וחוסר ב-NADPH.", "עודף בריבוז-5-פוספט ועודף ב-NADPH.", "מחסור בריבוז-5-פוספט וב-NADPH במקביל.", "מחסור בריבוז-5-פוספט ועודף ב-NADPH."], answer: 2, explanation: "המסלול נועד לספק לתא שני דברים עיקריים: כוח חיזור (NADPH) וסוכר מחומש לסינתזת נוקלאוטידים (ריבוז-5-פוספט). כששניהם חסרים, התא מריץ את המסלול מההתחלה (חמצוני) ומייצר NADPH וריבוז-5-פוספט שאינו ממשיך חזרה לגליקוליזה (השלב הלא-חמצוני משתתף בייצור הריבוז).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 14." }
+        { id: "q29", subject: "פיזיולוגיה", subtopic: "שריר הלב (היפרקלמיה)", text: "מטופל מגיע למיון עם חולשה והפרעות בקצב הלב. בבדיקות דם נמצא K+ חוץ תאי ברמה גבוהה (היפרקלמיה). מה יקרה בהתכווצות שריר הלב?", options: ["היפרפולריזציה ולכן קושי לייצר פוטנציאל פעולה.", "דה-פולריזציה שמקלה בתחילה לייצר פ\"פ, אך רה-פולריזציה לא תקינה ולכן קושי בייצור פ\"פ נוספים.", "ללא שינוי במתח, רק שינוי בכוח הכיווץ.", "רה-פולריזציה מוגברת כך שייווצרו יותר פוטנציאלי פעולה."], answer: 1, explanation: "אשלגן חוץ תאי גבוה מקטין את מפל הריכוזים, מה שגורם למתח המנוחה להיות חיובי יותר (דה-פולריזציה קלה). למרות שזה מקרב למתח הסף, זה פוגע ביכולת לייצר פוטנציאלי פעולה תקינים בהמשך.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
+        { id: "q30", subject: "מולקולרית", subtopic: "בקרה על ביטוי גנים (אופרונים)", text: "למה תגרום מוטציה באופרון הלקטוז (Lac Operon) שמונעת מהרפרסור (Repressor) להיקשר לאזור ה-Operator?", options: ["ביטוי האופרון יפעל באופן רציף גם בהיעדר לקטוז.", "ביטוי האופרון לעולם לא יתבטא, גם לא בנוכחות לקטוז.", "ייווצר חלבון לקטאז מוטנטי שאינו מתפקד.", "האופרון לא יהיה תלוי יותר ברמות ה-cAMP."], answer: 0, explanation: "תפקיד הרפרסור הוא לחסום את השעתוק כאשר אין לקטוז בסביבה. אם הוא פגום ולא מסוגל להיקשר, ה-RNA פולימראז ישעתק את הגנים ללא הפרעה (ביטוי קונסטיטוטיבי).", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 16." },
+        { id: "q31", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "באיזה שלב של מחזור התא הליקאז מסוג MCM עובר אקטיבציה מלאה ומתחיל לפרום את ה-DNA?", options: ["שלב G1", "שלב S", "שלב G2", "שלב הטלופאזה"], answer: 1, explanation: "הקומפלקס MCM נטען על ה-DNA כבר בשלב G1, אך הוא הופך לפעיל ומתחיל את פרימת הסליל (אקטיבציה) רק בתחילת שלב S, בעקבות זרחון על ידי קינאזות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
+        { id: "q32", subject: "פיזיולוגיה", subtopic: "מיקרוצירקולציה", text: "איזה מהמדדים הבאים אינו משפיע על מעבר מים דרך קפילרות הדם (לפי כוחות סטארלינג)?", options: ["הלחץ ההידרוסטטי בתוך הקפילרות.", "הלחץ האוסמוטי/אונקוטי של נוזל הרקמה (אינטרסטיציום).", "מקדם הרפלקציה (Reflection coefficient).", "גודל המולקולות הלא חדירות שאינן מעורבות באוסמוזה."], answer: 3, explanation: "משוואת סטארלינג מתחשבת בלחצים ההידרוסטטיים והאונקוטיים ובמקדם הרפלקציה. גודל פיזי של מולקולות לא נחשב למדד, אלא רק הריכוז האוסמוטי שלהן.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 16." },
+        { id: "q33", subject: "ביוכימיה", subtopic: "מסלול הפנטוזות (PPP)", text: "איזה מצב מטבולי ידחוף את התא למסלול הפנטוז פוספט ויפעיל גם את הפאזה החמצונית וגם את הלא-חמצונית?", options: ["עודף בריבוז-5-פוספט וחוסר ב-NADPH.", "עודף בריבוז-5-פוספט ועודף ב-NADPH.", "מחסור בריבוז-5-פוספט וב-NADPH במקביל.", "מחסור בריבוז-5-פוספט ועודף ב-NADPH."], answer: 2, explanation: "כשהתא זקוק גם ל-NADPH וגם לריבוז (ליצירת נוקלאוטידים), המסלול יפעל בצורה מלאה מההתחלה ועד יצירת הריבוז בתוך הפאזה הלא-חמצונית.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 14." },
+        // --- 5 New Questions ---
+        { id: "q34", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "חוקר הוסיף מעכב תחרותי לתגובה אנזימטית. כיצד ניתן לבטל לחלוטין את השפעת המעכב?", options: ["להוריד את הטמפרטורה ל-4 מעלות.", "להוסיף ריכוז גבוה מאוד של סובסטרט למערכת.", "להעלות את ה-pH של התמיסה.", "לא ניתן לבטל, העיכוב הוא בלתי הפיך וקוולנטי."], answer: 1, explanation: "מעכב תחרותי מתחרה עם הסובסטרט על אותו אתר קישור באופן הפיך. הוספת כמות אדירה של סובסטרט 'תנצח' בתחרות, והאנזים יגיע ל-Vmax המקורי שלו.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
+        { id: "q35", subject: "ביולוגיה של התא", subtopic: "מיון חלבונים (Protein Sorting)", text: "איזה תג כימי משמש כסיגנל הכוונה של אנזימים (הידרולאזות חומציות) אל תוך הליזוזום?", options: ["Mannose-6-Phosphate (M6P)", "KDEL", "רצף של חומצות אמינו הידרופוביות בקצה ה-N.", "יוביקווטין (Ubiquitin)"], answer: 0, explanation: "במנגנון המיון בגולג'י, אנזימים המיועדים לליזוזום עוברים מודיפיקציה שבה נוסף להם תג של מאנוז-6-פוספט, אותו קולטנים ספציפיים מזהים לאריזה בוזיקולות לליזוזום.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 13." },
+        { id: "q36", subject: "מולקולרית", subtopic: "שכפול DNA", text: "האנזים טלומראז פועל במנגנון של:", options: ["DNA-dependent DNA polymerase", "RNA-dependent RNA polymerase", "RNA-dependent DNA polymerase (Reverse Transcriptase)", "אנדונוקלאז החותך קצוות כרומוזומים."], answer: 2, explanation: "טלומראז מאריך את קצוות הכרומוזומים על ידי סינתזת DNA. הוא משתמש בתבנית RNA משל עצמו כדי לסנתז DNA, ולכן הוא סוג של Reverse Transcriptase.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
+        { id: "q37", subject: "מולקולרית", subtopic: "מחזור התא", text: "באיזה שלב של המיוזה מתרחש תהליך השחלוף (Crossing over) המגביר את המגוון הגנטי?", options: ["פרופאזה I (Prophase I)", "מטאפאזה II (Metaphase II)", "אנאפאזה I (Anaphase I)", "תחילת שלב ה-S שלפני המיוזה."], answer: 0, explanation: "השחלוף (רקומבינציה הומולוגית) מתרחש בפרופאזה של החלוקה המיוטית הראשונה, כאשר הכרומוזומים ההומולוגיים נצמדים ויוצרים מבנה של ביבלנט/טטרדה (Bivalent).", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
+        { id: "q38", subject: "פיזיולוגיה", subtopic: "שריר הלב (היפרקלמיה)", text: "מה מתאר חוק פרנק-סטרלינג של הלב (Frank-Starling law of the heart)?", options: ["ככל שהדופק עולה, כך כוח הכיווץ יורד.", "ככל שיש מתיחה גדולה יותר של שריר הלב בדיאסטולה (EDV גבוה), כך עוצמת הכיווץ בסיסטולה תהיה חזקה יותר.", "העלייה בריכוז הסידן התוך-תאי פרופורציונלית למתח הממברנה.", "רק זרחון של פוספולמבן יכול להגביר את כוח הכיווץ של הלב."], answer: 1, explanation: "חוק פרנק-סטרלינג קובע שעלייה בנפח הדם החוזר ללב (End-Diastolic Volume) מותחת את סיבי השריר לאורך אופטימלי, מה שמגביר את כוח ההתכווצות ואת נפח הפעימה (Stroke Volume).", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 9." }
     ];
 
-    // --- Safe Storage Initialization (v10) ---
+    // --- Safe Storage Initialization ---
     const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
     const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     let appData = { cards: {}, questions: {}, mistakes: {} };
 
     try {
-        let savedData = localStorage.getItem('med101_v10');
+        let savedData = localStorage.getItem('med101_v10'); // Keeping v10 so user progress is saved
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
@@ -266,7 +322,6 @@
         document.getElementById('tab-' + sectionId).classList.add('active');
         document.getElementById(sectionId).classList.add('active');
         
-        // Load only if they are empty (keeps state when switching tabs!)
         if(sectionId === 'flashcards' && !currentFC) loadFlashcard();
         if(sectionId === 'questions' && !currentQ) loadQuestion();
         if(sectionId === 'weakpoints') updateWeakPoints();
@@ -300,7 +355,6 @@
         document.getElementById('fc-back').innerText = currentFC.back;
         
         let explHtml = `<strong>הסבר: </strong> ${currentFC.explanation}`;
-        if(currentFC.reference) explHtml += `<div class="reference">📚 ${currentFC.reference}</div>`;
         document.getElementById('fc-explanation').innerHTML = explHtml;
         
         document.getElementById('fc-front').classList.remove('hidden');
@@ -312,14 +366,12 @@
 
     function flipCard() {
         if (showingFront) {
-            // Flip to back
             document.getElementById('fc-front').classList.add('hidden');
             document.getElementById('fc-back').classList.remove('hidden');
             document.getElementById('fc-explanation').classList.remove('hidden');
             document.getElementById('fc-controls').classList.remove('hidden');
             showingFront = false;
         } else {
-            // Flip to front (does not change the card)
             document.getElementById('fc-front').classList.remove('hidden');
             document.getElementById('fc-back').classList.add('hidden');
             document.getElementById('fc-explanation').classList.add('hidden');
@@ -361,7 +413,6 @@
         document.getElementById('q-options').innerHTML = optionsHtml;
         
         let explHtml = `<strong>הסבר: </strong> ${currentQ.explanation}`;
-        if(currentQ.reference) explHtml += `<div class="reference">📚 ${currentQ.reference}</div>`;
         document.getElementById('q-explanation').innerHTML = explHtml;
 
         document.getElementById('q-feedback').classList.add('hidden');
@@ -399,21 +450,33 @@
 
     function nextQuestion() { loadQuestion(); }
 
+    // --- The Magic: Weak Points & Book Recommendations ---
     function updateWeakPoints() {
         let list = document.getElementById('weak-list');
         list.innerHTML = "";
         let keys = Object.keys(appData.mistakes);
-        if (keys.length === 0) { list.innerHTML = "<li>מעולה! אין טעויות בינתיים.</li>"; return; }
+        if (keys.length === 0) { 
+            list.innerHTML = "<li>מעולה! אין טעויות בינתיים. המשך לתרגל כדי שהמערכת תמליץ לך מה לקרוא.</li>"; 
+            return; 
+        }
+        
         keys.sort((a, b) => appData.mistakes[b] - appData.mistakes[a]);
+        
         keys.forEach(subtopic => {
             let score = appData.mistakes[subtopic];
             let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
-            list.innerHTML += `<li>זיהינו קושי ב<strong>${subtopic}</strong> (${severity}).</li>`;
+            let bookRef = topicReferences[subtopic] || "חזור על סיכומי ההרצאות ועל המצגות שלך";
+            
+            list.innerHTML += `
+                <li class="weakpoint-item">
+                    זיהינו קושי ב<strong>${subtopic}</strong> (${severity}).
+                    <span class="book-ref">📖 המלצת קריאה: ${bookRef}</span>
+                </li>`;
         });
     }
 
     function resetStats() {
-        if(confirm("לאפס את הנתונים?")) {
+        if(confirm("לאפס את הנתונים? המערכת תתחיל ללמוד אותך מחדש.")) {
             appData = { cards: {}, questions: {}, mistakes: {} };
             saveData(); showSection('flashcards'); alert("הנתונים אופסו!");
         }
@@ -440,7 +503,7 @@
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
                 appData.mistakes = parsed.mistakes || {};
-                saveData(); alert("סונכרן בהצלחה!"); location.reload();
+                saveData(); alert("הנתונים סונכרנו בהצלחה!"); location.reload();
             }
         } catch(e) { alert("שגיאה בפענוח."); }
     }
