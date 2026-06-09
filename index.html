@@ -51,6 +51,9 @@
         .section.active { display: block; text-align: center; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        .filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-select { padding: 8px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--option-bg); color: var(--text-color); font-size: 14px; outline: none; }
+
         .card { background: var(--card-bg); border: 3px solid var(--border-color); border-radius: 15px; padding: 30px 20px; margin: 20px auto; max-width: 600px; min-height: 150px; display: flex; flex-direction: column; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.3s, box-shadow 0.3s, background 0.4s ease; }
         .card:hover { transform: translateY(-5px) scale(1.02); }
 
@@ -65,6 +68,8 @@
         .btn-primary:hover { background-color: #3498db; }
         .btn-sync { background-color: #8e44ad; }
         .btn-sync:hover { background-color: #9b59b6; }
+        .btn-sim { background-color: #e67e22; width: 100%; font-size: 18px; padding: 15px;}
+        .btn-sim:hover { background-color: #d35400; }
 
         .question-box { text-align: right; padding: 20px; }
         .option { display: block; width: 100%; text-align: right; padding: 15px; margin: 10px 0; background: var(--option-bg); color: var(--text-color); border: 1px solid transparent; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 16px; font-weight: 500; }
@@ -74,6 +79,7 @@
         .option.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
         .dark-mode .option.correct { background: #1e4620; color: #d4edda; }
         .dark-mode .option.wrong { background: #4a191e; color: #f8d7da; }
+        .sim-option.selected { background: var(--border-color); color: white; }
 
         .explanation-box { background: var(--explanation-bg); border-right: 4px solid var(--explanation-border); padding: 15px; margin-top: 20px; text-align: right; border-radius: 5px; font-size: 16px; line-height: 1.5; }
         .explanation-box strong { color: var(--explanation-border); }
@@ -81,13 +87,27 @@
 
         .badge { background: #e67e22; color: white; padding: 5px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         .badge-sub { background: #8e44ad; margin-right: 5px; }
-        .stats { font-size: 14px; opacity: 0.7; margin-bottom: 15px; }
         .done-message { font-size: 22px; color: #27ae60; font-weight: bold; padding: 40px; }
         
+        /* Status Board */
+        .status-board { margin-top: 30px; background: var(--option-bg); border-radius: 10px; padding: 15px; text-align: right; }
+        .status-board h3 { margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;}
+        .status-list { list-style: none; padding: 0; margin: 0; font-size: 14px; max-height: 150px; overflow-y: auto; }
+        .status-list li { padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .dark-mode .status-list li { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .status-col { background: var(--card-bg); padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status-col.correct-col { border-top: 3px solid #27ae60; }
+        .status-col.wrong-col { border-top: 3px solid #c0392b; }
+        .status-col.unseen-col { border-top: 3px solid #7f8c8d; }
+
         .sync-box { margin-top: 30px; padding: 20px; background: var(--option-bg); border-radius: 10px; border: 1px dashed #7f8c8d; }
         .weakpoint-item { background: var(--option-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #e74c3c; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .book-ref { display: block; margin-top: 8px; font-size: 15px; color: #2980b9; font-weight: bold; }
         .dark-mode .book-ref { color: #3498db; }
+
+        #sim-timer { font-size: 24px; font-weight: bold; color: #e74c3c; margin-bottom: 15px; text-align: center; }
+        #sim-progress { font-size: 16px; margin-bottom: 20px; color: #7f8c8d; }
     </style>
 </head>
 <body class="dark-mode">
@@ -98,12 +118,21 @@
     
     <div class="tabs">
         <button class="tab active" id="tab-flashcards" onclick="showSection('flashcards')">כרטיסיות</button>
-        <button class="tab" id="tab-questions" onclick="showSection('questions')">שאלות שחזור</button>
-        <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">נקודות חיזוק והגדרות</button>
+        <button class="tab" id="tab-questions" onclick="showSection('questions')">שאלות</button>
+        <button class="tab" id="tab-simulation" onclick="showSection('simulation')">סימולציה</button>
+        <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">נקודות חיזוק</button>
     </div>
 
     <div id="flashcards" class="section active">
-        <h2>שינון מושגים (חזרות מרווחות)</h2>
+        <div class="filters">
+            <select class="filter-select" id="fc-subj-filter" onchange="loadFlashcard(true)">
+                <option value="all">כל התחומים</option>
+            </select>
+            <select class="filter-select" id="fc-sub-filter" onchange="loadFlashcard(true)">
+                <option value="all">כל הנושאים</option>
+            </select>
+        </div>
+        
         <div id="fc-working-area">
             <div>
                 <span class="badge" id="fc-subject">תחום: טוען...</span>
@@ -116,17 +145,44 @@
             <div id="fc-explanation" class="explanation-box hidden"></div>
             
             <div id="fc-controls" class="hidden" style="margin-top: 20px;">
-                <button class="btn btn-success" onclick="processFlashcard(true)">ידעתי (עוד 7 ימים)</button>
-                <button class="btn btn-danger" onclick="processFlashcard(false)">לא ידעתי (עוד יומיים)</button>
+                <button class="btn btn-success" onclick="processFlashcard(true)">ידעתי</button>
+                <button class="btn btn-danger" onclick="processFlashcard(false)">לא ידעתי</button>
             </div>
         </div>
         <div id="fc-done-area" class="hidden done-message">
-            כל הכבוד! סיימת את כל הכרטיסיות להיום.
+            אין כרטיסיות שממתינות לחזרה בנושא זה כעת.
+            <br><button class="btn btn-primary" onclick="forceReview('cards')">תרגל בכל זאת (עקוף זמנים)</button>
+        </div>
+
+        <div class="status-board">
+            <h3>סטטוס כרטיסיות</h3>
+            <div class="status-grid">
+                <div class="status-col correct-col">
+                    <strong>ידעתי</strong>
+                    <ul class="status-list" id="fc-list-correct"></ul>
+                </div>
+                <div class="status-col wrong-col">
+                    <strong>לחיזוק</strong>
+                    <ul class="status-list" id="fc-list-wrong"></ul>
+                </div>
+                <div class="status-col unseen-col">
+                    <strong>לא נצפו</strong>
+                    <ul class="status-list" id="fc-list-unseen"></ul>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="questions" class="section">
-        <h2>תרגול אמריקאי מבוסס שחזורים</h2>
+        <div class="filters">
+            <select class="filter-select" id="q-subj-filter" onchange="loadQuestion(true)">
+                <option value="all">כל התחומים</option>
+            </select>
+            <select class="filter-select" id="q-sub-filter" onchange="loadQuestion(true)">
+                <option value="all">כל הנושאים</option>
+            </select>
+        </div>
+
         <div id="q-working-area">
             <div class="question-box">
                 <div style="text-align: center;">
@@ -145,7 +201,54 @@
             </div>
         </div>
         <div id="q-done-area" class="hidden done-message">
-            מצוין! סיימת את כל השאלות הפתוחות להיום.
+            אין שאלות שממתינות לחזרה בנושא זה כעת.
+            <br><button class="btn btn-primary" onclick="forceReview('questions')">תרגל בכל זאת (עקוף זמנים)</button>
+        </div>
+
+        <div class="status-board">
+            <h3>סטטוס שאלות</h3>
+            <div class="status-grid">
+                <div class="status-col correct-col">
+                    <strong>נכונות</strong>
+                    <ul class="status-list" id="q-list-correct"></ul>
+                </div>
+                <div class="status-col wrong-col">
+                    <strong>שגויות</strong>
+                    <ul class="status-list" id="q-list-wrong"></ul>
+                </div>
+                <div class="status-col unseen-col">
+                    <strong>לא נצפו</strong>
+                    <ul class="status-list" id="q-list-unseen"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="simulation" class="section">
+        <h2>מבחן סימולציה</h2>
+        <div id="sim-intro">
+            <p>הסימולציה שולפת 15 שאלות אקראיות מכל המאגר (ללא תלות בזמני החזרה שלך).</p>
+            <p>זמן מוקצב: <strong>15 דקות</strong>.</p>
+            <button class="btn btn-sim" onclick="startSimulation()">התחל סימולציה עכשיו</button>
+        </div>
+        
+        <div id="sim-active" class="hidden question-box">
+            <div id="sim-timer">15:00</div>
+            <div id="sim-progress" style="text-align: center; font-weight: bold;">שאלה 1 מתוך 15</div>
+            
+            <h3 id="sim-q-text" style="margin-top: 10px; text-align: right;">טוען...</h3>
+            <div id="sim-q-options"></div>
+            
+            <div style="text-align: left; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="nextSimQuestion()">הבא</button>
+            </div>
+        </div>
+
+        <div id="sim-results" class="hidden">
+            <h2 style="color: #27ae60;">הסימולציה הסתיימה!</h2>
+            <h1 id="sim-score" style="font-size: 40px; margin: 10px 0;"></h1>
+            <div id="sim-mistakes" style="text-align: right; background: var(--explanation-bg); padding: 15px; border-radius: 8px;"></div>
+            <button class="btn btn-primary" onclick="showSection('simulation'); document.getElementById('sim-intro').classList.remove('hidden'); document.getElementById('sim-results').classList.add('hidden');">חזור להתחלה</button>
         </div>
     </div>
 
@@ -158,7 +261,7 @@
 
         <div class="sync-box">
             <h3>סנכרון נתונים בין מכשירים</h3>
-            <p style="font-size: 14px;">כדי להעביר את ההתקדמות מהמחשב לטלפון (או להפך), ייצא את הנתונים, העתק אותם, וייבא אותם במכשיר השני.</p>
+            <p style="font-size: 14px;">כדי להעביר התקדמות מהמחשב לטלפון, ייצא את הנתונים והדבק במכשיר השני.</p>
             <button class="btn btn-sync" onclick="exportData()">ייצא נתונים (העתק קוד)</button>
             <button class="btn btn-sync" onclick="importData()">ייבא נתונים (הדבק קוד)</button>
         </div>
@@ -168,64 +271,69 @@
 <script>
     // --- Topic To Book Chapters Dictionary ---
     const topicReferences = {
-        "מטבוליזם (גליקוליזה)": "Lehninger Principles of Biochemistry, Chapter 15",
-        "חומצות אמינו וחלבונים": "Lehninger Principles of Biochemistry, Chapters 3-4",
-        "מבנה ותפקוד חלבונים": "Lehninger Principles of Biochemistry, Chapter 5",
-        "מטבוליזם ליפידים": "Lehninger Principles of Biochemistry, Chapter 17",
-        "זרחון חמצוני": "Lehninger Principles of Biochemistry, Chapter 19",
-        "מערכת הדם (קרישה)": "Guyton and Hall Physiology, Chapter 37",
-        "הנדסה גנטית": "Alberts Molecular Biology of the Cell, Chapter 8",
-        "אנדוציטוזה": "Alberts Molecular Biology of the Cell, Chapter 13",
-        "מבנה השריר": "Guyton and Hall Physiology, Chapter 6",
-        "פחמימות": "Lehninger Principles of Biochemistry, Chapter 7",
-        "בקרה אנזימטית": "Lehninger Principles of Biochemistry, Chapter 6",
-        "מטבוליזם (תסיסה)": "Lehninger Principles of Biochemistry, Chapter 14",
-        "מבנה הממברנה": "Alberts Molecular Biology of the Cell, Chapter 10",
-        "מים וסביבה מימית": "Lehninger Principles of Biochemistry, Chapter 2",
-        "חומצות אמינו וסטריאוכימיה": "Lehninger Principles of Biochemistry, Chapter 1",
-        "מבנה הכרומטין": "Alberts Molecular Biology of the Cell, Chapter 4",
-        "פוטנציאל פעולה והולכה": "Guyton and Hall Physiology, Chapter 5",
-        "מערכת העצבים": "Alberts Chapter 22 / Guyton Chapter 46",
-        "בקרה הורמונלית (אינסולין)": "Lehninger Principles of Biochemistry, Chapter 23",
-        "שעתוק (Transcription)": "Watson Molecular Biology of the Gene, Chapter 12",
-        "מבנה ה-DNA": "Watson Molecular Biology of the Gene, Chapter 4",
-        "שעתוק ועיבוד RNA": "Alberts Molecular Biology of the Cell, Chapter 6",
-        "אפופטוזיס": "Alberts Molecular Biology of the Cell, Chapter 18",
-        "שלד התא": "Alberts Molecular Biology of the Cell, Chapter 16",
-        "צומתי מעבר": "Alberts Molecular Biology of the Cell, Chapter 19",
-        "מערכת העצבים המרכזית": "Guyton and Hall Physiology, Chapter 46",
-        "שריר הלב (היפרקלמיה)": "Guyton and Hall Physiology, Chapter 5",
-        "בקרה על ביטוי גנים (אופרונים)": "Watson Molecular Biology of the Gene, Chapter 16",
-        "מחזור התא": "Alberts Molecular Biology of the Cell, Chapter 17",
-        "מיקרוצירקולציה": "Guyton and Hall Physiology, Chapter 16",
-        "מסלול הפנטוזות (PPP)": "Lehninger Principles of Biochemistry, Chapter 14",
-        "קינטיקה אנזימטית": "Lehninger Principles of Biochemistry, Chapter 6",
-        "שינוע והפרשת חלבונים": "Alberts Molecular Biology of the Cell, Chapter 12",
-        "מטבוליזם חומצות אמינו": "Lehninger Principles of Biochemistry, Chapter 18",
-        "שכפול DNA": "Watson Molecular Biology of the Gene, Chapter 9",
-        "מסלולים מטבוליים": "Lehninger Principles of Biochemistry, Chapter 15",
-        "מנגנוני הגהה": "Watson Molecular Biology of the Gene, Chapter 9",
-        "איתות תאי (Signaling)": "Alberts Molecular Biology of the Cell, Chapter 15",
-        "מיון חלבונים (Protein Sorting)": "Alberts Molecular Biology of the Cell, Chapter 12"
+        "מטבוליזם (גליקוליזה)": "Lehninger, Chapter 15",
+        "חומצות אמינו וחלבונים": "Lehninger, Chapters 3-4",
+        "מבנה ותפקוד חלבונים": "Lehninger, Chapter 5",
+        "מטבוליזם ליפידים": "Lehninger, Chapter 17",
+        "זרחון חמצוני": "Lehninger, Chapter 19",
+        "מערכת הדם (קרישה)": "Guyton, Chapter 37",
+        "הנדסה גנטית": "Alberts, Chapter 8",
+        "אנדוציטוזה": "Alberts, Chapter 13",
+        "מבנה השריר": "Guyton, Chapter 6",
+        "פחמימות": "Lehninger, Chapter 7",
+        "בקרה אנזימטית": "Lehninger, Chapter 6",
+        "מטבוליזם (תסיסה)": "Lehninger, Chapter 14",
+        "מבנה הממברנה": "Alberts, Chapter 10",
+        "מים וסביבה מימית": "Lehninger, Chapter 2",
+        "חומצות אמינו וסטריאוכימיה": "Lehninger, Chapter 1",
+        "מבנה הכרומטין": "Alberts, Chapter 4",
+        "פוטנציאל פעולה והולכה": "Guyton, Chapter 5",
+        "מערכת העצבים": "Alberts Ch.22 / Guyton Ch.46",
+        "בקרה הורמונלית (אינסולין)": "Lehninger, Chapter 23",
+        "שעתוק (Transcription)": "Watson, Chapter 12",
+        "מבנה ה-DNA": "Watson, Chapter 4",
+        "שעתוק ועיבוד RNA": "Alberts, Chapter 6",
+        "אפופטוזיס": "Alberts, Chapter 18",
+        "שלד התא": "Alberts, Chapter 16",
+        "צומתי מעבר": "Alberts, Chapter 19",
+        "מערכת העצבים המרכזית": "Guyton, Chapter 46",
+        "שריר הלב": "Guyton, Chapter 9",
+        "בקרה על ביטוי גנים (אופרונים)": "Watson, Chapter 16",
+        "מחזור התא": "Alberts, Chapter 17",
+        "מיקרוצירקולציה": "Guyton, Chapter 16",
+        "מסלול הפנטוזות (PPP)": "Lehninger, Chapter 14",
+        "קינטיקה אנזימטית": "Lehninger, Chapter 6",
+        "שינוע והפרשת חלבונים": "Alberts, Chapter 12",
+        "מטבוליזם חומצות אמינו": "Lehninger, Chapter 18",
+        "שכפול DNA": "Watson, Chapter 9",
+        "מסלולים מטבוליים": "Lehninger, Chapter 15",
+        "מנגנוני הגהה": "Watson, Chapter 9",
+        "איתות תאי (Signaling)": "Alberts, Chapter 15",
+        "מיון חלבונים (Protein Sorting)": "Alberts, Chapter 12",
+        "הכליה והנפרון": "Guyton, Chapter 27",
+        "מוטציות": "Watson, Chapter 15"
     };
 
-    // --- Data Base (Concepts vs Questions) ---
+    // --- DB Cards (Concepts) ---
     const dbFlashcards = [
-        { id: "fc1", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "Km (קבוע מיכאליס)", back: "ריכוז הסובסטרט שבו מהירות התגובה שווה למחצית מהמהירות המקסימלית (Vmax/2).", explanation: "ערך ה-Km מהווה מדד אפיניות. ככל שה-Km נמוך יותר, הזיקה של האנזים לסובסטרט גבוהה יותר.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
-        { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שינוע והפרשת חלבונים", front: "SRP (Signal Recognition Particle)", back: "קומפלקס המזהה רצף סיגנל של חלבון המיועד ל-ER, עוצר את התרגום ומכוון את הריבוזום לקרום ה-ER.", explanation: "כאשר פפטיד חדש נוצר ובו רצף סיגנל הידרופובי, ה-SRP נקשר אליו, עוצר את תהליך התרגום בציטוזול, ומלווה אותו ל-ER.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 12." },
-        { id: "fc3", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "פלואידין (Phalloidin)", back: "טוקסין המייצב את סיבי האקטין (F-actin) ומונע את הפירוק שלהם.", explanation: "קולכיצין ונוקודזול, לעומת זאת, קשורים למיקרוטובולי ולא לאקטין.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 16." },
-        { id: "fc4", subject: "ביוכימיה", subtopic: "מטבוליזם חומצות אמינו", front: "PLP (Pyridoxal phosphate)", back: "קואנזים (נגזרת של ויטמין B6) המשמש לנשיאת קבוצות אמין ולהעברתן בריאקציות של אמינוטרנספראזות.", explanation: "PLP משמש כנשא זמני לקבוצת האמין במהלך הריאקציה, תוך יצירת קשר קוולנטי (בסיס שיף).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 18." },
-        { id: "fc5", subject: "מולקולרית", subtopic: "שכפול DNA", front: "DNA Polymerase III", back: "האנזים העיקרי המבצע את הארכת גדילי ה-DNA (שכפול) בתאי חיידקי E. coli.", explanation: "לעומתו, DNA Pol I משמש בעיקר להחלפת הפריימרים (RNA) ב-DNA ולתיקון שגיאות בקצוות.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
-        { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "שלב S (Synthesis)", back: "השלב במחזור התא שבו מתבצעת הכפלת ה-DNA (רפליקציה) בצורה מלאה.", explanation: "בשלב זה כל כרומוזום משוכפל למבנה המורכב משתי כרומטידות אחיות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
-        { id: "fc7", subject: "ביוכימיה", subtopic: "מסלולים מטבוליים", front: "מסלולים מטבוליים (Metabolic Pathways)", back: "ארגון של תגובות בשרשרת רב-שלבית, המונע הגעה לשיווי משקל תרמודינמי ומאפשר יעילות בבקרה.", explanation: "הארגון במסלולים המניעים מוצרים קדימה מונע הגעה לשיווי משקל, ומאפשר בקרה עדינה באנזימי מפתח ספציפיים לאורך המסלול.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 15." },
-        { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "הגהה עצמית (Proofreading) 3' ל-5'", back: "מנגנון תיקון שגיאות בזמן אמת, הקיים ב-DNA פולימראז אך לא ב-RNA פולימראז.", explanation: "ל-DNA פולימראז יש אתר אקסונוקלאז שמזהה טעויות ומתקן אותן מייד. ל-RNA פולימראז אין, ולכן שיעור השגיאות שלו בשעתוק גבוה בהרבה.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
-        { id: "fc9", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "Adenylyl Cyclase (אדניליל ציקלאז)", back: "אנזים ממברנלי המופעל על ידי חלבון Gs ומייצר את השליח השניוני cAMP מ-ATP.", explanation: "כאשר קולטן GPCR מופעל, תת-היחידה אלפא של Gs משחלפת GDP ל-GTP, ניתקת ומפעילה את האדניליל ציקלאז.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 15." },
-        { id: "fc10", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", front: "ויטמין C (חומצה אסקורבית)", back: "קופקטור חיוני לאנזים פרוליל-הידרוקסילאז, המייצב את סיבי הקולגן.", explanation: "ויטמין C נדרש ליצירת הידרוקסי-פרולין. ללא התמרה זו, סיבי הקולגן ברקמות החיבור חלשים ומתפרקים (מה שגורם למחלת הצפדינה).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 4." },
-        { id: "fc11", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תעלות אשלגן תלויות-מתח", back: "תעלות שפתיחתן מוציאה אשלגן (K+) מהתא וגורמת לרה-פולריזציה (חזרה למתח המנוחה).", explanation: "לאחר הדה-פולריזציה שנגרמה מנתרן, פתיחת תעלות האשלגן גורמת ליציאת יונים חיוביים מהתא, מה שמחזיר את הממברנה למתח שלילי.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
-        { id: "fc12", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "חלבון p53", back: "בקר מרכזי ('שומר הגנום') העוצר את מחזור התא במקרה של נזק ל-DNA, או מפעיל אפופטוזיס אם הנזק בלתי הפיך.", explanation: "כשיש נזק ל-DNA, הוא מזורחן ומייצב, וגורם לעצירת מחזור התא (על ידי יצירת p21) כדי לאפשר תיקון.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
-        { id: "fc13", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב תחרותי (Competitive Inhibition)", back: "מצב בו מעכב מתחרה עם הסובסטרט על האתר הפעיל. ה-Vmax נשאר זהה, אך ה-Km עולה.", explanation: "הוספת ריכוז גבוה מאוד של סובסטרט תתגבר על המעכב (לכן Vmax לא משתנה), אבל נדרש יותר סובסטרט כדי להגיע לחצי המהירות (הזיקה יורדת = Km עולה).", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." }
+        { id: "fc1", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "Km (קבוע מיכאליס)", back: "ריכוז הסובסטרט שבו מהירות התגובה שווה למחצית מהמהירות המקסימלית (Vmax/2).", explanation: "מייצג את הזיקה של האנזים. Km נמוך = זיקה גבוהה.", reference: "Lehninger Chapter 6." },
+        { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שינוע והפרשת חלבונים", front: "SRP (Signal Recognition Particle)", back: "קומפלקס המזהה רצף סיגנל של חלבון המיועד ל-ER, עוצר תרגום ומכוון ל-ER.", explanation: "נקשר לפפטיד הידרופובי בציטוזול.", reference: "Alberts Chapter 12." },
+        { id: "fc3", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "פלואידין (Phalloidin)", back: "טוקסין המייצב את סיבי האקטין (F-actin) ומונע את פירוקם.", explanation: "שונה מקולכיצין שפועל על מיקרוטובולי.", reference: "Alberts Chapter 16." },
+        { id: "fc4", subject: "ביוכימיה", subtopic: "מטבוליזם חומצות אמינו", front: "PLP (Pyridoxal phosphate)", back: "קואנזים (ויטמין B6) המשמש העברת קבוצות אמין באמינוטרנספראזות.", explanation: "יוצר קשר קוולנטי זמני (בסיס שיף).", reference: "Lehninger Chapter 18." },
+        { id: "fc5", subject: "מולקולרית", subtopic: "שכפול DNA", front: "DNA Polymerase III", back: "האנזים העיקרי המבצע את הארכת גדילי ה-DNA בשכפול בחיידקים.", explanation: "DNA Pol I אחראי על החלפת פריימרים ותיקון.", reference: "Watson Chapter 9." },
+        { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "שלב S (Synthesis)", back: "השלב במחזור התא שבו מתבצעת רפליקציה של ה-DNA.", explanation: "הכרומוזום משוכפל לשתי כרומטידות אחיות.", reference: "Alberts Chapter 17." },
+        { id: "fc7", subject: "ביוכימיה", subtopic: "מסלולים מטבוליים", front: "מסלולים מטבוליים (Pathways)", back: "שרשרת תגובות המונעת שיווי משקל תרמודינמי ומאפשרת בקרה.", explanation: "מונע אובדן יכולת להפיק עבודה.", reference: "Lehninger Chapter 15." },
+        { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "Proofreading (3' ל-5')", back: "מנגנון תיקון שגיאות בזמן אמת, קיים ב-DNA פולימראז.", explanation: "ל-RNA פולימראז אין מנגנון כזה, לכן הוא טועה יותר.", reference: "Watson Chapter 9." },
+        { id: "fc9", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "Adenylyl Cyclase", back: "אנזים המופעל על ידי Gs ומייצר cAMP מ-ATP.", explanation: "שלב קריטי בהגברת אותות (Amplification).", reference: "Alberts Chapter 15." },
+        { id: "fc10", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", front: "ויטמין C (בייצור קולגן)", back: "קופקטור לאנזים פרוליל-הידרוקסילאז המייצב את סיבי הקולגן.", explanation: "חוסר גורם לצפדינה (Scurvy).", reference: "Lehninger Chapter 4." },
+        { id: "fc11", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תעלות אשלגן תלויות-מתח", back: "מוציאות אשלגן וגורמות לרה-פולריזציה.", explanation: "מחזירות את התא למתח מנוחה שלילי.", reference: "Guyton Chapter 5." },
+        { id: "fc12", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "חלבון p53", back: "בקר העוצר את מחזור התא במקרה של נזק ל-DNA או מפעיל אפופטוזיס.", explanation: "'שומר הגנום'. מפעיל את p21.", reference: "Alberts Chapter 17." },
+        { id: "fc13", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב תחרותי (Competitive Inhibition)", back: "מעכב הנקשר לאתר הפעיל. Vmax זהה, Km עולה.", explanation: "הוספת סובסטרט מתגברת על המעכב.", reference: "Lehninger Chapter 6." },
+        { id: "fc14", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב לא-תחרותי מוחלט (Non-competitive)", back: "מעכב הנקשר לאתר אחר ופוגע בפעילות. Vmax יורד, Km ללא שינוי.", explanation: "לא ניתן להתגבר עליו בהוספת סובסטרט.", reference: "Lehninger Chapter 6." },
+        { id: "fc15", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תקופה רפרקטורית מוחלטת (Absolute Refractory Period)", back: "הזמן בו לא ניתן לייצר פוטנציאל פעולה נוסף בשום עוצמת גירוי.", explanation: "בגלל שתעלות הנתרן נמצאות במצב אינאקטיבציה (שער סגור).", reference: "Guyton Chapter 5." }
     ];
 
+    // --- DB Questions (Full Questions) ---
     const dbQuestions = [
         { id: "q1", subject: "ביוכימיה", subtopic: "מטבוליזם (גליקוליזה)", text: "איזה מהאנזימים הבאים מזרז ריאקציה בלתי הפיכה בגליקוליזה, ומהווה את שלב הבקרה המרכזי (Rate-limiting step)?", options: ["Hexokinase", "Phosphofructokinase-1 (PFK-1)", "Phosphoglycerate kinase", "Pyruvate kinase"], answer: 1, explanation: "PFK-1 הוא האנזים קובע הקצב (Rate-limiting) והמבוקר ביותר. הוא מעוכב אלסטרית על ידי רמות גבוהות של ATP וציטראט, ומופעל על ידי AMP.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 15." },
         { id: "q2", subject: "ביוכימיה", subtopic: "חומצות אמינו וחלבונים", text: "מדוע חומצת האמינו גליצין אינה פעילה אופטית (Achiral)?", options: ["משום שיש לה שייר צד קטן שגורם לפעילות אופטית זניחה.", "משום שיש גמישות יתר של זוויות פי ופסיי בקשר הפפטידי שלה.", "משום שישנם שני אטומי מימן הקשורים לפחמן האלפא שלה.", "משום שהיא מופיעה כצוויטריון בתנאים פיזיולוגיים."], answer: 2, explanation: "פחמן כיראלי חייב להיות קשור לארבע קבוצות שונות. בגליצין, שייר ה-R הוא אטום מימן נוסף, ולכן פחמן האלפא קשור לשני אטומי מימן ואינו כיראלי.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 3." },
@@ -255,31 +363,32 @@
         { id: "q26", subject: "ביולוגיה של התא", subtopic: "שלד התא", text: "איזה מבנה משמש כמרכז ארגון המיקרוטובולים (MTOC) הראשי בתא האנימלי?", options: ["צנטרוזום", "סיליה", "קומפלקס גמא-TuRC", "קורטקס התא (Cell cortex)"], answer: 0, explanation: "הצנטרוזום הוא ה-MTOC העיקרי. הוא מכיל טבעות גמא-טובולין (Gamma-TuRC) שמהן צומחים סיבי המיקרוטובולי.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 16." },
         { id: "q27", subject: "ביולוגיה של התא", subtopic: "צומתי מעבר", text: "אילו מהמולקולות הבאות יכולות לעבור באופן חופשי דרך צומת מעבר (Gap Junction) בין שני תאים סמוכים?", options: ["חלבונים ו-RNA", "יונים וחומצות אמינו", "נוקלאוטידים ו-DNA", "רב-סוכרים בלבד"], answer: 1, explanation: "Gap junctions מאפשרים מעבר רק של מולקולות קטנות המסיסות במים (עד כ-1000 דלתון), כגון יונים, חומצות אמינו וחד-סוכרים.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 19." },
         { id: "q28", subject: "פיזיולוגיה", subtopic: "מערכת העצבים המרכזית", text: "מהו אחד התפקידים העיקריים של האסטרוציטים במערכת העצבים המרכזית (CNS)?", options: ["ויסות הריכוז החוץ-תאי של יוני אשלגן (K+) ופינוי נוירוטרנסמיטורים מהסינפסה.", "ייצור מעטפת המיאלין סביב האקסונים.", "תפקוד כתאי חיסון לפאגוציטוזה.", "הפרשת נוזל המוח והשדרה (CSF) לתוך החדרים."], answer: 0, explanation: "האסטרוציטים מתחזקים את הסביבה הכימית לנוירונים. הם קולטים עודפי אשלגן ומפנים נוירוטרנסמיטורים (כמו גלוטמט ו-GABA) מהמרווח הסינפטי.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 46." },
-        { id: "q29", subject: "פיזיולוגיה", subtopic: "שריר הלב (היפרקלמיה)", text: "מטופל מגיע למיון עם חולשה והפרעות בקצב הלב. בבדיקות דם נמצא K+ חוץ תאי ברמה גבוהה (היפרקלמיה). מה יקרה בהתכווצות שריר הלב?", options: ["היפרפולריזציה ולכן קושי לייצר פוטנציאל פעולה.", "דה-פולריזציה שמקלה בתחילה לייצר פ\"פ, אך רה-פולריזציה לא תקינה ולכן קושי בייצור פ\"פ נוספים.", "ללא שינוי במתח, רק שינוי בכוח הכיווץ.", "רה-פולריזציה מוגברת כך שייווצרו יותר פוטנציאלי פעולה."], answer: 1, explanation: "אשלגן חוץ תאי גבוה מקטין את מפל הריכוזים, מה שגורם למתח המנוחה להיות חיובי יותר (דה-פולריזציה קלה). למרות שזה מקרב למתח הסף, זה פוגע ביכולת לייצר פוטנציאלי פעולה תקינים בהמשך.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 5." },
-        { id: "q30", subject: "מולקולרית", subtopic: "בקרה על ביטוי גנים (אופרונים)", text: "למה תגרום מוטציה באופרון הלקטוז (Lac Operon) שמונעת מהרפרסור (Repressor) להיקשר לאזור ה-Operator?", options: ["ביטוי האופרון יפעל באופן רציף גם בהיעדר לקטוז.", "ביטוי האופרון לעולם לא יתבטא, גם לא בנוכחות לקטוז.", "ייווצר חלבון לקטאז מוטנטי שאינו מתפקד.", "האופרון לא יהיה תלוי יותר ברמות ה-cAMP."], answer: 0, explanation: "תפקיד הרפרסור הוא לחסום את השעתוק כאשר אין לקטוז בסביבה. אם הוא פגום ולא מסוגל להיקשר, ה-RNA פולימראז ישעתק את הגנים ללא הפרעה (ביטוי קונסטיטוטיבי).", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 16." },
-        { id: "q31", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "באיזה שלב של מחזור התא הליקאז מסוג MCM עובר אקטיבציה מלאה ומתחיל לפרום את ה-DNA?", options: ["שלב G1", "שלב S", "שלב G2", "שלב הטלופאזה"], answer: 1, explanation: "הקומפלקס MCM נטען על ה-DNA כבר בשלב G1, אך הוא הופך לפעיל ומתחיל את פרימת הסליל (אקטיבציה) רק בתחילת שלב S, בעקבות זרחון על ידי קינאזות.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
-        { id: "q32", subject: "פיזיולוגיה", subtopic: "מיקרוצירקולציה", text: "איזה מהמדדים הבאים אינו משפיע על מעבר מים דרך קפילרות הדם (לפי כוחות סטארלינג)?", options: ["הלחץ ההידרוסטטי בתוך הקפילרות.", "הלחץ האוסמוטי/אונקוטי של נוזל הרקמה (אינטרסטיציום).", "מקדם הרפלקציה (Reflection coefficient).", "גודל המולקולות הלא חדירות שאינן מעורבות באוסמוזה."], answer: 3, explanation: "משוואת סטארלינג מתחשבת בלחצים ההידרוסטטיים והאונקוטיים ובמקדם הרפלקציה. גודל פיזי של מולקולות לא נחשב למדד, אלא רק הריכוז האוסמוטי שלהן.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 16." },
-        { id: "q33", subject: "ביוכימיה", subtopic: "מסלול הפנטוזות (PPP)", text: "איזה מצב מטבולי ידחוף את התא למסלול הפנטוז פוספט ויפעיל גם את הפאזה החמצונית וגם את הלא-חמצונית?", options: ["עודף בריבוז-5-פוספט וחוסר ב-NADPH.", "עודף בריבוז-5-פוספט ועודף ב-NADPH.", "מחסור בריבוז-5-פוספט וב-NADPH במקביל.", "מחסור בריבוז-5-פוספט ועודף ב-NADPH."], answer: 2, explanation: "כשהתא זקוק גם ל-NADPH וגם לריבוז (ליצירת נוקלאוטידים), המסלול יפעל בצורה מלאה מההתחלה ועד יצירת הריבוז בתוך הפאזה הלא-חמצונית.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 14." },
-        { id: "q34", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "חוקר הוסיף מעכב תחרותי לתגובה אנזימטית. כיצד ניתן לבטל לחלוטין את השפעת המעכב?", options: ["להוריד את הטמפרטורה ל-4 מעלות.", "להוסיף ריכוז גבוה מאוד של סובסטרט למערכת.", "להעלות את ה-pH של התמיסה.", "לא ניתן לבטל, העיכוב הוא בלתי הפיך וקוולנטי."], answer: 1, explanation: "מעכב תחרותי מתחרה עם הסובסטרט על אותו אתר קישור באופן הפיך. הוספת כמות אדירה של סובסטרט 'תנצח' בתחרות, והאנזים יגיע ל-Vmax המקורי שלו.", reference: "Lehninger Principles of Biochemistry, 7th Ed, Chapter 6." },
-        { id: "q35", subject: "ביולוגיה של התא", subtopic: "מיון חלבונים (Protein Sorting)", text: "איזה תג כימי משמש כסיגנל הכוונה של אנזימים (הידרולאזות חומציות) אל תוך הליזוזום?", options: ["Mannose-6-Phosphate (M6P)", "KDEL", "רצף של חומצות אמינו הידרופוביות בקצה ה-N.", "יוביקווטין (Ubiquitin)"], answer: 0, explanation: "במנגנון המיון בגולג'י, אנזימים המיועדים לליזוזום עוברים מודיפיקציה שבה נוסף להם תג של מאנוז-6-פוספט, אותו קולטנים ספציפיים מזהים לאריזה בוזיקולות לליזוזום.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 13." },
-        { id: "q36", subject: "מולקולרית", subtopic: "שכפול DNA", text: "האנזים טלומראז פועל במנגנון של:", options: ["DNA-dependent DNA polymerase", "RNA-dependent RNA polymerase", "RNA-dependent DNA polymerase (Reverse Transcriptase)", "אנדונוקלאז החותך קצוות כרומוזומים."], answer: 2, explanation: "טלומראז מאריך את קצוות הכרומוזומים על ידי סינתזת DNA. הוא משתמש בתבנית RNA משל עצמו כדי לסנתז DNA, ולכן הוא סוג של Reverse Transcriptase.", reference: "Molecular Biology of the Gene (Watson), 7th Ed, Chapter 9." },
-        { id: "q37", subject: "מולקולרית", subtopic: "מחזור התא", text: "באיזה שלב של המיוזה מתרחש תהליך השחלוף (Crossing over) המגביר את המגוון הגנטי?", options: ["פרופאזה I (Prophase I)", "מטאפאזה II (Metaphase II)", "אנאפאזה I (Anaphase I)", "תחילת שלב ה-S שלפני המיוזה."], answer: 0, explanation: "השחלוף (רקומבינציה הומולוגית) מתרחש בפרופאזה של החלוקה המיוטית הראשונה, כאשר הכרומוזומים ההומולוגיים נצמדים ויוצרים מבנה של ביבלנט/טטרדה.", reference: "Molecular Biology of the Cell (Alberts), 6th Ed, Chapter 17." },
-        { id: "q38", subject: "פיזיולוגיה", subtopic: "שריר הלב (היפרקלמיה)", text: "מה מתאר חוק פרנק-סטרלינג של הלב (Frank-Starling law of the heart)?", options: ["ככל שהדופק עולה, כך כוח הכיווץ יורד.", "ככל שיש מתיחה גדולה יותר של שריר הלב בדיאסטולה (EDV גבוה), כך עוצמת הכיווץ בסיסטולה תהיה חזקה יותר.", "העלייה בריכוז הסידן התוך-תאי פרופורציונלית למתח הממברנה.", "רק זרחון של פוספולמבן יכול להגביר את כוח הכיווץ של הלב."], answer: 1, explanation: "חוק פרנק-סטרלינג קובע שעלייה בנפח הדם החוזר ללב (End-Diastolic Volume) מותחת את סיבי השריר לאורך אופטימלי, מה שמגביר את כוח ההתכווצות ואת נפח הפעימה.", reference: "Guyton and Hall Textbook of Medical Physiology, 14th Ed, Chapter 9." }
+        { id: "q29", subject: "פיזיולוגיה", subtopic: "שריר הלב", text: "מטופל מגיע למיון עם חולשה והפרעות בקצב הלב. בבדיקות דם נמצא K+ חוץ תאי ברמה גבוהה (היפרקלמיה). מה יקרה בהתכווצות שריר הלב?", options: ["היפרפולריזציה ולכן קושי לייצר פוטנציאל פעולה.", "דה-פולריזציה שמקלה בתחילה לייצר פ\"פ, אך פוגעת בהמשך ביכולת לייצר פ\"פ תקינים.", "ללא שינוי במתח, רק שינוי בכוח הכיווץ.", "רה-פולריזציה מוגברת כך שייווצרו יותר פוטנציאלי פעולה."], answer: 1, explanation: "אשלגן חוץ תאי גבוה מקטין את מפל הריכוזים, גורם לדה-פולריזציה קלה שמכניסה תעלות נתרן לאינאקטיבציה, ופוגעת ביכולת לייצר פוטנציאלי פעולה.", reference: "Guyton Chapter 5." },
+        { id: "q30", subject: "מולקולרית", subtopic: "בקרה על ביטוי גנים (אופרונים)", text: "למה תגרום מוטציה באופרון הלקטוז שמונעת מהרפרסור (Repressor) להיקשר לאזור ה-Operator?", options: ["ביטוי האופרון יפעל באופן רציף גם בהיעדר לקטוז.", "ביטוי האופרון לעולם לא יתבטא, גם לא בנוכחות לקטוז.", "ייווצר חלבון לקטאז מוטנטי שאינו מתפקד.", "האופרון לא יהיה תלוי יותר ברמות ה-cAMP."], answer: 0, explanation: "הרפרסור חוסם את השעתוק כשאין לקטוז. אם הוא פגום, ה-RNA פולימראז ישעתק את הגנים ללא הפרעה (ביטוי קונסטיטוטיבי).", reference: "Watson Chapter 16." },
+        { id: "q31", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "באיזה שלב של מחזור התא הליקאז מסוג MCM עובר אקטיבציה מלאה ומתחיל לפרום את ה-DNA?", options: ["שלב G1", "שלב S", "שלב G2", "שלב הטלופאזה"], answer: 1, explanation: "הקומפלקס MCM נטען על ה-DNA כבר בשלב G1, אך הוא הופך לפעיל ומתחיל את פרימת הסליל רק בתחילת שלב S בעקבות זרחון.", reference: "Alberts Chapter 17." },
+        { id: "q32", subject: "פיזיולוגיה", subtopic: "מיקרוצירקולציה", text: "איזה מהמדדים הבאים אינו משפיע על מעבר מים דרך קפילרות הדם (לפי כוחות סטארלינג)?", options: ["הלחץ ההידרוסטטי בתוך הקפילרות.", "הלחץ האוסמוטי/אונקוטי של נוזל הרקמה.", "מקדם הרפלקציה.", "גודל פיזי של המולקולות הלא חדירות שאינן מעורבות באוסמוזה."], answer: 3, explanation: "משוואת סטארלינג מתחשבת בלחצים הידרוסטטיים ואונקוטיים ובמקדם הרפלקציה. גודל פיזי של מולקולות (ללא קשר לריכוזן) אינו פרמטר.", reference: "Guyton Chapter 16." },
+        { id: "q33", subject: "ביוכימיה", subtopic: "מסלול הפנטוזות (PPP)", text: "איזה מצב מטבולי ידחוף את התא למסלול הפנטוז פוספט ויפעיל גם את הפאזה החמצונית וגם את הלא-חמצונית?", options: ["עודף בריבוז-5-פוספט וחוסר ב-NADPH.", "עודף בריבוז-5-פוספט ועודף ב-NADPH.", "מחסור בריבוז-5-פוספט וב-NADPH במקביל.", "מחסור בריבוז-5-פוספט ועודף ב-NADPH."], answer: 2, explanation: "כשהתא זקוק גם ל-NADPH וגם לריבוז, המסלול יפעל בצורה מלאה מההתחלה ועד יצירת הריבוז בתוך הפאזה הלא-חמצונית.", reference: "Lehninger Chapter 14." },
+        { id: "q34", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "חוקר הוסיף מעכב תחרותי לתגובה אנזימטית. כיצד ניתן לבטל לחלוטין את השפעת המעכב?", options: ["להוריד את הטמפרטורה ל-4 מעלות.", "להוסיף ריכוז גבוה מאוד של סובסטרט למערכת.", "להעלות את ה-pH של התמיסה.", "לא ניתן לבטל, העיכוב הוא בלתי הפיך וקוולנטי."], answer: 1, explanation: "מעכב תחרותי מתחרה עם הסובסטרט על אותו אתר קישור באופן הפיך. הוספת כמות אדירה של סובסטרט תתגבר עליו.", reference: "Lehninger Chapter 6." },
+        { id: "q35", subject: "ביולוגיה של התא", subtopic: "מיון חלבונים (Protein Sorting)", text: "איזה תג כימי משמש כסיגנל הכוונה של אנזימים (הידרולאזות חומציות) אל תוך הליזוזום?", options: ["Mannose-6-Phosphate (M6P)", "KDEL", "רצף של חומצות אמינו הידרופוביות בקצה ה-N.", "יוביקווטין (Ubiquitin)"], answer: 0, explanation: "במנגנון המיון בגולג'י, אנזימים המיועדים לליזוזום עוברים מודיפיקציה שבה נוסף להם תג של מאנוז-6-פוספט.", reference: "Alberts Chapter 13." },
+        // --- 5 New Ext questions ---
+        { id: "q36", subject: "מולקולרית", subtopic: "מוטציות", text: "מהי מוטציית פסק (Nonsense mutation)?", options: ["החלפת בסיס שלא משנה את חומצת האמינו (בגלל ניוון הקוד הגנטי).", "הוספה של בסיס שגורמת להסטת מסגרת הקריאה.", "החלפת בסיס שמשנה קודון של חומצת אמינו לקודון סיום (Stop codon).", "החלפת בסיס המשנה חומצת אמינו אחת לאחרת בעלת תכונות כימיות דומות."], answer: 2, explanation: "מוטציית פסק (Nonsense) יוצרת קודון סיום בטרם עת, מה שמוביל לייצור חלבון קטוע שלרוב אינו מתפקד.", reference: "Watson Chapter 15." },
+        { id: "q37", subject: "פיזיולוגיה", subtopic: "הכליה והנפרון", text: "היכן בנפרון מתרחשת ספיגה חוזרת (Reabsorption) של כמעט 100% מהגלוקוז וחומצות האמינו שסוננו?", options: ["באבובית המפותלת המקורבת (Proximal Convoluted Tubule).", "בלולאת הנלה (Loop of Henle) החלק היורד.", "באבובית המפותלת המרוחקת (Distal Convoluted Tubule).", "בצינור המאסף (Collecting Duct)."], answer: 0, explanation: "האבובית המקורבת (PCT) עמוסה בנשאי SGLT והיא סופגת חזרה את כל הגלוקוז, חומצות האמינו ורוב המים והמלחים שסוננו בפקעית.", reference: "Guyton Chapter 27." },
+        { id: "q38", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מהו ההבדל המרכזי בין התקופה הרפרקטורית המוחלטת ליחסית?", options: ["במוחלטת התא בהיפרפולריזציה, וביחסית הוא בדה-פולריזציה.", "במוחלטת תעלות הנתרן במצב אינאקטיבציה (סגורות ולא יכולות להיפתח), וביחסית רובן סגורות אך יכולות להיפתח בגירוי חזק מהרגיל.", "במוחלטת תעלות האשלגן פתוחות לרווחה, וביחסית תעלות הנתרן פתוחות לרווחה.", "אין הבדל פיזיולוגי, מדובר בהבדל סמנטי בלבד."], answer: 1, explanation: "בתקופה הרפרקטורית המוחלטת שערי האינאקטיבציה של תעלות הנתרן סגורים. בתקופה היחסית (שלב הרה/היפרפולריזציה) השערים נפתחים חזרה למצב מנוחה, ולכן גירוי חזק יכול לייצר פוטנציאל פעולה נוסף.", reference: "Guyton Chapter 5." },
+        { id: "q39", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "איזה סוג עיכוב מאופיין בכך שהמעכב נקשר רק לקומפלקס האנזים-סובסטרט (ES) ולא לאנזים החופשי?", options: ["עיכוב תחרותי (Competitive)", "עיכוב לא-תחרותי מוחלט (Non-competitive)", "עיכוב בלתי-תחרותי (Uncompetitive)", "עיכוב קוולנטי בלתי הפיך"], answer: 2, explanation: "בעיכוב בלתי-תחרותי (Uncompetitive), המעכב נקשר רק לאחר שהסובסטרט יצר שינוי קונפורמציה באנזים. זה גורם גם ל-Vmax וגם ל-Km לרדת.", reference: "Lehninger Chapter 6." },
+        { id: "q40", subject: "ביולוגיה של התא", subtopic: "אנדוציטוזה", text: "כיצד הליזוזום שומר על סביבה חומצית (pH ~5.0) החיונית לפעילות ההידרולאזות שבו?", options: ["על ידי ייצור חומצה לקטית בתוך האברון.", "באמצעות משאבת פרוטונים מסוג V-ATPase המשתמשת ב-ATP לשאיבת H+ פנימה.", "על ידי אנזים קרבוניק אנהידראז המייצר פרוטונים מ-CO2.", "הוא אינו שומר על סביבה חומצית, ה-pH זהה לזה של הציטוזול."], answer: 1, explanation: "משאבות V-ATPase (Vacuolar) בממברנת הליזוזום (וגם באנדוזומים) שואבות פרוטונים מהציטוזול לתוך האברון כנגד מפל הריכוזים, תוך הידרוליזה של ATP.", reference: "Alberts Chapter 13." }
     ];
 
     // --- Safe Storage Initialization ---
-    const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
-    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-    let appData = { cards: {}, questions: {}, mistakes: {} };
+    let appData = { cards: {}, questions: {}, status: {} };
 
     try {
-        let savedData = localStorage.getItem('med101_v10'); // Keeping v10 key to preserve user progress
+        let savedData = localStorage.getItem('med101_v10'); // Keep v10 to retain user progress
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
-                appData.mistakes = parsed.mistakes || {};
+                appData.status = parsed.status || {}; // New object for tracking right/wrong
             }
         }
     } catch (e) {
@@ -290,7 +399,16 @@
         try { localStorage.setItem('med101_v10', JSON.stringify(appData)); } catch (e) {}
     }
 
-    let showingFront = true; let currentFC = null; let currentQ = null;
+    let showingFront = true; 
+    let currentFC = null; 
+    let currentQ = null;
+
+    // Simulation variables
+    let simQuestions = [];
+    let currentSimIndex = 0;
+    let simScore = 0;
+    let simTimerInterval = null;
+    let simTimeLeft = 15 * 60; // 15 minutes
 
     // --- Dynamic Greeting ---
     function setGreeting() {
@@ -320,14 +438,45 @@
         document.getElementById('tab-' + sectionId).classList.add('active');
         document.getElementById(sectionId).classList.add('active');
         
-        if(sectionId === 'flashcards' && !currentFC) loadFlashcard();
-        if(sectionId === 'questions' && !currentQ) loadQuestion();
+        if(sectionId === 'flashcards') {
+            if(!currentFC) loadFlashcard();
+            updateStatusLists('cards', dbFlashcards, 'fc');
+        }
+        if(sectionId === 'questions') {
+            if(!currentQ) loadQuestion();
+            updateStatusLists('questions', dbQuestions, 'q');
+        }
         if(sectionId === 'weakpoints') updateWeakPoints();
     }
 
-    function getDueItems(dbArray, trackingDict) {
+    // --- Filter Logic ---
+    function populateFilters() {
+        let fSubj = new Set(), fSub = new Set();
+        dbFlashcards.forEach(c => { fSubj.add(c.subject); fSub.add(c.subtopic); });
+        
+        let qSubj = new Set(), qSub = new Set();
+        dbQuestions.forEach(q => { qSubj.add(q.subject); qSub.add(q.subtopic); });
+
+        const addOpts = (set, id) => {
+            let el = document.getElementById(id);
+            set.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
+        };
+
+        addOpts(fSubj, 'fc-subj-filter'); addOpts(fSub, 'fc-sub-filter');
+        addOpts(qSubj, 'q-subj-filter');  addOpts(qSub, 'q-sub-filter');
+    }
+
+    function getDueItems(dbArray, trackingDict, subjFilterId, subFilterId) {
         const now = Date.now();
-        return dbArray.filter(item => { return (trackingDict[item.id] || 0) <= now; });
+        let subj = document.getElementById(subjFilterId)?.value || 'all';
+        let sub = document.getElementById(subFilterId)?.value || 'all';
+        
+        return dbArray.filter(item => { 
+            let due = (trackingDict[item.id] || 0) <= now;
+            let matchSubj = subj === 'all' || item.subject === subj;
+            let matchSub = sub === 'all' || item.subtopic === sub;
+            return due && matchSubj && matchSub;
+        });
     }
 
     function getRandomItem(array) {
@@ -335,18 +484,72 @@
         return array[Math.floor(Math.random() * array.length)];
     }
 
+    function forceReview(type) {
+        if(type === 'cards') {
+            // reset due dates of filtered cards to now
+            let subj = document.getElementById('fc-subj-filter').value;
+            let sub = document.getElementById('fc-sub-filter').value;
+            dbFlashcards.forEach(c => {
+                if((subj === 'all' || c.subject === subj) && (sub === 'all' || c.subtopic === sub)) {
+                    appData.cards[c.id] = 0;
+                }
+            });
+            saveData();
+            loadFlashcard(true);
+        } else {
+            let subj = document.getElementById('q-subj-filter').value;
+            let sub = document.getElementById('q-sub-filter').value;
+            dbQuestions.forEach(q => {
+                if((subj === 'all' || q.subject === subj) && (sub === 'all' || q.subtopic === sub)) {
+                    appData.questions[q.id] = 0;
+                }
+            });
+            saveData();
+            loadQuestion(true);
+        }
+    }
+
+    // --- Status Dashboard Logic ---
+    function updateStatusLists(dataType, dbArray, prefix) {
+        let correctUl = document.getElementById(`${prefix}-list-correct`);
+        let wrongUl = document.getElementById(`${prefix}-list-wrong`);
+        let unseenUl = document.getElementById(`${prefix}-list-unseen`);
+        
+        correctUl.innerHTML = ''; wrongUl.innerHTML = ''; unseenUl.innerHTML = '';
+        
+        let cCount = 0, wCount = 0, uCount = 0;
+
+        dbArray.forEach(item => {
+            let stat = appData.status[item.id];
+            let name = item.front || item.text.substring(0, 30) + '...';
+            let li = `<li>${name}</li>`;
+            
+            if (stat === 'correct') { correctUl.innerHTML += li; cCount++; }
+            else if (stat === 'wrong') { wrongUl.innerHTML += li; wCount++; }
+            else { unseenUl.innerHTML += li; uCount++; }
+        });
+
+        if(cCount===0) correctUl.innerHTML = '<li>אין פריטים</li>';
+        if(wCount===0) wrongUl.innerHTML = '<li>אין פריטים</li>';
+        if(uCount===0) unseenUl.innerHTML = '<li>אין פריטים</li>';
+    }
+
     // --- Flashcards Logic ---
-    function loadFlashcard() {
-        let dueCards = getDueItems(dbFlashcards, appData.cards);
+    function loadFlashcard(forceReload = false) {
+        let dueCards = getDueItems(dbFlashcards, appData.cards, 'fc-subj-filter', 'fc-sub-filter');
         if (dueCards.length === 0) {
             document.getElementById('fc-working-area').classList.add('hidden');
             document.getElementById('fc-done-area').classList.remove('hidden');
+            currentFC = null;
             return; 
         }
         document.getElementById('fc-working-area').classList.remove('hidden');
         document.getElementById('fc-done-area').classList.add('hidden');
 
-        currentFC = getRandomItem(dueCards);
+        if (forceReload || !currentFC || !dueCards.find(c => c.id === currentFC.id)) {
+            currentFC = getRandomItem(dueCards);
+        }
+
         document.getElementById('fc-subject').innerText = "תחום: " + currentFC.subject;
         document.getElementById('fc-subtopic').innerText = "נושא: " + currentFC.subtopic;
         document.getElementById('fc-front').innerText = currentFC.front;
@@ -360,6 +563,8 @@
         document.getElementById('fc-explanation').classList.add('hidden');
         document.getElementById('fc-controls').classList.add('hidden');
         showingFront = true;
+        
+        updateStatusLists('cards', dbFlashcards, 'fc');
     }
 
     function flipCard() {
@@ -380,26 +585,32 @@
 
     function processFlashcard(knewIt) {
         if (!currentFC) return;
-        if (knewIt) { appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; } 
-        else { 
+        if (knewIt) { 
+            appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; 
+            appData.status[currentFC.id] = 'correct';
+        } else { 
             appData.cards[currentFC.id] = Date.now() + TWO_DAYS;
-            appData.mistakes[currentFC.subtopic] = (appData.mistakes[currentFC.subtopic] || 0) + 1;
+            appData.status[currentFC.id] = 'wrong';
         }
-        saveData(); loadFlashcard();
+        saveData(); loadFlashcard(true);
     }
 
     // --- Questions Logic ---
-    function loadQuestion() {
-        let dueQuestions = getDueItems(dbQuestions, appData.questions);
+    function loadQuestion(forceReload = false) {
+        let dueQuestions = getDueItems(dbQuestions, appData.questions, 'q-subj-filter', 'q-sub-filter');
         if (dueQuestions.length === 0) {
             document.getElementById('q-working-area').classList.add('hidden');
             document.getElementById('q-done-area').classList.remove('hidden');
+            currentQ = null;
             return;
         }
         document.getElementById('q-working-area').classList.remove('hidden');
         document.getElementById('q-done-area').classList.add('hidden');
 
-        currentQ = getRandomItem(dueQuestions);
+        if (forceReload || !currentQ || !dueQuestions.find(q => q.id === currentQ.id)) {
+            currentQ = getRandomItem(dueQuestions);
+        }
+
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
         document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
         document.getElementById('q-text').innerText = currentQ.text;
@@ -416,14 +627,17 @@
         document.getElementById('q-feedback').classList.add('hidden');
         document.getElementById('q-explanation').classList.add('hidden');
         document.getElementById('q-next').classList.add('hidden');
+        
+        updateStatusLists('questions', dbQuestions, 'q');
     }
 
     function checkAnswer(selectedIndex) {
+        if (!currentQ) return;
         let feedback = document.getElementById('q-feedback');
         let expl = document.getElementById('q-explanation');
         document.getElementById('q-next').classList.remove('hidden');
         
-        let buttons = document.querySelectorAll('.option');
+        let buttons = document.querySelectorAll('#q-options .option');
         buttons.forEach((btn, idx) => {
             btn.disabled = true;
             if (idx === currentQ.answer) btn.classList.add('correct');
@@ -434,11 +648,12 @@
             feedback.innerText = "תשובה נכונה! (יופיע שוב בעוד שבוע לחזרה)";
             feedback.style.color = "#27ae60";
             appData.questions[currentQ.id] = Date.now() + SEVEN_DAYS;
+            appData.status[currentQ.id] = 'correct';
         } else {
             feedback.innerText = "טעות. קרא את ההסבר ולמד להבא (יופיע שוב בעוד יומיים)";
             feedback.style.color = "#e74c3c";
             appData.questions[currentQ.id] = Date.now() + TWO_DAYS;
-            appData.mistakes[currentQ.subtopic] = (appData.mistakes[currentQ.subtopic] || 0) + 2; 
+            appData.status[currentQ.id] = 'wrong';
         }
         
         saveData();
@@ -446,23 +661,133 @@
         expl.classList.remove('hidden');
     }
 
-    function nextQuestion() { loadQuestion(); }
+    function nextQuestion() { loadQuestion(true); }
+
+    // --- Simulation Logic ---
+    function startSimulation() {
+        // Prepare questions
+        let allQ = [...dbQuestions];
+        // shuffle
+        allQ.sort(() => 0.5 - Math.random());
+        simQuestions = allQ.slice(0, 15); // Take 15 random questions
+        
+        currentSimIndex = 0;
+        simScore = 0;
+        simTimeLeft = 15 * 60; // 15 mins
+
+        document.getElementById('sim-intro').classList.add('hidden');
+        document.getElementById('sim-results').classList.add('hidden');
+        document.getElementById('sim-active').classList.remove('hidden');
+        
+        clearInterval(simTimerInterval);
+        simTimerInterval = setInterval(updateSimTimer, 1000);
+        
+        renderSimQuestion();
+    }
+
+    function updateSimTimer() {
+        simTimeLeft--;
+        if (simTimeLeft <= 0) {
+            clearInterval(simTimerInterval);
+            finishSimulation();
+            return;
+        }
+        let m = Math.floor(simTimeLeft / 60);
+        let s = simTimeLeft % 60;
+        document.getElementById('sim-timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function renderSimQuestion() {
+        if (currentSimIndex >= simQuestions.length) {
+            finishSimulation();
+            return;
+        }
+        let q = simQuestions[currentSimIndex];
+        document.getElementById('sim-progress').innerText = `שאלה ${currentSimIndex + 1} מתוך ${simQuestions.length}`;
+        document.getElementById('sim-q-text').innerText = q.text;
+        
+        let optionsHtml = "";
+        q.options.forEach((opt, idx) => {
+            optionsHtml += `<button class="option sim-option" id="sim-opt-${idx}" onclick="selectSimOption(${idx})">${opt}</button>`;
+        });
+        document.getElementById('sim-q-options').innerHTML = optionsHtml;
+    }
+
+    function selectSimOption(idx) {
+        let buttons = document.querySelectorAll('.sim-option');
+        buttons.forEach(b => b.classList.remove('selected'));
+        document.getElementById(`sim-opt-${idx}`).classList.add('selected');
+        // Store answer temp
+        simQuestions[currentSimIndex].userAnswer = idx;
+    }
+
+    function nextSimQuestion() {
+        if (simQuestions[currentSimIndex].userAnswer === undefined) {
+            alert("אנא בחר תשובה לפני המעבר לשאלה הבאה.");
+            return;
+        }
+        // Check answer
+        if (simQuestions[currentSimIndex].userAnswer === simQuestions[currentSimIndex].answer) {
+            simScore++;
+        }
+        currentSimIndex++;
+        renderSimQuestion();
+    }
+
+    function finishSimulation() {
+        clearInterval(simTimerInterval);
+        document.getElementById('sim-active').classList.add('hidden');
+        document.getElementById('sim-results').classList.remove('hidden');
+        
+        document.getElementById('sim-score').innerText = `ציון: ${Math.round((simScore / simQuestions.length) * 100)}`;
+        
+        let mistakesHtml = "<h3>פירוט טעויות:</h3>";
+        let hasMistakes = false;
+        simQuestions.forEach((q, i) => {
+            if (q.userAnswer !== q.answer) {
+                hasMistakes = true;
+                mistakesHtml += `
+                    <div style="margin-bottom:15px; border-bottom:1px solid #bdc3c7; padding-bottom:10px;">
+                        <strong>שאלה ${i+1}:</strong> ${q.text}<br>
+                        <span style="color:#c0392b;">ענית: ${q.userAnswer !== undefined ? q.options[q.userAnswer] : "לא נענה"}</span><br>
+                        <span style="color:#27ae60;">תשובה נכונה: ${q.options[q.answer]}</span>
+                    </div>`;
+            }
+        });
+        if(!hasMistakes) mistakesHtml += "<p>כל הכבוד! אין טעויות.</p>";
+        document.getElementById('sim-mistakes').innerHTML = mistakesHtml;
+    }
+
 
     // --- The Magic: Weak Points & Book Recommendations ---
     function updateWeakPoints() {
         let list = document.getElementById('weak-list');
         list.innerHTML = "";
-        let keys = Object.keys(appData.mistakes);
+        
+        // Compute weak points based on tracking dictionary or status
+        let weakTopics = {};
+        dbQuestions.forEach(q => {
+            if (appData.status[q.id] === 'wrong') {
+                weakTopics[q.subtopic] = (weakTopics[q.subtopic] || 0) + 1;
+            }
+        });
+        dbFlashcards.forEach(c => {
+            if (appData.status[c.id] === 'wrong') {
+                weakTopics[c.subtopic] = (weakTopics[c.subtopic] || 0) + 1;
+            }
+        });
+
+        let keys = Object.keys(weakTopics);
         if (keys.length === 0) { 
             list.innerHTML = "<li>מעולה! אין טעויות בינתיים. המשך לתרגל כדי שהמערכת תמליץ לך מה לקרוא.</li>"; 
             return; 
         }
         
-        keys.sort((a, b) => appData.mistakes[b] - appData.mistakes[a]);
+        keys.sort((a, b) => weakTopics[b] - weakTopics[a]);
         
         keys.forEach(subtopic => {
-            let score = appData.mistakes[subtopic];
-            let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
+            let score = weakTopics[subtopic];
+            let severity = score > 2 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
             let bookRef = topicReferences[subtopic] || "חזור על סיכומי ההרצאות ועל המצגות שלך";
             
             list.innerHTML += `
@@ -475,7 +800,7 @@
 
     function resetStats() {
         if(confirm("לאפס את הנתונים? המערכת תתחיל ללמוד אותך מחדש.")) {
-            appData = { cards: {}, questions: {}, mistakes: {} };
+            appData = { cards: {}, questions: {}, status: {} };
             saveData(); showSection('flashcards'); alert("הנתונים אופסו!");
         }
     }
@@ -500,13 +825,14 @@
             if (parsed && typeof parsed === 'object') {
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
-                appData.mistakes = parsed.mistakes || {};
+                appData.status = parsed.status || {};
                 saveData(); alert("הנתונים סונכרנו בהצלחה!"); location.reload();
             }
         } catch(e) { alert("שגיאה בפענוח."); }
     }
 
     window.onload = () => { 
+        populateFilters();
         setGreeting();
         loadFlashcard(); 
         loadQuestion(); 
