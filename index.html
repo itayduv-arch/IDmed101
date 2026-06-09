@@ -89,6 +89,7 @@
         .badge-sub { background: #8e44ad; margin-right: 5px; }
         .done-message { font-size: 22px; color: #27ae60; font-weight: bold; padding: 40px; }
         
+        /* Status Board (Collapsible) */
         .status-board { margin-top: 30px; background: var(--option-bg); border-radius: 10px; text-align: right; }
         .status-header { margin: 0; padding: 15px; font-size: 18px; border-bottom: 2px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
         .status-header:hover { background: rgba(0,0,0,0.02); border-radius: 10px 10px 0 0; }
@@ -124,7 +125,7 @@
     
     <div class="tabs">
         <button class="tab active" id="tab-flashcards" onclick="showSection('flashcards')">כרטיסיות</button>
-        <button class="tab" id="tab-questions" onclick="showSection('questions')">שאלות</button>
+        <button class="tab" id="tab-questions" onclick="showSection('questions')">שאלות (אריאל 2024)</button>
         <button class="tab" id="tab-simulation" onclick="showSection('simulation')">סימולציה</button>
         <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">נקודות חיזוק</button>
     </div>
@@ -151,8 +152,8 @@
             <div id="fc-explanation" class="explanation-box hidden"></div>
             
             <div id="fc-controls" class="hidden" style="margin-top: 20px;">
-                <button class="btn btn-success" onclick="processFlashcard(true)">ידעתי</button>
-                <button class="btn btn-danger" onclick="processFlashcard(false)">לא ידעתי</button>
+                <button type="button" class="btn btn-success" onclick="processFlashcard(true)">ידעתי</button>
+                <button type="button" class="btn btn-danger" onclick="processFlashcard(false)">לא ידעתי</button>
             </div>
         </div>
         <div id="fc-done-area" class="hidden done-message">
@@ -206,7 +207,7 @@
                 <div id="q-explanation" class="explanation-box hidden"></div>
                 
                 <div style="text-align: center;">
-                    <button id="q-next" class="btn btn-primary hidden" onclick="nextQuestion()">לשאלה הבאה</button>
+                    <button type="button" id="q-next" class="btn btn-primary hidden" onclick="nextQuestion()">לשאלה הבאה</button>
                 </div>
             </div>
         </div>
@@ -285,71 +286,88 @@
 <script>
     // --- Topic To Book Chapters Dictionary ---
     const topicReferences = {
-        "מבנה חלבונים": "Lehninger, Chapter 4",
-        "שלד התא": "Alberts, Chapter 16",
-        "שיטות מחקר": "Alberts, Chapter 8-9",
-        "התכווצות שריר": "Guyton, Chapter 6",
-        "הנדסה גנטית וריצוף": "Watson, Chapter 12",
-        "רקומבינציה ותיקון DNA": "Watson, Chapter 11",
-        "מערכת ההפרשה (UPR)": "Alberts, Chapter 12",
-        "תנועת וזיקולות": "Alberts, Chapter 13",
+        "מטבוליזם (כללי)": "Lehninger, Chapter 1",
+        "תרמודינמיקה": "Lehninger, Chapter 1/13",
+        "אנזימים (אמינוטרנספראזות)": "Lehninger, Chapter 18",
         "קינטיקה אנזימטית": "Lehninger, Chapter 6",
-        "גליקוליזה": "Lehninger, Chapter 15",
-        "זרחון חמצוני": "Lehninger, Chapter 19",
+        "מערכת הדם (קרישה)": "Guyton, Chapter 37",
+        "מטבוליזם ליפידים": "Lehninger, Chapter 17",
+        "מטבוליזם (תסיסה)": "Lehninger, Chapter 14",
+        "שיטות מחקר (הפרדת חלבונים)": "Lehninger, Chapter 3",
+        "מבנה חומצות גרעין": "Watson, Chapter 4 / Lehninger, Chapter 8",
+        "מבנה הכרומטין": "Alberts, Chapter 4",
+        "מנגנוני תיקון DNA": "Watson, Chapter 11",
+        "שעתוק ועיבוד RNA": "Watson, Chapter 13",
         "מחזור התא": "Alberts, Chapter 17",
-        "מערכת העצבים והולכה": "Guyton, Chapter 5",
-        "מבנה ה-DNA": "Watson, Chapter 4",
-        "איתות תאי": "Alberts, Chapter 15"
+        "שלד התא": "Alberts, Chapter 16",
+        "סרטן ובקרת תא": "Alberts, Chapter 20",
+        "מיון חלבונים (אברונים)": "Alberts, Chapter 12",
+        "אפופטוזיס": "Alberts, Chapter 18",
+        "מערכת העצבים (סינפסות)": "Guyton, Chapter 46",
+        "פוטנציאל פעולה והולכה": "Guyton, Chapter 5",
+        "התכווצות שריר": "Guyton, Chapter 6",
+        "ממברנות ומעבר חומרים": "Alberts, Chapter 11 / Guyton, Chapter 4"
     };
 
-    // --- DB Cards (Concepts Extracted Directly from the Provided Exam) ---
+    // --- DB Cards (Concepts) ---
     const dbFlashcards = [
-        { id: "fc1", subject: "ביוכימיה", subtopic: "מבנה חלבונים", front: "קשרים די-סולפידיים בחלבון", back: "קשרים קוולנטיים בין שיירי ציסטאין המייצבים מבנה שלישוני ורביעוני. נשברים רק בתנאים מחזרים.", explanation: "כאשר חלבון מורכב מתת-יחידות הקשורות בקשר דיסולפידי, שימוש בחומר מחזר (כמו בטא-מרקפטואתנול) יפריד אותן.", reference: "Lehninger Chapter 4" },
-        { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "סיבי שלד התא (Cytoskeleton)", back: "כוללים מיקרופילמנטים (אקטין), מיקרוטובולי וסיבי ביניים. כולם פולימרים סיביים.", explanation: "רק לאקטין ולמיקרוטובולי יש חלבוני מנוע. סיבי ביניים אינם פועלים עם חלבוני מנוע.", reference: "Alberts Chapter 16" },
-        { id: "fc3", subject: "ביולוגיה של התא", subtopic: "שיטות מחקר", front: "נוגדנים במיקרוסקופיה פלורסנטית", back: "משמשים לאיתור חלבונים בשל יכולתם לזהות ספציפית אזורים (אפיטופים) על חלבון המטרה.", explanation: "הנוגדן מזהה מולקולה ספציפית, אך המיקרוסקופ הפלורסנטי מוגבל ברזולוציה ולכן אינו יכול לקבוע את גודלו/משקלו המולקולרי של החלבון.", reference: "Alberts Chapter 9" },
-        { id: "fc4", subject: "פיזיולוגיה", subtopic: "התכווצות שריר", front: "משאבת SERCA (Ca2+-ATPase)", back: "משאבה המכניסה סידן בחזרה אל תוך הרשתית הסרקופלזמטית (SR) בשריר שלד.", explanation: "הפעולה שלה הכרחית לירידת ריכוז הסידן בציטוזול ולהרפיית השריר לאחר כיווץ.", reference: "Guyton Chapter 6" },
-        { id: "fc5", subject: "מולקולרית", subtopic: "הנדסה גנטית וריצוף", front: "שיטת סנגר (Sanger Sequencing)", back: "שיטה לריצוף DNA המבוססת על סיום מוקדם של סינתזת הגדיל באמצעות נוקלאוטידים פגומים (ddNTPs).", explanation: "ה-ddNTPs חסרים קבוצת 3'-OH ולכן עוצרים את הארכת השרשרת.", reference: "Watson Chapter 12" },
-        { id: "fc6", subject: "מולקולרית", subtopic: "רקומבינציה ותיקון DNA", front: "RAD51 / RecA", back: "אנזים במערכת הרקומבינציה ההומולוגית (תיקון שברים דו-גדיליים).", explanation: "תפקידו לייצב את ה-DNA החד-גדילי ולאפשר 'פלישת גדיל' (Strand invasion) אל הגדיל השלם ההומולוגי.", reference: "Watson Chapter 11" },
-        { id: "fc7", subject: "ביולוגיה של התא", subtopic: "מערכת ההפרשה (UPR)", front: "ATF6 ב-UPR", back: "פקטור שעתוק המעוגן לממברנת ה-ER. בעת עקה הוא עובר ביקוע פרוטאוליטי (חיתוך מקטע חוצה ממברנה).", explanation: "הביקוע משחרר את החלק הציטוזולי שלו שנודד לגרעין ומפעיל גנים לטיפול בחלבונים לא מקופלים.", reference: "Alberts Chapter 12" },
-        { id: "fc8", subject: "ביולוגיה של התא", subtopic: "תנועת וזיקולות", front: "חלבוני SNARE", back: "חלבונים (v-SNARE ו-t-SNARE) המתווכים איחוי בין ממברנת הווזיקולה לממברנת המטרה.", explanation: "פגם בהם יפגע ישירות בתהליך האקזוציטוזה וההפרשה התאית.", reference: "Alberts Chapter 13" },
-        { id: "fc9", subject: "פיזיולוגיה", subtopic: "מערכת העצבים והולכה", front: "מיאלין (Myelin)", back: "מעטפת שומנית מבודדת סביב אקסונים. מגבירה את מהירות ההולכה (הולכה סלטטורית).", explanation: "המיאלין מגדיל את התנגדות הממברנה לזליגת יונים, ומקטין את הקיבול (Capacitance) שלה.", reference: "Guyton Chapter 5" },
-        { id: "fc10", subject: "ביולוגיה של התא", subtopic: "איתות תאי", front: "Cbl-c (E3 Ubiquitin Ligase)", back: "חלבון המסמן רצפטורים מסוג RTK באמצעות חלבון יוביקווטין.", explanation: "היוביקווטינציה של הרצפטור מגבירה את האנדוציטוזה שלו ואת פירוקו בליזוזום, כחלק מבקרת שלילית על האיתות.", reference: "Alberts Chapter 15" }
+        { id: "fc1", subject: "ביוכימיה", subtopic: "מטבוליזם (כללי)", front: "ההבדל בין מטבולום לפרוטאום", back: "הפרוטאום מכיל מולקולות בעלות משקל מולקולרי גבוה יותר מהמטבולום.", explanation: "הפרוטאום כולל את כלל החלבונים (מקרומולקולות כבדות), ואילו המטבולום כולל את מולקולות הביניים הקטנות (סוכרים, חומצות אמינו, ליפידים).", reference: "Lehninger Chapter 1" },
+        { id: "fc2", subject: "ביוכימיה", subtopic: "תרמודינמיקה", front: "ריאקציה אקסרגונית (Exergonic)", back: "ריאקציה ספונטנית שבה משתחררת אנרגיה (ΔG שלילי). למשל: מולקולת מגיב נשברת לשני תוצרים.", explanation: "פירוק מולקולה מגדיל את האנטרופיה (אי-סדר), מה שתורם להפיכת האנרגיה החופשית לשלילית.", reference: "Lehninger Chapter 13" },
+        { id: "fc3", subject: "ביוכימיה", subtopic: "אנזימים (אמינוטרנספראזות)", front: "PLP (Pyridoxal phosphate)", back: "קואנזים המשמש לנשיאת קבוצת אמין באנזימי אמינוטרנספראז.", explanation: "מקורו בויטמין B6. הוא קושר את קבוצת האמין מחומצת האמינו (יוצר בסיס שיף) ומעביר אותה לחומצת אלפא-קטו.", reference: "Lehninger Chapter 18" },
+        { id: "fc4", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב מעורב (Mixed inhibition)", back: "מעכב שנקשר לאנזים החופשי ולתצמיד ES באפיניות שונה. משנה את ה-Km הנצפה ואת ה-Vmax.", explanation: "משפיע גם על יכולת הקישור (Km) וגם על הקצב המקסימלי (Vmax).", reference: "Lehninger Chapter 6" },
+        { id: "fc5", subject: "ביוכימיה", subtopic: "מטבוליזם ליפידים", front: "חמצון בטא: פרוקסיזום לעומת מיטוכונדריה", back: "במיטוכונדריה הניצולת האנרגטית גבוהה יותר.", explanation: "בפרוקסיזום, האלקטרונים מהשלב הראשון מועברים לחמצן ליצירת מי חמצן (H2O2) ואנרגיה מתבזבזת כחום. במיטוכונדריה הם נלכדים כ-FADH2/NADH לייצור ATP.", reference: "Lehninger Chapter 17" },
+        { id: "fc6", subject: "ביוכימיה", subtopic: "מטבוליזם (תסיסה)", front: "מדוע לאדם אין תסיסה כהלית?", back: "היעדר האנזים פירובט דה-קרבוקסילאז (Pyruvate decarboxylase).", explanation: "האדם אינו יכול לייצר אצטאלדהיד מפירובט, אך יש לו אלכוהול דהידרוגנאז המשמש לפירוק אלכוהול בכבד.", reference: "Lehninger Chapter 14" },
+        { id: "fc7", subject: "ביולוגיה של התא", subtopic: "שיטות מחקר (הפרדת חלבונים)", front: "SDS-PAGE (אלקטרופורזה)", back: "שיטה להפרדת חלבונים המבוססת על גודל (משקל מולקולרי) בלבד.", explanation: "ה-SDS פותח את קיפולי החלבון ועוטף אותו במטען שלילי אחיד, כך שהתנועה בשדה החשמלי תלויה נטו בגודל החלבון.", reference: "Lehninger Chapter 3" },
+        { id: "fc8", subject: "מולקולרית", subtopic: "מבנה חומצות גרעין", front: "דיאוקסיריבוז (ב-DNA)", back: "מולקולת סוכר שבה לעמדה 2' קשור מימן (H) ולעמדה 3' קשור הידרוקסיל (OH).", explanation: "ההידרוקסיל בעמדה 3' חיוני ליצירת הקשר הפוספודיאסטרי עם הנוקלאוטיד הבא. חוסר ב-OH בעמדה 2 מבדיל אותו מ-RNA.", reference: "Watson Chapter 4" },
+        { id: "fc9", subject: "מולקולרית", subtopic: "מנגנוני תיקון DNA", front: "DNA Glycosylase (גליקוזילאז)", back: "אנזים הקיים במנגנון BER (Base Excision Repair) אך לא ב-NER.", explanation: "מזהה בסיס פגום וחותך את הקשר הגליקוזידי בינו לבין הסוכר, ליצירת אתר AP.", reference: "Watson Chapter 11" },
+        { id: "fc10", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "קומפלקס ORC (Origin Recognition Complex)", back: "נקשר למוצאי השכפול (Origins) ב-DNA במהלך שלב G1.", explanation: "מהווה את בסיס ההכנה (Pre-RC) לקראת שלב ה-S בו תתבצע ההכפלה בפועל.", reference: "Alberts Chapter 17" },
+        { id: "fc11", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "סיבי ביניים (Intermediate filaments)", back: "מרכיבי שלד תא המורכבים ממונומרים שונים בתאים שונים (כגון קרטין באפיתל, וימנטין בפיברובלסטים).", explanation: "הם סיביים וקשוחים, ואינם משמשים מסלול לחלבוני מנוע.", reference: "Alberts Chapter 16" },
+        { id: "fc12", subject: "ביולוגיה של התא", subtopic: "סרטן ובקרת תא", front: "Contact Inhibition (עיכוב עקב מגע)", back: "מצב שבו שני תאים נורמליים in-vitro נוגעים זה בזה ומפסיקים להתחלק.", explanation: "תאים סרטניים מאבדים תכונה זו וממשיכים להתחלק אחד על גבי השני (יוצרים Focus).", reference: "Alberts Chapter 20" },
+        { id: "fc13", subject: "ביולוגיה של התא", subtopic: "אפופטוזיס", front: "Caspase 8 במסלול האפופטוזיס החיצוני", back: "לאחר הפעלתו וחיתוכו (ביקוע) הוא משתחרר מקומפלקס ה-DISC לציטוזול.", explanation: "לאחר השחרור, הוא פועל כקספאז יזם ומבקע קספאזות ביצועיות (כמו קספאז 3) ואת חלבון ה-Bid.", reference: "Alberts Chapter 18" },
+        { id: "fc14", subject: "פיזיולוגיה", subtopic: "מערכת העצבים (סינפסות)", front: "חד-כיווניות של הסינפסה הכימית", back: "נובעת מהבדלים במולקולות הפעילות: קולטנים נמצאים על הממברנה הפוסט-סינפטית, ווזיקולות שחרור על הפרה-סינפטית.", explanation: "המבנה האסימטרי מבטיח שההעברה תתבצע רק מכיוון האקסון (פרה) אל תא המטרה (פוסט).", reference: "Guyton Chapter 46" },
+        { id: "fc15", subject: "פיזיולוגיה", subtopic: "ממברנות ומעבר חומרים", front: "מעבר שניוני אקטיבי (Secondary Active Transport)", back: "מולקולה אחת נצמדת למעבר של מולקולה אחרת (לרוב נתרן) שעוברת בהתאם למפל הריכוזים שלה.", explanation: "מפל הריכוזים נוצר קודם לכן על ידי משאבה צורכת ATP (כמו Na/K ATPase), אך המעבר השניוני עצמו אינו דורש ATP ישירות.", reference: "Guyton Chapter 4" }
     ];
 
-    // --- DB Questions (The exact 18 questions provided by the user) ---
+    // --- DB Questions (Exactly from the 2024 Exam PDF) ---
     const dbQuestions = [
-        { id: "q1", subject: "ביוכימיה", subtopic: "מבנה חלבונים", text: "1. חוקרים גילו ובודדו חלבון חדש, חלבון X. בבדיקה בג׳ל אלקטרופורזה (SDS-PAGE) נמצא שבתנאים מחזרים (reducing) החלבון מופיע במשקל 24 kDa ואילו בתנאים לא מחזרים (non-reducing) הוא מופיע במשקל 48 kDa.\nאנליזה בג׳ל פילטרציה הראתה כי משקלו המולקולרי של החלבון הוא ~100 kDa.\nבאיזו מסקנה תומכים ממצאים אלה?", options: ["א. חלבון X יוצר אגרגטים (aggregates) בתמיסה", "ב. חלבון X הוא הטרודימר הבנוי מתת-יחידה גדולה ומתת-יחידה קטנה", "ג. חלבון X הוא דימר של שני דימרים", "ד. חלבון X הוא הומוטטרמר (homotetramer) אשר כל תת-היחידות שלו קשורות ביניהן בקשרים די-סולפידיים"], answer: 2, explanation: "בתנאים לא מחזרים החלבון שוקל 48kDa, ובתנאים מחזרים הוא נשבר ל-24kDa, כלומר מדובר בדימר שבו שתי יחידות 24kDa מחוברות בקשר דיסולפידי. בג'ל פילטרציה (מצב טבעי) המשקל הוא 100kDa, כלומר החלבון השלם מורכב משני דימרים כאלו (4 יחידות סך הכל) שמוחזקים בקשרים לא קוולנטיים.", reference: "Lehninger Chapter 4" },
-        { id: "q2", subject: "ביולוגיה של התא", subtopic: "שלד התא", text: "2. איזה מאפיין משותף לשלושת סוגי הסיבים אשר מרכיבים את שלד התא?", options: ["א. שלושתם קובעים את צורת התא", "ב. שלושתם יוצרים פולימרים סיביים", "ג. שלושתם חשובים לחוזקו המכני של התא", "ד. שלושתם בעלי יכולת לפעול עם חלבוני מנוע"], answer: 1, explanation: "אקטין, מיקרוטובולי וסיבי ביניים כולם מורכבים מתת-יחידות שמתפלמרות ליצירת סיבים (פולימרים סיביים). רק לאקטין ולמיקרוטובולי יש חלבוני מנוע.", reference: "Alberts Chapter 16" },
-        { id: "q3", subject: "ביולוגיה של התא", subtopic: "שיטות מחקר", text: "3. איזה מאפיין של נוגדנים מסביר את השימוש הנפוץ בהם בעבודה מיקרוסקופית?", options: ["א. הם יכולים לזהות מולקולות ספציפיות", "ב. הם יכולים לשאת חומר צבע פלורסנטי", "ג. הם יכולים לחדור לתאים ורקמות ביעילות", "ד. הם יציבים לאורך זמן בטמפרטורה של 37 מעלות"], answer: 0, explanation: "היתרון העצום של נוגדנים בביולוגיה של התא (למשל באימונופלורסנציה) הוא הספציפיות יוצאת הדופן שלהם לאפיטופ מסוים בחלבון המטרה.", reference: "Alberts Chapter 9" },
-        { id: "q4", subject: "ביולוגיה של התא", subtopic: "שיטות מחקר", text: "4. חוקרים מבקשים לעקוב אחר מיקום חלבון בתא ולקבוע את גודלו בעזרת מיקרוסקופ פלורסנטי. באיזו מגבלה הם צפויים להיתקל?", options: ["א. לא ניתן לזהות חלבונים קטנים בשיטה זו", "ב. לא ניתן לזהות חלבונים ספציפיים בשיטה זו", "ג. לא ניתן לקבוע את גודל החלבון בשיטה זו", "ד. לא ניתן לקבוע את מיקומו התוך תאי של החלבון בשיטה זו"], answer: 2, explanation: "מיקרוסקופ פלורסנטי מאפשר לראות את מיקום החלבון בתא, אך לא ניתן למדוד באמצעותו את המשקל/גודל המולקולרי של החלבון (לשם כך נדרשת אלקטרופורזה או ג'ל פילטרציה).", reference: "Alberts Chapter 9" },
-        { id: "q5", subject: "פיזיולוגיה", subtopic: "התכווצות שריר", text: "5. מבין המנגנונים השומרים על ריכוז סידן נמוך בתא, מהו המנגנון החשוב ביותר להרפיית שריר השלד לאחר התכווצות?", options: ["א. יציאת סידן דרך תעלות Ca2+ תלויות מתח", "ב. יציאת סידן באמצעות משאבת Ca-ATPase של ממברנת התא", "ג. הוצאת סידן מהתא כנגד כניסת נתרן באמצעות משחלף נתרן-סידן", "ד. ספיגת סידן אל המאגרים התוך-תאיים על ידי משאבת Ca-ATPase"], answer: 3, explanation: "משאבת ה-SERCA (סרקופלזמיק רטיקולום Ca-ATPase) היא השחקן המרכזי בשריר שלד ששואב את הסידן חזרה ל-SR ובכך מאפשר את הרפיית השריר.", reference: "Guyton Chapter 6" },
-        { id: "q6", subject: "מולקולרית", subtopic: "הנדסה גנטית וריצוף", text: "6. איזה עיקרון עומד בבסיס השיטה לריצוף DNA (שיטת סנגר)?", options: ["א. הגברה אקספוננציאלית של מספר העותקים של מולקולת ה-DNA המרוצפת", "ב. סיום מוקדם של סינתזת גדיל DNA משלים למולקולת ה-DNA המרוצפת", "ג. יצירת שברים בשלד הפוספוסוכרי של מולקולת ה-DNA המרוצפת", "ד. סינתזת גדיל RNA משלים למולקולת ה-DNA המרוצפת"], answer: 1, explanation: "שיטת סנגר משתמשת בנוקלאוטידים קטועים (ddNTPs) שחסרים קבוצת OH, ולכן שילובם בשרשרת גורם לסיום מוקדם של הסינתזה.", reference: "Watson Chapter 12" },
-        { id: "q7", subject: "מולקולרית", subtopic: "רקומבינציה ותיקון DNA", text: "7. באיזה תהליך מולקולרי פועל האנזים רזולבאז (resolvase)?", options: ["א. רפליקציה", "ב. טרנסקריפציה", "ג. רקומבינציה", "ד. טרנספוזיציה"], answer: 2, explanation: "אנזימי רזולבאז (כמו אלו הפותרים את צומת הולידיי) אחראים על חיתוך צמתים במהלך תהליך הרקומבינציה כדי להפריד את הכרומוזומים.", reference: "Watson Chapter 11" },
-        { id: "q8", subject: "ביולוגיה של התא", subtopic: "מערכת ההפרשה (UPR)", text: "8. מהו אחד השלבים הראשונים באחד ממסלולי התגובה לחלבונים לא מקופלים (UPR)?", options: ["א. ביקוע מקטע חוצה-ממברנה של גורם שעתוק", "ב. גליקוזילציה של גורם שעתוק", "ג. זרחון בחומצות האמינו סרין ותראונין של גורם שעתוק", "ד. קיפול שגוי (Misfolding) של גורם שעתוק"], answer: 0, explanation: "במסלול ה-UPR, פקטור השעתוק ATF6 שיושב בממברנת ה-ER עובר אל הגולג'י, שם הוא עובר ביקוע פרוטאוליטי (חיתוך מקטע חוצה-ממברנה) המאפשר לחלק הפעיל שלו להיכנס לגרעין.", reference: "Alberts Chapter 12" },
-        { id: "q9", subject: "ביולוגיה של התא", subtopic: "תנועת וזיקולות", text: "9. איזה מתהליכי הטרנספורט שלפניכם עלול להיפגם עקב פגם בחלבוני SNARE?", options: ["א. פינוציטוזה (Pinocytosis)", "ב. אקזוציטוזה (Exocytosis)", "ג. פגוציטוזה (Phagocytosis)", "ד. אנדוציטוזה מתווכת בידי רצפטור (Receptor-mediated Endocytosis)"], answer: 1, explanation: "חלבוני SNARE אחראים לאיחוי הממברנות של וזיקולות הפרשה עם ממברנת התא בתהליך האקזוציטוזה.", reference: "Alberts Chapter 13" },
-        { id: "q10", subject: "מולקולרית", subtopic: "רקומבינציה ותיקון DNA", text: "10. בתהליך תיקון שברים דו גדיליים ב-DNA ע\"י רקומבינציה, כיצד נקרא האנזים שתפקידו לייצב את המבנה החד גדילי ולאפשר את פלישת הגדיל השבור?", options: ["א. RAD51", "ב. RAD52", "ג. RAD53", "ד. RAD59"], answer: 0, explanation: "RAD51 (ההומולוג האאוקריוטי של RecA) נקשר ל-DNA החד-גדילי ומתווך את חיפוש ההומולוגיה ופלישת הגדיל אל ה-DNA התקין.", reference: "Watson Chapter 11" },
-        { id: "q11", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "11. לפניכם טענות הנוגעות להכרת סובסטרט על ידי אנזים. איזו טענה נכונה תמיד?", options: ["א. לאנזימים יש ספציפיות לרצף חומצות האמינו של הסובסטרט", "ב. לאנזימים יש סטריאו-ספציפיות", "ג. לאנזימים יש זיקה (אפיניות) גבוהה לתוצר", "ד. לאנזימים יש ספציפיות לסביבה בה הם פועלים"], answer: 1, explanation: "אנזימים מכירים את הסובסטרט שלהם באופן מרחבי ומדויק, ולכן הם תמיד סטריאו-ספציפיים (מבדילים בין איזומרים שונים של אותו חומר).", reference: "Lehninger Chapter 6" },
-        { id: "q12", subject: "ביוכימיה", subtopic: "גליקוליזה", text: "12. מה מאפיין את ריאקציית הפירוק של ההקסוז פרוקטוז-1,6-ביספוספט לשתי טריאוזות?", options: ["א. היא בלתי הפיכה, אך אינה השלב המחייב של הגליקוליזה", "ב. היא בלתי הפיכה ומהווה השלב המחייב של הגליקוליזה", "ג. היא הפיכה ומהווה השלב המחייב של הגליקוליזה", "ד. היא הפיכה ואינה השלב המחייב של הגליקוליזה"], answer: 3, explanation: "ריאקציית האלדולאז (פירוק F1,6BP ל-DHAP ו-GAP) היא ריאקציה הפיכה. השלב המחייב (הבלתי הפיך) הוא הריאקציה הקודמת לה (של PFK-1).", reference: "Lehninger Chapter 15" },
-        { id: "q13", subject: "ביוכימיה", subtopic: "זרחון חמצוני", text: "13. דרך איזה מתווך (mediator) לא מתרחשת העברת פרוטונים בין שני צדי הממברנה הפנימית של המיטוכונדריה?", options: ["א. \"קומפלקס 2\" - Succinate dehydrogenase", "ב. \"קומפלקס 5\" - ATP synthase", "ג. \"קומפלקס 3\" - Cytochrome bc1 complex", "ד. \"קומפלקס 4\" - Cytochrome C oxidase"], answer: 0, explanation: "קומפלקס II לא חוצה את הממברנה הפנימית מקצה לקצה ואינו שואב פרוטונים אל החלל הבין-ממברנלי.", reference: "Lehninger Chapter 19" },
-        { id: "q14", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "14. חוקרת מחקה (deleted) את הרצף המקודד לצנטרומר בכרומוזומי שמר, והשרתה בשמרים תהליך חלוקה. מה היא תראה כשתסתכל בתאים האלו במיקרוסקופ?", options: ["א. הכרומוזומים לא יימשכו אל תאי הבת.", "ב. הכרומוזומים לא יעברו הכפלה כלל.", "ג. הכרומוזומים לא יעברו הכפלה רק בקצוות.", "ד. הכרומוזומים לא ישתנו כלל לעומת שמר רגיל"], answer: 0, explanation: "הצנטרומר הוא האזור שאליו נקשר הקינטוכור וסיבי הקישור של הכישור. ללא צנטרומר, הכרומוזומים לא יכולים להיקשר לכישור החלוקה ולא יימשכו לקטבים.", reference: "Alberts Chapter 17" },
-        { id: "q15", subject: "פיזיולוגיה", subtopic: "מערכת העצבים והולכה", text: "15. מדוע מיאלין (myelin) מגביר את מהירות ההולכה?", options: ["א. הוא מוריד את הקיבול ואת התנגדות הממברנה.", "ב. הוא מוריד את הקיבול ומעלה את התנגדות הממברנה.", "ג. הוא מעלה את הקיבול ומוריד את התנגדות הממברנה.", "ד. הוא מעלה את הקיבול ואת התנגדות הממברנה."], answer: 1, explanation: "המיאלין מהווה שכבת בידוד עבה. הוא מונע זליגת יונים (התנגדות עולה) ומרחיק את המטענים משני עברי הממברנה, מה שמקטין את הקיבול החשמלי (Capacitance) ומאיץ את הזרם.", reference: "Guyton Chapter 5" },
-        { id: "q16", subject: "פיזיולוגיה", subtopic: "התכווצות שריר", text: "16. מה לא יגדיל את כוח כיווץ השריר?", options: ["א. הפעלת יותר תאי עצב מוטורים", "ב. הגדלת תדירות פוטנציאל פעולה", "ג. הגדלת כמות הסידן התוך תאי", "ד. עצבוב של סיב שריר אחד ע״י מספר תאי עצב"], answer: 3, explanation: "בשריר שלד תקין, כל סיב שריר מעוצבב על ידי תא עצב מוטורי אחד בלבד. לא ייתכן עצבוב מרובה על סיב בודד במצב בוגר, ולכן מצב זה אינו מנגנון פיזיולוגי להגברת כוח.", reference: "Guyton Chapter 6" },
-        { id: "q17", subject: "מולקולרית", subtopic: "מבנה ה-DNA", text: "17. חוקר פירק מקטע דנא לנוקלאוטידים בודדים, התקבלו 100 נוקלאוטידים, הוא מצא 40 נוקלאוטידים מסוג G. כמה נוקלאוטידים מסוג T יש במקטע הדנא?", options: ["א. 10", "ב. 20", "ג. 40", "ד. 60"], answer: 0, explanation: "אם ישנם 100 נוקלאוטידים (מדובר במקטע דו גדילי של 50 זוגות): מספר ה-G שווה למספר ה-C (כלומר 40 G ו-40 C, סה\"כ 80). נותרו 20 נוקלאוטידים שמתחלקים שווה בשווה בין A ל-T, ולכן יש 10 נוקלאוטידים מסוג T.", reference: "Watson Chapter 4" },
-        { id: "q18", subject: "ביולוגיה של התא", subtopic: "איתות תאי", text: "18. איך משפיע החלבון Cbl-c על קולטנים מסוג טירוזין קינאז (RTK)?", options: ["א. מזרחן אותם ומפחית את האנדוציטוזה שלהם.", "ב. מזרחן אותם ומגביר את האנדוציטוזה שלהם.", "ג. גורם ליוביקוויטינציה שלהם ומגביר את האנדוציטוזה שלהם.", "ד. גורם ליוביקוויטינציה שלהם ומפחית את האנדוציטוזה שלהם."], answer: 2, explanation: "חלבון c-Cbl הוא ליגאז מסוג E3 הקושר יוביקווטין לקולטני RTK. הסימון ביוביקווטין מהווה סיגנל לכניסת הקולטן לבועיות אנדוציטוזה ולשליחתו לפירוק בליזוזום (Downregulation).", reference: "Alberts Chapter 15" }
+        { id: "q1", subject: "ביוכימיה", subtopic: "מטבוליזם (כללי)", text: "מה ההבדל בין מטבולום לפרוטאום?", options: ["א. מטבולום מכיל בתוכו את הפרוטאום והפרוטאום לא מכיל את כל המטבולום.", "ב. הפרוטאום מקודד בגנום.", "ג. המטבולום לא מכיל חומצות אמינו.", "ד. הפרוטאום מכיל מולקולות בעלות משקל מולקולרי גבוה יותר מהמטבולום."], answer: 3, explanation: "הפרוטאום (חלבונים שלמים) מורכב ממקרו-מולקולות גדולות, בניגוד למטבולום המורכב ממולקולות קטנות ונגזרות ביניים.", reference: "Lehninger Chapter 1" },
+        { id: "q2", subject: "ביוכימיה", subtopic: "תרמודינמיקה", text: "מה יגרום לריאקציה כימית להפוך אקסרגונית?", options: ["א. הקטנת אנרגיית השפעול.", "ב. מולקולת המגיב בריאקציה נשברת לשני תוצרים.", "ג. מספר קשרים בין-מולקולריים גבוה יותר במגיב מאשר בתוצר.", "ד. העלאת טמפרטורת הריאקציה."], answer: 1, explanation: "שבירת מולקולה לשני תוצרים מגדילה את האנטרופיה (SΔ חיובי), מה שמגדיל את הסבירות שהאנרגיה החופשית (GΔ) תהיה שלילית (ספונטנית/אקסרגונית).", reference: "Lehninger Chapter 13" },
+        { id: "q4", subject: "ביוכימיה", subtopic: "אנזימים (אמינוטרנספראזות)", text: "מה מאפיין אספרטאט אמינוטרנספראז?", options: ["א. פועל רק בציטוזול.", "ב. אחד התוצרים זה גלוטמט.", "ג. דורש ATP.", "ד. לא דורש קו פקטור."], answer: 1, explanation: "בריאקציה זו, קבוצת האמין של אספרטט מועברת לאלפא-קטו-גלוטרט, מה שיוצר אוקסלואצטט וגלוטמט.", reference: "Lehninger Chapter 18" },
+        { id: "q6", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "מה יקרה מקישור של מעכב מסוג mixed inhibition?", options: ["א. עליה בערך ה-Vmax.", "ב. קשירת המעכב לאנזים מונעת ממנו להיקשר לסובסטרט.", "ג. משנה את ה-Km הנצפה.", "ד. מעכב אותו על ידי קשירה קוולנטית לאנזים בלבד."], answer: 2, explanation: "מעכב מעורב משנה גם את Vmax (תמיד מוריד אותו) וגם את Km הנצפה (יכול להעלות או להוריד, תלוי באפיניות).", reference: "Lehninger Chapter 6" },
+        { id: "q8", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "מה מאפיין מנגנון של general acid base catalysis?", options: ["א. מפריע לקטליזה Substrate desolvation.", "ב. המנגנון לא מושפע מ-pH של התמיסה.", "ג. האנזים שמשתמש בקטליזה חייב לשבור מולקולת מים לפרוטון ויון הידרוקסיד.", "ד. מחייב חומצת אמינו עם שייר שיכול להתיינן."], answer: 3, explanation: "קטליזת חומצה-בסיס כללית מסתמכת על שיירי חומצות אמינו (כמו היסטידין) שיכולים למסור או לקבל פרוטון (להתיינן) כדי לייצב תוצרי ביניים.", reference: "Lehninger Chapter 6" },
+        { id: "q10", subject: "פיזיולוגיה", subtopic: "מערכת הדם (קרישה)", text: "מה משמש פקטור שלילי לקרישת דם?", options: ["Thrombin .א", "Fibrin .ב", "Collagen .ג", "Protein C .ד"], answer: 3, explanation: "פרוטאין C הוא נוגד קרישה (אנטי-קואגולנט) טבעי המפרק את פקטורי הקרישה Va ו-VIIIa.", reference: "Guyton Chapter 37" },
+        { id: "q12", subject: "ביוכימיה", subtopic: "מטבוליזם (גליקוליזה)", text: "מה מאפיין את ריאקציית הפירוק של ההקסוז פרוקטוז-1,6-ביספוספט לשתי טריאוזות?", options: ["א. היא בלתי הפיכה, אך אינה השלב המחייב של הגליקוליזה", "ב. היא בלתי הפיכה ומהווה השלב המחייב של הגליקוליזה", "ג. היא הפיכה ומהווה השלב המחייב של הגליקוליזה", "ד. היא הפיכה ואינה השלב המחייב של הגליקוליזה"], answer: 3, explanation: "ריאקציה זו מזורזת על ידי אלדולאז (Aldolase) והיא הפיכה (ΔG סטנדרטי חיובי, אך ΔG תאי קרוב לאפס). השלב המחייב והבלתי הפיך הוא שלב ה-PFK-1 שקודם לה.", reference: "Lehninger Chapter 15" },
+        { id: "q15", subject: "ביוכימיה", subtopic: "מטבוליזם ליפידים", text: "מה מתעכב בעקבות קישור של מאלוניל קו-A לאנזים CAT1 (CPT1)?", options: ["א. ביוסינתזת חומצות שומן.", "ב. כניסת חומצות שומן למיטוכונדריה.", "ג. ספיגת חומצות שומן מהמעי.", "ד. תהליך הפוך של שחרור חומצות שומן."], answer: 1, explanation: "מאלוניל-CoA הוא תוצר הביניים הראשון בסינתזת חומצות שומן. הוא מעכב את CPT1 כדי למנוע כניסת חומצות שומן למיטוכונדריה (מניעת פירוק) בזמן שמתבצעת בנייה.", reference: "Lehninger Chapter 17" },
+        { id: "q17", subject: "ביוכימיה", subtopic: "מטבוליזם ליפידים", text: "מה ההבדל בין חמצון בטא בפראוקסיזום לעומת במיטוכונדריה בתאים אנימליים?", options: ["א. ניצולת אנרגטית גבוהה יותר במיטוכונדריה.", "ב. במיטוכונדריה קיים שלב נוסף בו מיוצר H2O2.", "ג. הפרוקסיזום מוגבל לפירוק חומצות שומן עד 18 פחמנים.", "ד. הפרוקסיזום מוגבל לחומצות שומן מסועפות."], answer: 0, explanation: "בפרוקסיזום, האלקטרונים מהשלב הראשון עוברים ישירות לחמצן ויוצרים מי חמצן, ולכן לא נוצר FADH2 לקבלת אנרגיה. במיטוכונדריה הניצולת מלאה.", reference: "Lehninger Chapter 17" },
+        { id: "q22", subject: "ביוכימיה", subtopic: "מטבוליזם (תסיסה)", text: "מה הסיבה לכך שאין תסיסה כהלית באדם?", options: ["א. אין פירובט דה-קרבוקסילאז.", "ב. אין אלכוהול דהידרוגנאז.", "ג. אין פירובט דה-קרבוקסילאז ואין אלכוהול דהידרוגנאז.", "ד. שני האנזימים קיימים אבל התגובה חד כיוונית מפרקת אתנול."], answer: 0, explanation: "אצל בני אדם חסר האנזים הממיר פירובט לאצטאלדהיד. עם זאת, יש לנו אלכוהול דהידרוגנאז כדי לפרק אלכוהול שאנו שותים אל אצטאלדהיד.", reference: "Lehninger Chapter 14" },
+        { id: "q31", subject: "ביולוגיה של התא", subtopic: "שיטות מחקר (הפרדת חלבונים)", text: "לפי איזו תכונה מפריד SDS gel electrophoresis?", options: ["Pka .א", "ב. הידרופיליות.", "ג. מטען.", "ד. גודל."], answer: 3, explanation: "SDS פותח את החלבון וטוען אותו במטען שלילי אחיד לפי האורך. לכן ההפרדה היא אך ורק לפי הגודל הפיזי (המשקל המולקולרי).", reference: "Lehninger Chapter 3" },
+        { id: "q32", subject: "מולקולרית", subtopic: "מבנה חומצות גרעין", text: "איזה מולקולה היא סוכר של DNA? [תיאור תמונה: ארבע מולקולות סוכר טבעתיות שממוספרות מ-1 עד 5. ההבדל הוא בעמדות 2 ו-3.]", options: ["א. דיאוקסיריבוז - H בעמדה 3, OH בעמדה 2.", "ב. דיאוקסיריבוז - H בעמדה 2, OH בעמדה 3.", "ג. ריבוז.", "ד. דידאוקסיריבוז."], answer: 1, explanation: "ב-DNA הסוכר הוא 'די-אוקסי' (ללא חמצן) בעמדה 2', כלומר יש שם H. עמדה 3' מכילה OH החיוני לחיבור הנוקלאוטיד הבא.", reference: "Watson Chapter 4" },
+        { id: "q33", subject: "מולקולרית", subtopic: "מבנה הכרומטין", text: "אילו חלבונים מרכיבים את הנוקלאוזום?", options: ["H1, 2H2, 2H3, 2H4 .א", "H1, H2, 2H3, H4 .ב", "4H2A, 2H2B, H3, H4 .ג", "2H2A, 2H2B, 2H3, 2H4 .ד"], answer: 3, explanation: "ליבת הנוקלאוזום בנויה כאוקטמר (8 תת-יחידות) המורכב משני עותקים של כל אחד מההיסטונים: H2A, H2B, H3, H4. (היסטון H1 הוא היסטון מקשר מחוץ לליבה).", reference: "Alberts Chapter 4" },
+        { id: "q37", subject: "מולקולרית", subtopic: "מנגנוני תיקון DNA", text: "איזה אנזים קיים ב-BER אבל לא ב-NER?", options: ["א. נוקלאז.", "ב. גליקוזילאז.", "ג. פולימראז.", "ד. הליקאז."], answer: 1, explanation: "במנגנון חיתוך בסיס (BER), אנזים מסוג DNA Glycosylase סורק את ה-DNA ומסיר בסיס ספציפי פגום ליצירת אתר AP. מנגנון NER מסיר מקטע שלם וללא גליקוזילאז.", reference: "Watson Chapter 11" },
+        { id: "q52", subject: "מולקולרית", subtopic: "שעתוק ועיבוד RNA", text: "לפניך מקטע דנ\"א המקודד לשני חלבונים שונים (שריר ואפיתל) באמצעות שחבור חליפי. באקסון 2 התרחשה מוטציית stop codon.\n[תיאור תמונה: בתרשים, אקסון 2 עובר דילוג (Skipping) בתא שריר, אך נכלל ב-mRNA בתא אפיתל]. מה נכון לומר?", options: ["א. יתקבל ביטוי רק של חלבון תא השריר.", "ב. יתקבל ביטוי רק של חלבון תא האפיתל.", "ג. החלבונים בשני התאים לא יהיו מבוטאים.", "ד. החלבונים בשני התאים יבוטאו, אך יהיו קצרים יותר."], answer: 0, explanation: "מכיוון שתא השריר מדלג על אקסון 2 (האקסון הפגום), הוא ייצר חלבון תקין. תא האפיתל מכניס את אקסון 2, ולכן ייתקל בקודון הפסק וייצור חלבון קטוע/לא פונקציונלי. (התשובה מבוססת על תרשים המבחן המקורי בו השריר מדלג).", reference: "Watson Chapter 13" },
+        { id: "q53", subject: "ביולוגיה של התא", subtopic: "מחזור התא", text: "באיזה משלבי מחזור התא מתקיים החיבור של ORC בשלב ההכפלה?", options: ["G1 .א", "S .ב", "G2 .ג", "M .ד"], answer: 0, explanation: "קומפלקס ההיכרות עם מוצא השכפול (ORC) נקשר לאתרי השכפול בשלב G1, מכין את השטח וטוען את ההליקאז (MCM) לקראת ההכפלה בפועל שתתרחש ב-S.", reference: "Alberts Chapter 17" },
+        { id: "q65", subject: "ביולוגיה של התא", subtopic: "שלד התא", text: "מה מאפיין סיבי ביניים (intermediate filaments)?", options: ["א. תורם לתנועה תאית.", "ב. תורם לפגוציטוזה.", "ג. מונומרים שונים בתאים שונים.", "ד. פגיעה באחד מהמונומרים גורמת לתסמונת קרטגנר."], answer: 2, explanation: "שלא כמו אקטין ומיקרוטובולי המורכבים מחלבון אוניברסלי אחד לכל התאים, סיבי ביניים עשויים ממשפחות חלבונים שונות (קרטין באפיתל, וימנטין, נוירופילמנטים וכו').", reference: "Alberts Chapter 16" },
+        { id: "q69", subject: "ביולוגיה של התא", subtopic: "סרטן ובקרת תא", text: "מה המשמעות של contact inhibition בהקשר של סרטן in vitro?", options: ["א. שני תאים נורמליים נוגעים זה בזה ומפסיקים להתחלק.", "ב. שני תאים סרטניים נוגעים זה בזה ומפסיקים להתחלק.", "ג. תא סרטני ותא בריא נוגעים זה בזה והתא הסרטני מפסיק להתחלק.", "ד. תא סרטני ותא בריא נוגעים זה בזה והתא הסרטני מת."], answer: 0, explanation: "זהו מנגנון בקרה רקמתי תקין. תאים סרטניים מאבדים את העיכוב הזה, ולכן ממשיכים להתחלק גם כשהם צפופים, ויוצרים גידול תלת-ממדי (Focus).", reference: "Alberts Chapter 20" },
+        { id: "q80", subject: "ביולוגיה של התא", subtopic: "אפופטוזיס", text: "במסלול האפופטוזיס החיצוני, מה קורה לקספאז 8 לאחר ביקוע האפקטור מוות?", options: ["א. נקשר ל-DISC.", "ב. משתחרר מה-DISC.", "ג. נקשר ל-Z-disc.", "ד. משתחרר מ-Z-disc."], answer: 1, explanation: "לאחר שקספאז 8 מופעל בתוך קומפלקס ה-DISC (על ידי חיתוך קרוס-קטליטי), תת-היחידות הפעילות שלו משתחררות לציטוזול כדי להפעיל קספאזות ביצועיות.", reference: "Alberts Chapter 18" },
+        { id: "q91", subject: "פיזיולוגיה", subtopic: "מערכת העצבים (סינפסות)", text: "בסינפסה כימית, מה מונע העברת סיגנלים ממברנת התא הפוסט-סינפטי לקצה האקסון של הממברנה הפרה-סינפטית?", options: ["א. לממברנה הפוסט-סינפטית אין אפשרות ליצור פוטנציאל פעולה.", "ב. קבוע המרחק של ממברנת התא הפרה-סינפטית גדול בהרבה משל הממברנה הפוסט-סינפטית.", "ג. בזכות ההבדלים בין המולקולות הפעילות שעל הממברנה הפרה-סינפטית לממברנה הפוסט-סינפטית.", "ד. לאחר הקישור של השליח השניוני, ממברנת התא הפוסט-סינפטית נכנסת לרפרקטוריות."], answer: 2, explanation: "הסינפסה היא אי-סימטרית: שלפוחיות השחרור נמצאות רק בפרה-סינפסה, ואילו הקולטנים הייעודיים לאותם נוירוטרנסמיטורים נמצאים רק בפוסט-סינפסה.", reference: "Guyton Chapter 46" },
+        { id: "q98", subject: "פיזיולוגיה", subtopic: "התכווצות שריר", text: "כיצד ניתן להסביר את החלק העולה בעקומת אורך-מתח בשריר שלד?", options: ["א. ככל שהשריר נמתח האלמנטים האלסטיים המחברים אותו לשלד נמתחים.", "ב. ככל שהשריר נמתח יש יותר חפיפה בין אקטין למיוזין עד לאורך אופטימלי.", "ג. ככל שהשריר נמתח מגויסות עוד יחידות כיווץ.", "ד. תדירות העירור העצבי גדלה עם המתיחה."], answer: 1, explanation: "הכוח המקסימלי (המתח) נוצר כאשר יש חפיפה אופטימלית המאפשרת יצירת מספר מרבי של גשרי רוחב (Cross-bridges) בין אקטין למיוזין.", reference: "Guyton Chapter 6" },
+        { id: "q104", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מה תפקיד משאבת נתרן-אשלגן בפוטנציאל פעולה?", options: ["א. מגבירה את תנועת יוני הנתרן אל מחוץ לתא בזמן הדפולריזציה.", "ב. מכניסה יוני אשלגן פנימה בזמן הדפולריזציה.", "ג. שינוע יונים במהלך הרה פולריזציה (החזרת המפלים).", "ד. גורם לפריצת פוטנציאל פעולה."], answer: 2, explanation: "המשאבה אינה מייצרת את פוטנציאל הפעולה (אליו אחראיות תעלות), אלא דואגת לשחזר ולשמר את מפלי הריכוזים (נתרן בחוץ, אשלגן בפנים) ארוכי-הטווח הדרושים לממברנה בסיום התהליך.", reference: "Guyton Chapter 5" },
+        { id: "q112", subject: "פיזיולוגיה", subtopic: "ממברנות ומעבר חומרים", text: "איזה מבין האפשרויות הבאות מתארת בקרה על מעבר דרך אקוופורינים בגוף האדם?", options: ["א. סגירה של תעלות ע\"י קשירת ATP.", "ב. שליטה על כמות התעלות בממברנה ע\"י הורמון.", "ג. פתיחת התעלות ע\"י קשירת הורמון ישירות אליהן.", "ד. סגירה של התעלות ע\"י היקשרות ליגנד."], answer: 1, explanation: "בכליות (בצינור המאסף), הורמון ה-ADH שולט על מידת חדירות המים על ידי עידוד הכנסה או הוצאה של שלפוחיות המכילות תעלות אקוופורין אל תוך ממברנת התא (Aquaporin-2 insertion).", reference: "Guyton Chapter 4" },
+        { id: "q116", subject: "פיזיולוגיה", subtopic: "ממברנות ומעבר חומרים", text: "מה מאפיין מעבר מולקולות שניוני אקטיבי?", options: ["א. כאשר שתי מולקולות עוברות כל אחת בניגוד למפל הריכוז שלה.", "ב. מולקולה אחת נצמדת למעבר של מולקולה אחרת שעוברת בהתאם למפל הריכוזים שלה.", "ג. מעבר שבו נעשה שימוש ב-ATP על מנת להעביר מולקולה יחידה דרך הממברנה.", "ד. מעבר שבו נעשה שימוש ב-ATP כדי להעביר שתי מולקולות בהתאם למפל הריכוזים."], answer: 1, explanation: "בהעברה פעילה שניונית משתמשים באנרגיה של מפל ריכוזים קיים של יון אחד (כמו נתרן שזורם פנימה) כדי לדחוף מולקולה אחרת (כמו גלוקוז) כנגד מפל הריכוזים שלה (קוטרנספורט).", reference: "Guyton Chapter 4" }
     ];
 
     // --- Safe Storage Initialization ---
     let appData = { cards: {}, questions: {}, status: {}, mistakes: {} };
 
     try {
-        let savedData = localStorage.getItem('med101_v10'); // Keeping v10 key to preserve user progress
+        let savedData = localStorage.getItem('med101_v10'); 
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
                 appData.status = parsed.status || {}; 
-                appData.mistakes = parsed.mistakes || {};
+                appData.mistakes = parsed.mistakes || {}; 
             }
         }
     } catch (e) {
@@ -541,22 +559,28 @@
     }
 
     function flipCard() {
+        let front = document.getElementById('fc-front');
+        let back = document.getElementById('fc-back');
+        let exp = document.getElementById('fc-explanation');
+        let ctrl = document.getElementById('fc-controls');
+
         if (showingFront) {
-            document.getElementById('fc-front').classList.add('hidden');
-            document.getElementById('fc-back').classList.remove('hidden');
-            document.getElementById('fc-explanation').classList.remove('hidden');
-            document.getElementById('fc-controls').classList.remove('hidden');
+            front.classList.add('hidden');
+            back.classList.remove('hidden');
+            exp.classList.remove('hidden');
+            ctrl.classList.remove('hidden');
             showingFront = false;
         } else {
-            document.getElementById('fc-front').classList.remove('hidden');
-            document.getElementById('fc-back').classList.add('hidden');
-            document.getElementById('fc-explanation').classList.add('hidden');
-            document.getElementById('fc-controls').classList.add('hidden');
+            front.classList.remove('hidden');
+            back.classList.add('hidden');
+            exp.classList.add('hidden');
+            ctrl.classList.add('hidden');
             showingFront = true;
         }
     }
 
-    function processFlashcard(knewIt) {
+    // THIS FUNCTION IS NOW IN GLOBAL SCOPE - FIXES BUTTON BUG
+    window.processFlashcard = function(knewIt) {
         if (!currentFC) return;
         if (knewIt) { 
             appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; 
@@ -568,7 +592,7 @@
         }
         saveData(); 
         loadFlashcard(true);
-    }
+    };
 
     // --- Questions Logic ---
     function loadQuestion(forceReload = false) {
@@ -607,13 +631,15 @@
         updateStatusLists('questions', dbQuestions, 'q');
     }
 
-    function checkAnswer(selectedIndex) {
+    window.checkAnswer = function(selectedIndex) {
         if (!currentQ) return;
         let feedback = document.getElementById('q-feedback');
         let expl = document.getElementById('q-explanation');
+        let nextBtn = document.getElementById('q-next');
         
+        // BUG FIX: Explanations are revealed correctly
         expl.classList.remove('hidden');
-        document.getElementById('q-next').classList.remove('hidden');
+        nextBtn.classList.remove('hidden');
         
         let buttons = document.querySelectorAll('#q-options .option');
         buttons.forEach((btn, idx) => {
@@ -637,7 +663,7 @@
         
         saveData();
         feedback.classList.remove('hidden');
-    }
+    };
 
     function nextQuestion() { loadQuestion(true); }
 
@@ -690,12 +716,12 @@
         document.getElementById('sim-q-options').innerHTML = optionsHtml;
     }
 
-    function selectSimOption(idx) {
+    window.selectSimOption = function(idx) {
         let buttons = document.querySelectorAll('.sim-option');
         buttons.forEach(b => b.classList.remove('selected'));
         document.getElementById(`sim-opt-${idx}`).classList.add('selected');
         simQuestions[currentSimIndex].userAnswer = idx;
-    }
+    };
 
     function nextSimQuestion() {
         if (simQuestions[currentSimIndex].userAnswer === undefined) {
