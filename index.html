@@ -89,13 +89,20 @@
         .badge-sub { background: #8e44ad; margin-right: 5px; }
         .done-message { font-size: 22px; color: #27ae60; font-weight: bold; padding: 40px; }
         
-        /* Status Board */
-        .status-board { margin-top: 30px; background: var(--option-bg); border-radius: 10px; padding: 15px; text-align: right; }
-        .status-board h3 { margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;}
+        /* Status Board (Collapsible) */
+        .status-board { margin-top: 30px; background: var(--option-bg); border-radius: 10px; text-align: right; }
+        .status-header { margin: 0; padding: 15px; font-size: 18px; border-bottom: 2px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .status-header:hover { background: rgba(0,0,0,0.02); border-radius: 10px 10px 0 0; }
+        .dark-mode .status-header:hover { background: rgba(255,255,255,0.02); }
+        .status-content { padding: 0 15px; max-height: 1000px; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; }
+        .status-content.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; border: none; }
+        .toggle-icon { transition: transform 0.3s ease; font-size: 14px; }
+        .collapsed-icon { transform: rotate(180deg); }
+        
         .status-list { list-style: none; padding: 0; margin: 0; font-size: 14px; max-height: 150px; overflow-y: auto; }
         .status-list li { padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .dark-mode .status-list li { border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .status-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; margin-bottom: 15px; }
         .status-col { background: var(--card-bg); padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .status-col.correct-col { border-top: 3px solid #27ae60; }
         .status-col.wrong-col { border-top: 3px solid #c0392b; }
@@ -155,19 +162,23 @@
         </div>
 
         <div class="status-board">
-            <h3>סטטוס כרטיסיות</h3>
-            <div class="status-grid">
-                <div class="status-col correct-col">
-                    <strong>ידעתי</strong>
-                    <ul class="status-list" id="fc-list-correct"></ul>
-                </div>
-                <div class="status-col wrong-col">
-                    <strong>לחיזוק</strong>
-                    <ul class="status-list" id="fc-list-wrong"></ul>
-                </div>
-                <div class="status-col unseen-col">
-                    <strong>לא נצפו</strong>
-                    <ul class="status-list" id="fc-list-unseen"></ul>
+            <h3 class="status-header" onclick="toggleStatus('fc-status-content', 'fc-icon')">
+                סטטוס כרטיסיות <span id="fc-icon" class="toggle-icon collapsed-icon">▼</span>
+            </h3>
+            <div id="fc-status-content" class="status-content collapsed">
+                <div class="status-grid">
+                    <div class="status-col correct-col">
+                        <strong>ידעתי</strong>
+                        <ul class="status-list" id="fc-list-correct"></ul>
+                    </div>
+                    <div class="status-col wrong-col">
+                        <strong>לחיזוק</strong>
+                        <ul class="status-list" id="fc-list-wrong"></ul>
+                    </div>
+                    <div class="status-col unseen-col">
+                        <strong>לא נצפו</strong>
+                        <ul class="status-list" id="fc-list-unseen"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -206,19 +217,23 @@
         </div>
 
         <div class="status-board">
-            <h3>סטטוס שאלות</h3>
-            <div class="status-grid">
-                <div class="status-col correct-col">
-                    <strong>נכונות</strong>
-                    <ul class="status-list" id="q-list-correct"></ul>
-                </div>
-                <div class="status-col wrong-col">
-                    <strong>שגויות</strong>
-                    <ul class="status-list" id="q-list-wrong"></ul>
-                </div>
-                <div class="status-col unseen-col">
-                    <strong>לא נצפו</strong>
-                    <ul class="status-list" id="q-list-unseen"></ul>
+            <h3 class="status-header" onclick="toggleStatus('q-status-content', 'q-icon')">
+                סטטוס שאלות <span id="q-icon" class="toggle-icon collapsed-icon">▼</span>
+            </h3>
+            <div id="q-status-content" class="status-content collapsed">
+                <div class="status-grid">
+                    <div class="status-col correct-col">
+                        <strong>נכונות</strong>
+                        <ul class="status-list" id="q-list-correct"></ul>
+                    </div>
+                    <div class="status-col wrong-col">
+                        <strong>שגויות</strong>
+                        <ul class="status-list" id="q-list-wrong"></ul>
+                    </div>
+                    <div class="status-col unseen-col">
+                        <strong>לא נצפו</strong>
+                        <ul class="status-list" id="q-list-unseen"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -270,6 +285,7 @@
 
 <script>
     // --- Topic To Book Chapters Dictionary ---
+    // מבוסס אך ורק על סילבוס מבחן ידע: Lehninger, Alberts, Guyton, Watson.
     const topicReferences = {
         "מטבוליזם (גליקוליזה)": "Lehninger, Chapter 15",
         "חומצות אמינו וחלבונים": "Lehninger, Chapters 3-4",
@@ -330,7 +346,8 @@
         { id: "fc12", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "חלבון p53", back: "בקר העוצר את מחזור התא במקרה של נזק ל-DNA או מפעיל אפופטוזיס.", explanation: "'שומר הגנום'. מפעיל את p21.", reference: "Alberts Chapter 17." },
         { id: "fc13", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב תחרותי (Competitive Inhibition)", back: "מעכב הנקשר לאתר הפעיל. Vmax זהה, Km עולה.", explanation: "הוספת סובסטרט מתגברת על המעכב.", reference: "Lehninger Chapter 6." },
         { id: "fc14", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב לא-תחרותי מוחלט (Non-competitive)", back: "מעכב הנקשר לאתר אחר ופוגע בפעילות. Vmax יורד, Km ללא שינוי.", explanation: "לא ניתן להתגבר עליו בהוספת סובסטרט.", reference: "Lehninger Chapter 6." },
-        { id: "fc15", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תקופה רפרקטורית מוחלטת (Absolute Refractory Period)", back: "הזמן בו לא ניתן לייצר פוטנציאל פעולה נוסף בשום עוצמת גירוי.", explanation: "בגלל שתעלות הנתרן נמצאות במצב אינאקטיבציה (שער סגור).", reference: "Guyton Chapter 5." }
+        { id: "fc15", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תקופה רפרקטורית מוחלטת (Absolute Refractory Period)", back: "הזמן בו לא ניתן לייצר פוטנציאל פעולה נוסף בשום עוצמת גירוי.", explanation: "בגלל שתעלות הנתרן נמצאות במצב אינאקטיבציה (שער סגור).", reference: "Guyton Chapter 5." },
+        { id: "fc17", subject: "מולקולרית", subtopic: "מוטציות", front: "מוטציית הסטת מסגרת (Frameshift mutation)", back: "הוספה או החסרה של בסיסים (שלא בכפולות של 3) המשנה את כל מסגרת הקריאה מקודון זה והלאה.", explanation: "לרוב גורמת ליצירת קודון פסק (Stop) מוקדם ולחלבון קטוע שאינו מתפקד.", reference: "Watson Chapter 15." }
     ];
 
     // --- DB Questions (Full Questions) ---
@@ -370,12 +387,17 @@
         { id: "q33", subject: "ביוכימיה", subtopic: "מסלול הפנטוזות (PPP)", text: "איזה מצב מטבולי ידחוף את התא למסלול הפנטוז פוספט ויפעיל גם את הפאזה החמצונית וגם את הלא-חמצונית?", options: ["עודף בריבוז-5-פוספט וחוסר ב-NADPH.", "עודף בריבוז-5-פוספט ועודף ב-NADPH.", "מחסור בריבוז-5-פוספט וב-NADPH במקביל.", "מחסור בריבוז-5-פוספט ועודף ב-NADPH."], answer: 2, explanation: "כשהתא זקוק גם ל-NADPH וגם לריבוז, המסלול יפעל בצורה מלאה מההתחלה ועד יצירת הריבוז בתוך הפאזה הלא-חמצונית.", reference: "Lehninger Chapter 14." },
         { id: "q34", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "חוקר הוסיף מעכב תחרותי לתגובה אנזימטית. כיצד ניתן לבטל לחלוטין את השפעת המעכב?", options: ["להוריד את הטמפרטורה ל-4 מעלות.", "להוסיף ריכוז גבוה מאוד של סובסטרט למערכת.", "להעלות את ה-pH של התמיסה.", "לא ניתן לבטל, העיכוב הוא בלתי הפיך וקוולנטי."], answer: 1, explanation: "מעכב תחרותי מתחרה עם הסובסטרט על אותו אתר קישור באופן הפיך. הוספת כמות אדירה של סובסטרט תתגבר עליו.", reference: "Lehninger Chapter 6." },
         { id: "q35", subject: "ביולוגיה של התא", subtopic: "מיון חלבונים (Protein Sorting)", text: "איזה תג כימי משמש כסיגנל הכוונה של אנזימים (הידרולאזות חומציות) אל תוך הליזוזום?", options: ["Mannose-6-Phosphate (M6P)", "KDEL", "רצף של חומצות אמינו הידרופוביות בקצה ה-N.", "יוביקווטין (Ubiquitin)"], answer: 0, explanation: "במנגנון המיון בגולג'י, אנזימים המיועדים לליזוזום עוברים מודיפיקציה שבה נוסף להם תג של מאנוז-6-פוספט.", reference: "Alberts Chapter 13." },
-        // --- 5 New Ext questions ---
         { id: "q36", subject: "מולקולרית", subtopic: "מוטציות", text: "מהי מוטציית פסק (Nonsense mutation)?", options: ["החלפת בסיס שלא משנה את חומצת האמינו (בגלל ניוון הקוד הגנטי).", "הוספה של בסיס שגורמת להסטת מסגרת הקריאה.", "החלפת בסיס שמשנה קודון של חומצת אמינו לקודון סיום (Stop codon).", "החלפת בסיס המשנה חומצת אמינו אחת לאחרת בעלת תכונות כימיות דומות."], answer: 2, explanation: "מוטציית פסק (Nonsense) יוצרת קודון סיום בטרם עת, מה שמוביל לייצור חלבון קטוע שלרוב אינו מתפקד.", reference: "Watson Chapter 15." },
         { id: "q37", subject: "פיזיולוגיה", subtopic: "הכליה והנפרון", text: "היכן בנפרון מתרחשת ספיגה חוזרת (Reabsorption) של כמעט 100% מהגלוקוז וחומצות האמינו שסוננו?", options: ["באבובית המפותלת המקורבת (Proximal Convoluted Tubule).", "בלולאת הנלה (Loop of Henle) החלק היורד.", "באבובית המפותלת המרוחקת (Distal Convoluted Tubule).", "בצינור המאסף (Collecting Duct)."], answer: 0, explanation: "האבובית המקורבת (PCT) עמוסה בנשאי SGLT והיא סופגת חזרה את כל הגלוקוז, חומצות האמינו ורוב המים והמלחים שסוננו בפקעית.", reference: "Guyton Chapter 27." },
         { id: "q38", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מהו ההבדל המרכזי בין התקופה הרפרקטורית המוחלטת ליחסית?", options: ["במוחלטת התא בהיפרפולריזציה, וביחסית הוא בדה-פולריזציה.", "במוחלטת תעלות הנתרן במצב אינאקטיבציה (סגורות ולא יכולות להיפתח), וביחסית רובן סגורות אך יכולות להיפתח בגירוי חזק מהרגיל.", "במוחלטת תעלות האשלגן פתוחות לרווחה, וביחסית תעלות הנתרן פתוחות לרווחה.", "אין הבדל פיזיולוגי, מדובר בהבדל סמנטי בלבד."], answer: 1, explanation: "בתקופה הרפרקטורית המוחלטת שערי האינאקטיבציה של תעלות הנתרן סגורים. בתקופה היחסית (שלב הרה/היפרפולריזציה) השערים נפתחים חזרה למצב מנוחה, ולכן גירוי חזק יכול לייצר פוטנציאל פעולה נוסף.", reference: "Guyton Chapter 5." },
         { id: "q39", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "איזה סוג עיכוב מאופיין בכך שהמעכב נקשר רק לקומפלקס האנזים-סובסטרט (ES) ולא לאנזים החופשי?", options: ["עיכוב תחרותי (Competitive)", "עיכוב לא-תחרותי מוחלט (Non-competitive)", "עיכוב בלתי-תחרותי (Uncompetitive)", "עיכוב קוולנטי בלתי הפיך"], answer: 2, explanation: "בעיכוב בלתי-תחרותי (Uncompetitive), המעכב נקשר רק לאחר שהסובסטרט יצר שינוי קונפורמציה באנזים. זה גורם גם ל-Vmax וגם ל-Km לרדת.", reference: "Lehninger Chapter 6." },
-        { id: "q40", subject: "ביולוגיה של התא", subtopic: "אנדוציטוזה", text: "כיצד הליזוזום שומר על סביבה חומצית (pH ~5.0) החיונית לפעילות ההידרולאזות שבו?", options: ["על ידי ייצור חומצה לקטית בתוך האברון.", "באמצעות משאבת פרוטונים מסוג V-ATPase המשתמשת ב-ATP לשאיבת H+ פנימה.", "על ידי אנזים קרבוניק אנהידראז המייצר פרוטונים מ-CO2.", "הוא אינו שומר על סביבה חומצית, ה-pH זהה לזה של הציטוזול."], answer: 1, explanation: "משאבות V-ATPase (Vacuolar) בממברנת הליזוזום (וגם באנדוזומים) שואבות פרוטונים מהציטוזול לתוך האברון כנגד מפל הריכוזים, תוך הידרוליזה של ATP.", reference: "Alberts Chapter 13." }
+        { id: "q40", subject: "ביולוגיה של התא", subtopic: "אנדוציטוזה", text: "כיצד הליזוזום שומר על סביבה חומצית (pH ~5.0) החיונית לפעילות ההידרולאזות שבו?", options: ["על ידי ייצור חומצה לקטית בתוך האברון.", "באמצעות משאבת פרוטונים מסוג V-ATPase המשתמשת ב-ATP לשאיבת H+ פנימה.", "על ידי אנזים קרבוניק אנהידראז המייצר פרוטונים מ-CO2.", "הוא אינו שומר על סביבה חומצית, ה-pH זהה לזה של הציטוזול."], answer: 1, explanation: "משאבות V-ATPase (Vacuolar) בממברנת הליזוזום (וגם באנדוזומים) שואבות פרוטונים מהציטוזול לתוך האברון כנגד מפל הריכוזים, תוך הידרוליזה של ATP.", reference: "Alberts Chapter 13." },
+        // --- NEW QUESTIONS BASED STRICTLY ON SYLLABUS ---
+        { id: "q41", subject: "מולקולרית", subtopic: "שכפול DNA", text: "מהו תפקידו העיקרי של האנזים DNA Polymerase III בחיידקי E. coli במהלך שכפול הגנום?", options: ["החלפת פריימרים של RNA ב-DNA בשרשרת המעוכבת (Lagging strand).", "סינתוז עיקר גדיל ה-DNA החדש על ידי הוספת נוקלאוטידים לקצה 3'-OH.", "פרימת סליל ה-DNA הדו-גדילי תוך שימוש באנרגיית ATP.", "חיבור (ליגציה) של מקטעי אוקזקי בסיום השכפול."], answer: 1, explanation: "האנזים DNA Polymerase III הוא הפולימראז הרפליקטיבי הראשי שאחראי על סינתזת ה-DNA בשני הגדילים. DNA Pol I אחראי על החלפת הפריימרים.", reference: "Watson Chapter 9." },
+        { id: "q42", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", text: "מהי המשמעות של 'אפקט בוהר' (Bohr Effect) בתפקוד ההמוגלובין?", options: ["ירידה ב-pH ועליה בריכוז CO2 מקטינות את הזיקה של המוגלובין לחמצן, ומעודדות שחרור חמצן לרקמות.", "עליה בריכוז 2,3-BPG גורמת לפירוק טטרמר ההמוגלובין למונומרים.", "קשירת חמצן אחת מעלה את האפיניות של שאר תת-היחידות לחמצן.", "נוכחות של פחמן חד-חמצני (CO) חוסמת באופן בלתי הפיך את קשירת החמצן."], answer: 0, explanation: "אפקט בוהר מתאר את ההשפעה האלוסטרית של פרוטונים ו-CO2 על ההמוגלובין. ברקמות פעילות (pH נמוך, CO2 גבוה), מצב T מיוצב, וההמוגלובין משחרר חמצן בקלות רבה יותר.", reference: "Lehninger Chapter 5." },
+        { id: "q43", subject: "פיזיולוגיה", subtopic: "מערכת הדם (קרישה)", text: "איזה יון הכרחי לקישור של פקטורי קרישה (כמו פרותרומבין ופקטור X) לפוספוליפידים שליליים על גבי טסיות הדם?", options: ["ברזל (Fe2+)", "מגנזיום (Mg2+)", "סידן (Ca2+)", "אשלגן (K+)"], answer: 2, explanation: "יון הסידן (פקטור IV) חיוני לקשירת פקטורי קרישה שעברו גמא-קרבוקסילציה (בתלות בויטמין K) לממברנות של הטסיות, מה שמאפשר את הפעלת מפל הקרישה.", reference: "Guyton Chapter 37." },
+        { id: "q44", subject: "ביולוגיה של התא", subtopic: "צומתי מעבר", text: "אילו חלבונים טרנס-ממברנליים אחראים על יצירת צומתי חסימה (Tight Junctions) באפיתל המעי?", options: ["קדהרינים (Cadherins)", "אינטגרינים (Integrins)", "קלאודינים ואוקלודינים (Claudins and Occludins)", "קונקסינים (Connexins)"], answer: 2, explanation: "קלאודינים ואוקלודינים הם החלבונים העיקריים שיוצרים את צומתי החסימה האוטמים את המרווח הבין-תאי באפיתל. קדהרינים ואינטגרינים קשורים לצמתי אדהזיה, וקונקסינים ל-Gap junctions.", reference: "Alberts Chapter 19." },
+        { id: "q45", subject: "מולקולרית", subtopic: "שעתוק (Transcription)", text: "איזו מודיפיקציה מתרחשת בקצה ה-5' של מולקולת mRNA אאוקריוטית מיד לאחר תחילת השעתוק?", options: ["הוספת זנב פולי-A (Poly-A tail).", "הסרת אינטרונים על ידי ספלייסוזום.", "הוספת כיפת 7-מתיל-גואנוזין (5' Cap).", "זרחון של ה-CTD של ה-RNA פולימראז."], answer: 2, explanation: "מיד לאחר תחילת השעתוק, מתווסף לקצה ה-5' נוקלאוטיד 7-מתיל-גואנוזין בקשר הפוך של 5' ל-5'. זהו ה-Cap שמגן על ה-mRNA ומשמש לזיהוי על ידי הריבוזום.", reference: "Alberts Chapter 6." }
     ];
 
     // --- Safe Storage Initialization ---
@@ -388,7 +410,7 @@
             if (parsed && typeof parsed === 'object') {
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
-                appData.status = parsed.status || {}; // New object for tracking right/wrong
+                appData.status = parsed.status || {};
             }
         }
     } catch (e) {
@@ -431,6 +453,19 @@
         }
     }
 
+    // Toggle Collapsible Status Boards
+    function toggleStatus(contentId, iconId) {
+        let content = document.getElementById(contentId);
+        let icon = document.getElementById(iconId);
+        if(content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            icon.classList.remove('collapsed-icon');
+        } else {
+            content.classList.add('collapsed');
+            icon.classList.add('collapsed-icon');
+        }
+    }
+
     function showSection(sectionId) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -459,7 +494,7 @@
 
         const addOpts = (set, id) => {
             let el = document.getElementById(id);
-            set.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
+            Array.from(set).sort().forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
         };
 
         addOpts(fSubj, 'fc-subj-filter'); addOpts(fSub, 'fc-sub-filter');
@@ -486,7 +521,6 @@
 
     function forceReview(type) {
         if(type === 'cards') {
-            // reset due dates of filtered cards to now
             let subj = document.getElementById('fc-subj-filter').value;
             let sub = document.getElementById('fc-sub-filter').value;
             dbFlashcards.forEach(c => {
@@ -665,11 +699,9 @@
 
     // --- Simulation Logic ---
     function startSimulation() {
-        // Prepare questions
         let allQ = [...dbQuestions];
-        // shuffle
         allQ.sort(() => 0.5 - Math.random());
-        simQuestions = allQ.slice(0, 15); // Take 15 random questions
+        simQuestions = allQ.slice(0, 15);
         
         currentSimIndex = 0;
         simScore = 0;
@@ -717,7 +749,6 @@
         let buttons = document.querySelectorAll('.sim-option');
         buttons.forEach(b => b.classList.remove('selected'));
         document.getElementById(`sim-opt-${idx}`).classList.add('selected');
-        // Store answer temp
         simQuestions[currentSimIndex].userAnswer = idx;
     }
 
@@ -726,7 +757,6 @@
             alert("אנא בחר תשובה לפני המעבר לשאלה הבאה.");
             return;
         }
-        // Check answer
         if (simQuestions[currentSimIndex].userAnswer === simQuestions[currentSimIndex].answer) {
             simScore++;
         }
@@ -758,13 +788,11 @@
         document.getElementById('sim-mistakes').innerHTML = mistakesHtml;
     }
 
-
-    // --- The Magic: Weak Points & Book Recommendations ---
+    // --- Weak Points & Book Recommendations ---
     function updateWeakPoints() {
         let list = document.getElementById('weak-list');
         list.innerHTML = "";
         
-        // Compute weak points based on tracking dictionary or status
         let weakTopics = {};
         dbQuestions.forEach(q => {
             if (appData.status[q.id] === 'wrong') {
