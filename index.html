@@ -285,13 +285,14 @@
 
 <script>
     // --- Topic To Book Chapters Dictionary ---
-    // מבוסס אך ורק על סילבוס מבחן ידע: Lehninger, Alberts, Guyton, Watson.
     const topicReferences = {
         "מטבוליזם (גליקוליזה)": "Lehninger, Chapter 15",
         "חומצות אמינו וחלבונים": "Lehninger, Chapters 3-4",
         "מבנה ותפקוד חלבונים": "Lehninger, Chapter 5",
         "מטבוליזם ליפידים": "Lehninger, Chapter 17",
         "זרחון חמצוני": "Lehninger, Chapter 19",
+        "מטבוליזם (מעגל קרבס)": "Lehninger, Chapter 16",
+        "מטבוליזם (גליקוגן)": "Lehninger, Chapter 15",
         "מערכת הדם (קרישה)": "Guyton, Chapter 37",
         "הנדסה גנטית": "Alberts, Chapter 8",
         "אנדוציטוזה": "Alberts, Chapter 13",
@@ -307,6 +308,7 @@
         "מערכת העצבים": "Alberts Ch.22 / Guyton Ch.46",
         "בקרה הורמונלית (אינסולין)": "Lehninger, Chapter 23",
         "שעתוק (Transcription)": "Watson, Chapter 12",
+        "תרגום (Translation)": "Watson, Chapter 14",
         "מבנה ה-DNA": "Watson, Chapter 4",
         "שעתוק ועיבוד RNA": "Alberts, Chapter 6",
         "אפופטוזיס": "Alberts, Chapter 18",
@@ -314,9 +316,11 @@
         "צומתי מעבר": "Alberts, Chapter 19",
         "מערכת העצבים המרכזית": "Guyton, Chapter 46",
         "שריר הלב": "Guyton, Chapter 9",
+        "מבנה ופעילות הלב": "Guyton, Chapter 10",
         "בקרה על ביטוי גנים (אופרונים)": "Watson, Chapter 16",
         "מחזור התא": "Alberts, Chapter 17",
         "מיקרוצירקולציה": "Guyton, Chapter 16",
+        "מערכת הנשימה": "Guyton, Chapter 40",
         "מסלול הפנטוזות (PPP)": "Lehninger, Chapter 14",
         "קינטיקה אנזימטית": "Lehninger, Chapter 6",
         "שינוע והפרשת חלבונים": "Alberts, Chapter 12",
@@ -327,7 +331,8 @@
         "איתות תאי (Signaling)": "Alberts, Chapter 15",
         "מיון חלבונים (Protein Sorting)": "Alberts, Chapter 12",
         "הכליה והנפרון": "Guyton, Chapter 27",
-        "מוטציות": "Watson, Chapter 15"
+        "מוטציות": "Watson, Chapter 15",
+        "אברונים (ליזוזום)": "Alberts, Chapter 13"
     };
 
     // --- DB Cards (Concepts) ---
@@ -335,19 +340,23 @@
         { id: "fc1", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "Km (קבוע מיכאליס)", back: "ריכוז הסובסטרט שבו מהירות התגובה שווה למחצית מהמהירות המקסימלית (Vmax/2).", explanation: "מייצג את הזיקה של האנזים. Km נמוך = זיקה גבוהה.", reference: "Lehninger Chapter 6." },
         { id: "fc2", subject: "ביולוגיה של התא", subtopic: "שינוע והפרשת חלבונים", front: "SRP (Signal Recognition Particle)", back: "קומפלקס המזהה רצף סיגנל של חלבון המיועד ל-ER, עוצר תרגום ומכוון ל-ER.", explanation: "נקשר לפפטיד הידרופובי בציטוזול.", reference: "Alberts Chapter 12." },
         { id: "fc3", subject: "ביולוגיה של התא", subtopic: "שלד התא", front: "פלואידין (Phalloidin)", back: "טוקסין המייצב את סיבי האקטין (F-actin) ומונע את פירוקם.", explanation: "שונה מקולכיצין שפועל על מיקרוטובולי.", reference: "Alberts Chapter 16." },
-        { id: "fc4", subject: "ביוכימיה", subtopic: "מטבוליזם חומצות אמינו", front: "PLP (Pyridoxal phosphate)", back: "קואנזים (ויטמין B6) המשמש העברת קבוצות אמין באמינוטרנספראזות.", explanation: "יוצר קשר קוולנטי זמני (בסיס שיף).", reference: "Lehninger Chapter 18." },
+        { id: "fc4", subject: "ביוכימיה", subtopic: "מטבוליזם חומצות אמינו", front: "PLP (Pyridoxal phosphate)", back: "קואנזים (ויטמין B6) המשמש להעברת קבוצות אמין באמינוטרנספראזות.", explanation: "יוצר קשר קוולנטי זמני (בסיס שיף).", reference: "Lehninger Chapter 18." },
         { id: "fc5", subject: "מולקולרית", subtopic: "שכפול DNA", front: "DNA Polymerase III", back: "האנזים העיקרי המבצע את הארכת גדילי ה-DNA בשכפול בחיידקים.", explanation: "DNA Pol I אחראי על החלפת פריימרים ותיקון.", reference: "Watson Chapter 9." },
         { id: "fc6", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "שלב S (Synthesis)", back: "השלב במחזור התא שבו מתבצעת רפליקציה של ה-DNA.", explanation: "הכרומוזום משוכפל לשתי כרומטידות אחיות.", reference: "Alberts Chapter 17." },
         { id: "fc7", subject: "ביוכימיה", subtopic: "מסלולים מטבוליים", front: "מסלולים מטבוליים (Pathways)", back: "שרשרת תגובות המונעת שיווי משקל תרמודינמי ומאפשרת בקרה.", explanation: "מונע אובדן יכולת להפיק עבודה.", reference: "Lehninger Chapter 15." },
         { id: "fc8", subject: "מולקולרית", subtopic: "מנגנוני הגהה", front: "Proofreading (3' ל-5')", back: "מנגנון תיקון שגיאות בזמן אמת, קיים ב-DNA פולימראז.", explanation: "ל-RNA פולימראז אין מנגנון כזה, לכן הוא טועה יותר.", reference: "Watson Chapter 9." },
-        { id: "fc9", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "Adenylyl Cyclase", back: "אנזים המופעל על ידי Gs ומייצר cAMP מ-ATP.", explanation: "שלב קריטי בהגברת אותות (Amplification).", reference: "Alberts Chapter 15." },
+        { id: "fc9", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "Adenylyl Cyclase", back: "אנזים המופעל על ידי חלבון Gs ומייצר cAMP מ-ATP.", explanation: "שלב קריטי בהגברת אותות (Amplification).", reference: "Alberts Chapter 15." },
         { id: "fc10", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", front: "ויטמין C (בייצור קולגן)", back: "קופקטור לאנזים פרוליל-הידרוקסילאז המייצב את סיבי הקולגן.", explanation: "חוסר גורם לצפדינה (Scurvy).", reference: "Lehninger Chapter 4." },
         { id: "fc11", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תעלות אשלגן תלויות-מתח", back: "מוציאות אשלגן וגורמות לרה-פולריזציה.", explanation: "מחזירות את התא למתח מנוחה שלילי.", reference: "Guyton Chapter 5." },
         { id: "fc12", subject: "ביולוגיה של התא", subtopic: "מחזור התא", front: "חלבון p53", back: "בקר העוצר את מחזור התא במקרה של נזק ל-DNA או מפעיל אפופטוזיס.", explanation: "'שומר הגנום'. מפעיל את p21.", reference: "Alberts Chapter 17." },
         { id: "fc13", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב תחרותי (Competitive Inhibition)", back: "מעכב הנקשר לאתר הפעיל. Vmax זהה, Km עולה.", explanation: "הוספת סובסטרט מתגברת על המעכב.", reference: "Lehninger Chapter 6." },
         { id: "fc14", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", front: "עיכוב לא-תחרותי מוחלט (Non-competitive)", back: "מעכב הנקשר לאתר אחר ופוגע בפעילות. Vmax יורד, Km ללא שינוי.", explanation: "לא ניתן להתגבר עליו בהוספת סובסטרט.", reference: "Lehninger Chapter 6." },
         { id: "fc15", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", front: "תקופה רפרקטורית מוחלטת (Absolute Refractory Period)", back: "הזמן בו לא ניתן לייצר פוטנציאל פעולה נוסף בשום עוצמת גירוי.", explanation: "בגלל שתעלות הנתרן נמצאות במצב אינאקטיבציה (שער סגור).", reference: "Guyton Chapter 5." },
-        { id: "fc17", subject: "מולקולרית", subtopic: "מוטציות", front: "מוטציית הסטת מסגרת (Frameshift mutation)", back: "הוספה או החסרה של בסיסים (שלא בכפולות של 3) המשנה את כל מסגרת הקריאה מקודון זה והלאה.", explanation: "לרוב גורמת ליצירת קודון פסק (Stop) מוקדם ולחלבון קטוע שאינו מתפקד.", reference: "Watson Chapter 15." }
+        { id: "fc16", subject: "ביוכימיה", subtopic: "מטבוליזם (מעגל קרבס)", front: "קומפלקס II (Succinate Dehydrogenase)", back: "האנזים היחיד במעגל קרבס שמעוגן לממברנה הפנימית של המיטוכונדריה.", explanation: "מהווה חלק משרשרת מעבר האלקטרונים (מעביר אלקטרונים מ-FADH2 ל-Q).", reference: "Lehninger Chapter 16." },
+        { id: "fc17", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", front: "RTK (Receptor Tyrosine Kinase)", back: "משפחת רצפטורים (כולל רצפטור לאינסולין) שעוברים דימריזציה וזרחון עצמי לאחר קישור ליגנד.", explanation: "מפעילים קסקדת איתות הכוללת לרוב את חלבוני Ras ו-MAPK.", reference: "Alberts Chapter 15." },
+        { id: "fc18", subject: "פיזיולוגיה", subtopic: "הכליה והנפרון", front: "אלדוסטרון (Aldosterone)", back: "הורמון סטרואידי המופרש מיותרת הכליה (אדרנל), המגביר ספיגה חוזרת של נתרן והפרשת אשלגן.", explanation: "פועל בעיקר על הצינור המאסף (Collecting duct) והאבובית המרוחקת.", reference: "Guyton Chapter 30." },
+        { id: "fc19", subject: "מולקולרית", subtopic: "תרגום (Translation)", front: "אמינואציל-tRNA סינתטאז", back: "אנזים המחבר חומצת אמינו ספציפית ל-tRNA המתאים לה, תוך השקעת אנרגיה (ATP).", explanation: "הדיוק של אנזים זה קריטי לשמירה על אמינות התרגום של הקוד הגנטי.", reference: "Watson Chapter 14." },
+        { id: "fc20", subject: "ביוכימיה", subtopic: "מטבוליזם ליפידים", front: "מערכת הקרניטין (Carnitine shuttle)", back: "מערכת נשאים המעבירה חומצות שומן ארוכות מהציטוזול אל תוך המיטוכונדריה לצורך חמצון בטא.", explanation: "מעוכבת על ידי מאלוניל-CoA, כדי למנוע חמצון שומן בזמן סינתזת שומן.", reference: "Lehninger Chapter 17." }
     ];
 
     // --- DB Questions (Full Questions) ---
@@ -392,25 +401,31 @@
         { id: "q38", subject: "פיזיולוגיה", subtopic: "פוטנציאל פעולה והולכה", text: "מהו ההבדל המרכזי בין התקופה הרפרקטורית המוחלטת ליחסית?", options: ["במוחלטת התא בהיפרפולריזציה, וביחסית הוא בדה-פולריזציה.", "במוחלטת תעלות הנתרן במצב אינאקטיבציה (סגורות ולא יכולות להיפתח), וביחסית רובן סגורות אך יכולות להיפתח בגירוי חזק מהרגיל.", "במוחלטת תעלות האשלגן פתוחות לרווחה, וביחסית תעלות הנתרן פתוחות לרווחה.", "אין הבדל פיזיולוגי, מדובר בהבדל סמנטי בלבד."], answer: 1, explanation: "בתקופה הרפרקטורית המוחלטת שערי האינאקטיבציה של תעלות הנתרן סגורים. בתקופה היחסית (שלב הרה/היפרפולריזציה) השערים נפתחים חזרה למצב מנוחה, ולכן גירוי חזק יכול לייצר פוטנציאל פעולה נוסף.", reference: "Guyton Chapter 5." },
         { id: "q39", subject: "ביוכימיה", subtopic: "קינטיקה אנזימטית", text: "איזה סוג עיכוב מאופיין בכך שהמעכב נקשר רק לקומפלקס האנזים-סובסטרט (ES) ולא לאנזים החופשי?", options: ["עיכוב תחרותי (Competitive)", "עיכוב לא-תחרותי מוחלט (Non-competitive)", "עיכוב בלתי-תחרותי (Uncompetitive)", "עיכוב קוולנטי בלתי הפיך"], answer: 2, explanation: "בעיכוב בלתי-תחרותי (Uncompetitive), המעכב נקשר רק לאחר שהסובסטרט יצר שינוי קונפורמציה באנזים. זה גורם גם ל-Vmax וגם ל-Km לרדת.", reference: "Lehninger Chapter 6." },
         { id: "q40", subject: "ביולוגיה של התא", subtopic: "אנדוציטוזה", text: "כיצד הליזוזום שומר על סביבה חומצית (pH ~5.0) החיונית לפעילות ההידרולאזות שבו?", options: ["על ידי ייצור חומצה לקטית בתוך האברון.", "באמצעות משאבת פרוטונים מסוג V-ATPase המשתמשת ב-ATP לשאיבת H+ פנימה.", "על ידי אנזים קרבוניק אנהידראז המייצר פרוטונים מ-CO2.", "הוא אינו שומר על סביבה חומצית, ה-pH זהה לזה של הציטוזול."], answer: 1, explanation: "משאבות V-ATPase (Vacuolar) בממברנת הליזוזום (וגם באנדוזומים) שואבות פרוטונים מהציטוזול לתוך האברון כנגד מפל הריכוזים, תוך הידרוליזה של ATP.", reference: "Alberts Chapter 13." },
-        // --- NEW QUESTIONS BASED STRICTLY ON SYLLABUS ---
         { id: "q41", subject: "מולקולרית", subtopic: "שכפול DNA", text: "מהו תפקידו העיקרי של האנזים DNA Polymerase III בחיידקי E. coli במהלך שכפול הגנום?", options: ["החלפת פריימרים של RNA ב-DNA בשרשרת המעוכבת (Lagging strand).", "סינתוז עיקר גדיל ה-DNA החדש על ידי הוספת נוקלאוטידים לקצה 3'-OH.", "פרימת סליל ה-DNA הדו-גדילי תוך שימוש באנרגיית ATP.", "חיבור (ליגציה) של מקטעי אוקזקי בסיום השכפול."], answer: 1, explanation: "האנזים DNA Polymerase III הוא הפולימראז הרפליקטיבי הראשי שאחראי על סינתזת ה-DNA בשני הגדילים. DNA Pol I אחראי על החלפת הפריימרים.", reference: "Watson Chapter 9." },
-        { id: "q42", subject: "ביוכימיה", subtopic: "מבנה ותפקוד חלבונים", text: "מהי המשמעות של 'אפקט בוהר' (Bohr Effect) בתפקוד ההמוגלובין?", options: ["ירידה ב-pH ועליה בריכוז CO2 מקטינות את הזיקה של המוגלובין לחמצן, ומעודדות שחרור חמצן לרקמות.", "עליה בריכוז 2,3-BPG גורמת לפירוק טטרמר ההמוגלובין למונומרים.", "קשירת חמצן אחת מעלה את האפיניות של שאר תת-היחידות לחמצן.", "נוכחות של פחמן חד-חמצני (CO) חוסמת באופן בלתי הפיך את קשירת החמצן."], answer: 0, explanation: "אפקט בוהר מתאר את ההשפעה האלוסטרית של פרוטונים ו-CO2 על ההמוגלובין. ברקמות פעילות (pH נמוך, CO2 גבוה), מצב T מיוצב, וההמוגלובין משחרר חמצן בקלות רבה יותר.", reference: "Lehninger Chapter 5." },
-        { id: "q43", subject: "פיזיולוגיה", subtopic: "מערכת הדם (קרישה)", text: "איזה יון הכרחי לקישור של פקטורי קרישה (כמו פרותרומבין ופקטור X) לפוספוליפידים שליליים על גבי טסיות הדם?", options: ["ברזל (Fe2+)", "מגנזיום (Mg2+)", "סידן (Ca2+)", "אשלגן (K+)"], answer: 2, explanation: "יון הסידן (פקטור IV) חיוני לקשירת פקטורי קרישה שעברו גמא-קרבוקסילציה (בתלות בויטמין K) לממברנות של הטסיות, מה שמאפשר את הפעלת מפל הקרישה.", reference: "Guyton Chapter 37." },
-        { id: "q44", subject: "ביולוגיה של התא", subtopic: "צומתי מעבר", text: "אילו חלבונים טרנס-ממברנליים אחראים על יצירת צומתי חסימה (Tight Junctions) באפיתל המעי?", options: ["קדהרינים (Cadherins)", "אינטגרינים (Integrins)", "קלאודינים ואוקלודינים (Claudins and Occludins)", "קונקסינים (Connexins)"], answer: 2, explanation: "קלאודינים ואוקלודינים הם החלבונים העיקריים שיוצרים את צומתי החסימה האוטמים את המרווח הבין-תאי באפיתל. קדהרינים ואינטגרינים קשורים לצמתי אדהזיה, וקונקסינים ל-Gap junctions.", reference: "Alberts Chapter 19." },
-        { id: "q45", subject: "מולקולרית", subtopic: "שעתוק (Transcription)", text: "איזו מודיפיקציה מתרחשת בקצה ה-5' של מולקולת mRNA אאוקריוטית מיד לאחר תחילת השעתוק?", options: ["הוספת זנב פולי-A (Poly-A tail).", "הסרת אינטרונים על ידי ספלייסוזום.", "הוספת כיפת 7-מתיל-גואנוזין (5' Cap).", "זרחון של ה-CTD של ה-RNA פולימראז."], answer: 2, explanation: "מיד לאחר תחילת השעתוק, מתווסף לקצה ה-5' נוקלאוטיד 7-מתיל-גואנוזין בקשר הפוך של 5' ל-5'. זהו ה-Cap שמגן על ה-mRNA ומשמש לזיהוי על ידי הריבוזום.", reference: "Alberts Chapter 6." }
+        // --- NEW QUESTIONS BASED STRICTLY ON SYLLABUS ---
+        { id: "q42", subject: "ביוכימיה", subtopic: "מטבוליזם (מעגל קרבס)", text: "איזה אנזים של מעגל חומצת הלימון (TCA) מעוגן לממברנה הפנימית של המיטוכונדריה ומשמש גם כקומפלקס II בשרשרת מעבר האלקטרונים?", options: ["Malate dehydrogenase", "Succinate dehydrogenase", "Isocitrate dehydrogenase", "Alpha-ketoglutarate dehydrogenase"], answer: 1, explanation: "סוקצינאט דהידרוגנאז (קומפלקס II) חמצן סוקצינאט לפומראט ומעביר את האלקטרונים ישירות ל-FAD וממנו ל-Ubiquinone בשרשרת הנשימה.", reference: "Lehninger Chapter 16." },
+        { id: "q43", subject: "ביולוגיה של התא", subtopic: "איתות תאי (Signaling)", text: "איזה תהליך חייב להתרחש בקולטן לאינסולין (מסוג RTK) מיד לאחר קישור ההורמון כדי להפעיל את הקסקדה התוך-תאית?", options: ["ניתוק של תת-יחידה אלפא של חלבון G וקישורה ל-GTP.", "פתיחה של תעלה להכנסת יוני סידן מחוץ לתא.", "דימריזציה וזרחון עצמי (Autophosphorylation) של שיירי טירוזין.", "שחרור ישיר של פקטור שעתוק לתוך הגרעין."], answer: 2, explanation: "קולטני RTK (כמו של אינסולין ו-EGF) עוברים שינוי קונפורמציה המקרב את הדומיינים התוך-תאיים שלהם, מה שמוביל לזרחון צולב של שיירי טירוזין המהווים אתרי קישור לחלבוני איתות.", reference: "Alberts Chapter 15." },
+        { id: "q44", subject: "פיזיולוגיה", subtopic: "הכליה והנפרון", text: "כיצד הורמון האלדוסטרון משפיע על נפח ולחץ הדם?", options: ["הוא מגביר הפרשה של נתרן בשתן, מה שמושך מים החוצה מהגוף ומוריד לחץ דם.", "הוא מגביר ספיגה חוזרת של נתרן בצינור המאסף (Collecting duct), מים נספגים בעקבותיו, ולחץ הדם עולה.", "הוא מרחיב באופן ישיר את העורקיקים (Arterioles) בגוף ומוריד את התנגדות כלי הדם.", "הוא גורם לכיווץ חזק של ורידי הריאה ומעלה את נפח הפעימה של הלב."], answer: 1, explanation: "אלדוסטרון מיוצר באדרנל וגורם לביטוי של תעלות ENaC ומשאבות Na/K באבובית המרוחקת ובצינור המאסף, מה שמחזיר נתרן לדם. מים עוברים בעקבותיו באוסמוזה וכך נפח הדם עולה.", reference: "Guyton Chapter 30." },
+        { id: "q45", subject: "פיזיולוגיה", subtopic: "מערכת הנשימה", text: "מהי המשמעות הפיזיולוגית של 'אפקט הלדאן' (Haldane effect) במערכת הנשימה?", options: ["ירידה ב-pH ברקמות גורמת להמוגלובין לשחרר חמצן בקלות רבה יותר.", "קשירת חמצן להמוגלובין בריאות מורידה את הזיקה שלו ל-CO2, מה שמקל על שחרור ה-CO2 לאוויר.", "עלייה בטמפרטורת השריר מרחיבה את הסמפונות כדי לאפשר כניסת חמצן מוגברת.", "הצטברות של חומצה לקטית משתקת את מרכז הנשימה במוח המוארך."], answer: 1, explanation: "בעוד שאפקט בוהר מתאר את השפעת ה-CO2 על קשירת חמצן, אפקט הלדאן מתאר את ההפך: כשהמוגלובין קושר חמצן (בריאות), הוא הופך לחומצי יותר ומשחרר פרוטונים ו-CO2 שנקשר אליו, מה שמאיץ את פליטת ה-CO2 החוצה.", reference: "Guyton Chapter 41." },
+        { id: "q46", subject: "מולקולרית", subtopic: "תרגום (Translation)", text: "איזה אנזים אחראי בפועל על התרגום המדויק של הקוד הגנטי (התאמת חומצת האמינו הנכונה לקודון)?", options: ["Aminoacyl-tRNA synthetase", "Peptidyl transferase", "RNA Polymerase II", "Helicase"], answer: 0, explanation: "אמינואציל-tRNA סינתטאז 'קורא' את ה-tRNA ומחבר אליו (בזבזת ATP) אך ורק את חומצת האמינו הספציפית שמתאימה לאנטי-קודון שלו. זהו השלב הקריטי של 'פיצוח' הקוד.", reference: "Watson Chapter 14." },
+        { id: "q47", subject: "מולקולרית", subtopic: "שעתוק ועיבוד RNA", text: "מהו תפקידם של חלקיקי ה-snRNPs (Small nuclear ribonucleoproteins) בגרעין התא?", options: ["להגן על קצות ה-mRNA מפני פירוק על ידי אקסונוקלאזות.", "להוות חלק מהקומפלקס של הריבוזום האחראי על סינתזת חלבונים.", "ליצור את קומפלקס הספלייסוזום (Spliceosome) המבצע חיתוך וסילוק של אינטרונים.", "להוביל את ה-mRNA המוכן מהגרעין החוצה אל הציטוזול דרך נקבוביות הגרעין."], answer: 2, explanation: "ה-snRNPs (כמו U1, U2 וכו') הם רצפי RNA קצרים הקשורים לחלבונים. הם מזהים אתרי חיתוך בקצוות האינטרונים ומרכיבים את הספלייסוזום המסלק את האינטרון ומחבר את האקסונים.", reference: "Alberts Chapter 6." },
+        { id: "q48", subject: "ביוכימיה", subtopic: "מטבוליזם (גליקוגן)", text: "איזה תהליך מזרז האנזים גליקוגן פוספורילאז (Glycogen phosphorylase) בזמן צום או מאמץ בשריר?", options: ["יצירת קשרי אלפא 1,6 להסתעפויות בגליקוגן.", "פירוק קשרי אלפא 1,4 בקצוות הלא-מחזרים של הגליקוגן תוך שילוב פוספט (Phosphorolysis).", "הפיכת גלוקוז-6-פוספט לגלוקוז חופשי לשחרור לזרם הדם.", "חיבור מולקולות UDP-Glucose לשרשרת הגליקוגן הקיימת."], answer: 1, explanation: "הפוספורילאז מפרק את השרשרת הישרה של הגליקוגן (קשרי 1,4) על ידי הוספת פוספט אנאורגני (Pi), מה שמשחרר מולקולות של גלוקוז-1-פוספט שיכולות להיכנס מיד לגליקוליזה (בשריר).", reference: "Lehninger Chapter 15." },
+        { id: "q49", subject: "ביולוגיה של התא", subtopic: "אברונים (ליזוזום)", text: "מהו הפגם המולקולרי הבסיסי הגורם למחלת I-cell (Inclusion-cell disease)?", options: ["מחסור באנזים גלוקוצרברוזידאז (מחלת גושה).", "פגם באנזים GlcNAc phosphotransferase בגולג'י, המונע סימון של אנזימים ב-M6P להכוונה לליזוזום.", "חוסר יכולת של התא לייצר את קרום הליזוזום עצמו מתוך ה-ER.", "מוטציה המונעת הפעלה של משאבות פרוטונים בליזוזום, מה שמשאיר את ה-pH בסיסי."], answer: 1, explanation: "במחלת I-cell, האנזימים הליזוזומליים לא מקבלים את התג של מאנוז-6-פוספט (M6P) בגולג'י, ולכן מופרשים בטעות החוצה מחוץ לתא במקום להישלח לליזוזום. הליזוזום נשאר ריק מאנזימים ומתמלא בפסולת.", reference: "Alberts Chapter 13." },
+        { id: "q50", subject: "פיזיולוגיה", subtopic: "מבנה ופעילות הלב", text: "מה מאפיין את ה'זרם המצחי' (Funny current - If) בתאי הקוצב הראשי של הלב (SA Node)?", options: ["זהו זרם חזק של אשלגן היוצא מהתא וגורם לרה-פולריזציה מהירה.", "זהו זרם איטי של נתרן הנכנס לתא דווקא בזמן היפרפולריזציה, וגורם לדה-פולריזציה ספונטנית (Prepotential).", "זהו זרם של סידן מתוך המאגרים התוך-תאיים הגורם להתכווצות מכנית אדירה.", "זהו זרם כלוריד המעכב את הקוצב בזמן גירוי פאראסימפתטי."], answer: 1, explanation: "תעלות ה-HCN של הזרם המצחי (If) נפתחות בצורה ייחודית כאשר התא מגיע למתח שלילי (היפרפולריזציה). הכניסה האיטית של נתרן מעלה את המתח בהדרגה עד לסף פריצה, מה שמקנה ל-SA node את האוטומטיות שלו.", reference: "Guyton Chapter 10." }
     ];
 
     // --- Safe Storage Initialization ---
-    let appData = { cards: {}, questions: {}, status: {} };
+    let appData = { cards: {}, questions: {}, status: {}, mistakes: {} }; // Added mistakes back
 
     try {
-        let savedData = localStorage.getItem('med101_v10'); // Keep v10 to retain user progress
+        let savedData = localStorage.getItem('med101_v10'); // Keeping v10 key to preserve user progress
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
-                appData.status = parsed.status || {};
+                appData.status = parsed.status || {}; 
+                appData.mistakes = parsed.mistakes || {}; // Load accumulated mistakes
             }
         }
     } catch (e) {
@@ -590,6 +605,7 @@
         document.getElementById('fc-back').innerText = currentFC.back;
         
         let explHtml = `<strong>הסבר: </strong> ${currentFC.explanation}`;
+        if(currentFC.reference) explHtml += `<div class="reference">📚 ${currentFC.reference}</div>`;
         document.getElementById('fc-explanation').innerHTML = explHtml;
         
         document.getElementById('fc-front').classList.remove('hidden');
@@ -625,6 +641,8 @@
         } else { 
             appData.cards[currentFC.id] = Date.now() + TWO_DAYS;
             appData.status[currentFC.id] = 'wrong';
+            // Accumulate mistake for Weak Points
+            appData.mistakes[currentFC.subtopic] = (appData.mistakes[currentFC.subtopic] || 0) + 1;
         }
         saveData(); loadFlashcard(true);
     }
@@ -656,6 +674,7 @@
         document.getElementById('q-options').innerHTML = optionsHtml;
         
         let explHtml = `<strong>הסבר: </strong> ${currentQ.explanation}`;
+        if(currentQ.reference) explHtml += `<div class="reference">📚 ${currentQ.reference}</div>`;
         document.getElementById('q-explanation').innerHTML = explHtml;
 
         document.getElementById('q-feedback').classList.add('hidden');
@@ -688,6 +707,8 @@
             feedback.style.color = "#e74c3c";
             appData.questions[currentQ.id] = Date.now() + TWO_DAYS;
             appData.status[currentQ.id] = 'wrong';
+            // Accumulate mistake for Weak Points
+            appData.mistakes[currentQ.subtopic] = (appData.mistakes[currentQ.subtopic] || 0) + 2; 
         }
         
         saveData();
@@ -793,29 +814,17 @@
         let list = document.getElementById('weak-list');
         list.innerHTML = "";
         
-        let weakTopics = {};
-        dbQuestions.forEach(q => {
-            if (appData.status[q.id] === 'wrong') {
-                weakTopics[q.subtopic] = (weakTopics[q.subtopic] || 0) + 1;
-            }
-        });
-        dbFlashcards.forEach(c => {
-            if (appData.status[c.id] === 'wrong') {
-                weakTopics[c.subtopic] = (weakTopics[c.subtopic] || 0) + 1;
-            }
-        });
-
-        let keys = Object.keys(weakTopics);
+        let keys = Object.keys(appData.mistakes);
         if (keys.length === 0) { 
             list.innerHTML = "<li>מעולה! אין טעויות בינתיים. המשך לתרגל כדי שהמערכת תמליץ לך מה לקרוא.</li>"; 
             return; 
         }
         
-        keys.sort((a, b) => weakTopics[b] - weakTopics[a]);
+        keys.sort((a, b) => appData.mistakes[b] - appData.mistakes[a]);
         
         keys.forEach(subtopic => {
-            let score = weakTopics[subtopic];
-            let severity = score > 2 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
+            let score = appData.mistakes[subtopic];
+            let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
             let bookRef = topicReferences[subtopic] || "חזור על סיכומי ההרצאות ועל המצגות שלך";
             
             list.innerHTML += `
@@ -828,7 +837,7 @@
 
     function resetStats() {
         if(confirm("לאפס את הנתונים? המערכת תתחיל ללמוד אותך מחדש.")) {
-            appData = { cards: {}, questions: {}, status: {} };
+            appData = { cards: {}, questions: {}, status: {}, mistakes: {} };
             saveData(); showSection('flashcards'); alert("הנתונים אופסו!");
         }
     }
@@ -854,6 +863,7 @@
                 appData.cards = parsed.cards || {};
                 appData.questions = parsed.questions || {};
                 appData.status = parsed.status || {};
+                appData.mistakes = parsed.mistakes || {};
                 saveData(); alert("הנתונים סונכרנו בהצלחה!"); location.reload();
             }
         } catch(e) { alert("שגיאה בפענוח."); }
