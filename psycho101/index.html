@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260908-16">
+<link rel="manifest" href="./manifest.webmanifest?v=20260908-17">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -84,9 +84,9 @@ body.dark-mode .sync-dot.on{background:var(--success)}
 
 /* --- Shared ID101 friendly learning design system --- */
 :root{
-  --friendly-green:#58b957;
-  --friendly-green-dark:#409c42;
-  --friendly-green-soft:#ecf8e9;
+  --friendly-green:#8b5cf6;
+  --friendly-green-dark:#6d3fd8;
+  --friendly-green-soft:#f1ebff;
   --friendly-blue:#4f8ef7;
   --friendly-purple:#8667e8;
   --friendly-orange:#ff9f43;
@@ -108,14 +108,14 @@ body.dark-mode .sync-dot.on{background:var(--success)}
   --text:#f3f8f2;
   --muted:#b4c0c4;
   --border:#3c4d52;
-  --primary:#68c968;
-  --primary-soft:#294331;
+  --primary:#a178ff;
+  --primary-soft:#3a2d52;
   --shadow:0 10px 28px rgba(0,0,0,.22);
 }
 body{
   background:
-    radial-gradient(circle at 10% 0%,rgba(88,185,87,.12),transparent 32%),
-    radial-gradient(circle at 90% 18%,rgba(79,142,247,.10),transparent 28%),
+    radial-gradient(circle at 10% 0%,rgba(139,92,246,.16),transparent 32%),
+    radial-gradient(circle at 90% 18%,rgba(167,139,250,.10),transparent 28%),
     var(--bg);
 }
 .app-shell{max-width:920px;padding-top:14px}
@@ -132,9 +132,9 @@ body{
 .icon-btn:hover{transform:translateY(-2px);border-color:#b8dcb5}
 .psy-home-hero{
   display:grid;grid-template-columns:1.4fr .8fr;gap:18px;align-items:center;
-  background:linear-gradient(135deg,#67c864,#4eac58);color:#fff;
+  background:linear-gradient(135deg,#9b6df7,#7250d8);color:#fff;
   border-radius:24px;padding:24px;text-align:right;
-  box-shadow:0 14px 28px rgba(62,157,75,.22);
+  box-shadow:0 14px 28px rgba(112,72,196,.24);
   position:relative;overflow:hidden;
 }
 .psy-home-hero:after{
@@ -145,13 +145,13 @@ body{
 .psy-home-hero p{margin:0 0 16px;opacity:.94;line-height:1.55}
 .hero-eyebrow{font-size:12px;font-weight:900;letter-spacing:.5px;opacity:.82}
 .hero-action{
-  width:auto;border:0;border-radius:16px;background:#fff;color:#388b3d;
+  width:auto;border:0;border-radius:16px;background:#fff;color:#6b3fd1;
   padding:13px 20px;font-weight:900;font-size:16px;cursor:pointer;
-  box-shadow:0 5px 0 rgba(31,103,42,.22);
+  box-shadow:0 5px 0 rgba(77,47,151,.24);
   transition:transform .15s,box-shadow .15s;
 }
 .hero-action:hover{transform:translateY(-2px)}
-.hero-action:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(31,103,42,.2)}
+.hero-action:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(77,47,151,.22)}
 .hero-orb{
   width:128px;height:128px;border-radius:50%;margin:auto;display:grid;place-items:center;text-align:center;
   background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.3);
@@ -173,7 +173,7 @@ body{
 .duo-progress{height:12px;border-radius:999px;background:#e8eee7;overflow:hidden;margin-top:10px}
 .dark-mode .duo-progress{background:#34454a}
 .duo-progress>div,.progress>div{
-  height:100%;border-radius:999px;background:linear-gradient(90deg,#58b957,#80d267);
+  height:100%;border-radius:999px;background:linear-gradient(90deg,#8b5cf6,#b28cff);
   transition:width .45s cubic-bezier(.2,.8,.2,1);position:relative;
 }
 .duo-progress>div:after,.progress>div:after{
@@ -183,17 +183,17 @@ body{
 .section-heading h3{margin:0;font-size:19px}.section-heading span{font-size:12px;color:var(--muted)}
 .lesson-path{gap:13px;max-width:690px;margin:14px auto 22px}
 .lesson-node{
-  border:1px solid var(--border);border-bottom:4px solid #dce7d9;border-radius:22px;
+  border:1px solid var(--border);border-bottom:4px solid #e6ddf7;border-radius:22px;
   padding:14px 16px;box-shadow:0 6px 15px rgba(0,0,0,.035);
   background:var(--panel);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
 }
-.dark-mode .lesson-node{border-bottom-color:#344c40}
+.dark-mode .lesson-node{border-bottom-color:#44365d}
 .lesson-node:nth-child(even){transform:translateX(-34px)}
-.lesson-node:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 22px rgba(0,0,0,.07);border-color:#b9ddb6}
+.lesson-node:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 22px rgba(0,0,0,.07);border-color:#cdb8f3}
 .lesson-node:nth-child(even):hover{transform:translate(-34px,-3px) scale(1.01)}
 .lesson-icon{
   width:58px;height:58px;background:var(--friendly-green-soft);
-  border:2px solid rgba(88,185,87,.2);transition:transform .2s ease;
+  border:2px solid rgba(139,92,246,.22);transition:transform .2s ease;
 }
 .lesson-node:hover .lesson-icon{transform:rotate(-5deg) scale(1.1)}
 .lesson-node[data-tone="blue"] .lesson-icon{background:#eaf2ff;border-color:#c7dbff}
@@ -211,16 +211,16 @@ body{
   font-weight:700;transition:transform .14s,background .14s,border-color .14s;
   background:var(--panel);
 }
-.answer:hover:not(:disabled){transform:translateY(-2px);border-color:#add9a8;background:var(--friendly-green-soft)}
-.answer.correct{background:#e8f8e7;border-color:#62bd64;color:#276d2c;animation:psyCorrectPop .42s ease}
+.answer:hover:not(:disabled){transform:translateY(-2px);border-color:#cdb8f3;background:var(--friendly-green-soft)}
+.answer.correct{background:#f2edff;border-color:#9b74ef;color:#5d35bb;animation:psyCorrectPop .42s ease}
 .answer.wrong{background:#fff0f1;border-color:#eb767e;color:#8e343a;animation:psyWrongShake .38s ease}
-.dark-mode .answer.correct{background:#294b32;color:#dff7e1}
+.dark-mode .answer.correct{background:#3a2f53;color:#eee5ff}
 .dark-mode .answer.wrong{background:#512f33;color:#ffe0e3}
 .feedback{border:1px solid var(--border)}
-.feedback.good{background:#edf9eb}.feedback.bad{background:#fff1f2}
-.dark-mode .feedback.good{background:#294331}.dark-mode .feedback.bad{background:#4d3034}
+.feedback.good{background:#f4efff}.feedback.bad{background:#fff1f2}
+.dark-mode .feedback.good{background:#3a2d52}.dark-mode .feedback.bad{background:#4d3034}
 .primary-btn{
-  background:var(--friendly-green);border-bottom:4px solid #3d9943;
+  background:var(--friendly-green);border-bottom:4px solid #6739c9;
   border-radius:14px;transition:transform .14s,filter .14s;
 }
 .primary-btn:hover{filter:brightness(1.03);transform:translateY(-1px)}
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260908-16";
+const PSYCHO101_BUILD_VERSION="20260908-17";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4894,7 +4894,7 @@ function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
 function psyConfetti(count=14){
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const colors=['#58b957','#4f8ef7','#8667e8','#ff9f43','#ffd166'];
+  const colors=['#8b5cf6','#4f8ef7','#8667e8','#ff9f43','#ffd166'];
   for(let i=0;i<count;i++){
     const el=document.createElement('i');
     el.className='psy-confetti';
