@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260908-13">
+<link rel="manifest" href="./manifest.webmanifest?v=20260908-14">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -86,7 +86,7 @@ body.dark-mode .sync-dot.on{background:var(--success)}
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260908-13";
+const PSYCHO101_BUILD_VERSION="20260908-14";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4540,6 +4540,21 @@ function buildWordQuestions(count=15){return selectWords(count).map(makeWordQues
 function nav(active){return`<nav class="bottom-nav" style="grid-template-columns:repeat(6,1fr)"><button class="nav-btn ${active==='home'?'active':''}" onclick="go('home')"><b>⌂</b>בית</button><button class="nav-btn ${active==='practice'?'active':''}" onclick="go('practice-menu')"><b>✎</b>תרגול</button><button class="nav-btn ${active==='words'?'active':''}" onclick="go('words-dashboard')"><b>א</b>מילים</button><button class="nav-btn ${active==='leaderboard'?'active':''}" onclick="go('leaderboard')"><b>🏆</b>דירוג</button><button class="nav-btn ${active==='errors'?'active':''}" onclick="go('errors')"><b>!</b>טעויות</button><button class="nav-btn ${active==='progress'?'active':''}" onclick="go('progress')"><b>↗</b>התקדמות</button></nav>`}
 function syncBadge(){const cloud=cloudConfigured();return`<span class="sync-state" title="${cloud?'סנכרון ענן זמין':'התקדמות נשמרת במכשיר זה'}"><span class="sync-dot ${cloud&&state.user?'on':''}"></span>${cloud?(state.user?'מסונכרן':'לא מחובר'):'מקומי'}</span>`}
 function topbar(){const dark=isDarkMode();return`<div class="topbar"><div class="logo">IDpsycho<span>101</span></div><div class="top-actions">${syncBadge()}<button class="icon-btn" onclick="shareApp()" title="שתף">↗</button><button class="icon-btn" onclick="toggleTheme()" title="${dark?'מצב בהיר':'מצב חושך'}">${dark?'☀️':'🌙'}</button><button class="icon-btn" onclick="go('account')" title="חשבון וסנכרון">☁</button></div></div>`}
+function getTimeGreeting(){
+  const hour=new Date().getHours();
+  let greeting="שלום";
+  let emoji="👋";
+  if(hour>=5&&hour<12){greeting="בוקר טוב";emoji="☀️"}
+  else if(hour>=12&&hour<18){greeting="צהריים טובים";emoji="🌤️"}
+  else if(hour>=18&&hour<22){greeting="ערב טוב";emoji="🌙"}
+  else{greeting="לילה טוב";emoji="🦉"}
+  const name=(state.displayName||"").trim();
+  return `${greeting}${name?", "+escapeHtml(name):""} ${emoji}`;
+}
+function refreshGreeting(){
+  const el=document.getElementById("dynamic-greeting");
+  if(el)el.innerHTML=getTimeGreeting();
+}
 function home(){
   updateStreak();saveLocal();
   const goal=Math.min(100,percent(state.todayAnswered,state.dailyGoal));
@@ -4548,7 +4563,7 @@ function home(){
   return`<div class="app-shell">${topbar()}
     <section class="hero duo-hero">
       <div>
-        <h1>כמה דקות וזהו 🎯</h1>
+        <h1 id="dynamic-greeting">${getTimeGreeting()}</h1>
         <p>שיעורים קצרים ופשוטים. כל שיעור בערך 8 שאלות.</p>
         <div class="progress-wrap"><div class="progress-row"><span>היעד היומי</span><strong>${state.todayAnswered}/${state.dailyGoal}</strong></div><div class="progress"><div style="width:${goal}%"></div></div></div>
       </div>
@@ -4818,6 +4833,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addE
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (async()=>{if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}render()})();
+setInterval(refreshGreeting,60000);
 
 </script>
 </body>
