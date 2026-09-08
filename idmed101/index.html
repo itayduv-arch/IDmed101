@@ -185,8 +185,12 @@
             <div class="med-lesson-node" onclick="startMedQuickLesson('ביוכימיה')"><div class="med-lesson-icon">⚗️</div><div class="med-lesson-main"><h3>ביוכימיה</h3><p>אנזימים, מטבוליזם, חלבונים ועוד</p></div><div class="med-lesson-meta" id="lesson-meta-ביוכימיה">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('מולקולרית')"><div class="med-lesson-icon">🧬</div><div class="med-lesson-main"><h3>ביולוגיה מולקולרית</h3><p>DNA, שכפול, שעתוק, תרגום ושיטות</p></div><div class="med-lesson-meta" id="lesson-meta-מולקולרית">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('ביולוגיה של התא')"><div class="med-lesson-icon">🔬</div><div class="med-lesson-main"><h3>ביולוגיה של התא</h3><p>ממברנות, איתות, שלד התא ומחזור התא</p></div><div class="med-lesson-meta" id="lesson-meta-ביולוגיה של התא">8 שאלות</div></div>
-            <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>עצב, שריר, מערכות ובקרה</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">5 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>עצב, שריר, מערכות ובקרה</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('daily')"><div class="med-lesson-icon">★</div><div class="med-lesson-main"><h3>שיעור יומי</h3><p>שילוב קצר מכל ארבעת התחומים</p></div><div class="med-lesson-meta" id="lesson-meta-daily">10 שאלות</div></div>
+        </div>
+        <div class="recommend-card" style="font-size:13px;">
+            <strong>איך נקבעת העדיפות?</strong>
+            <div>כל הנושאים מוגבלים לסילבוס הרשמי 2026. בתוך הסילבוס, נושאים שחזרו בשחזורים מ־2019 עד 2026 מקבלים משקל גבוה יותר בשיעורים הקצרים.</div>
         </div>
         <div class="dashboard-grid">
             <div class="dash-stat"><strong id="home-due">0</strong><span>לחזרה עכשיו</span></div>
@@ -339,8 +343,8 @@
         </div>
         
         <div id="sim-active" class="hidden question-box">
-            <div id="sim-timer">15:00</div>
-            <div id="sim-progress" style="text-align: center; font-weight: bold;">שאלה 1 מתוך 15</div>
+            <div id="sim-timer">24:00</div>
+            <div id="sim-progress" style="text-align: center; font-weight: bold;">שאלה 1 מתוך 16</div>
             
             <h3 id="sim-q-text" style="margin-top: 10px; text-align: right;">טוען...</h3>
             <div id="sim-q-options"></div>
@@ -3118,14 +3122,47 @@
     window.nextQuestion = function() { loadQuestion(true); };
 
     function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+    function medPriorityWeight(q){
+        const t=((q.subtopic||'')+' '+(q.text||'')).toLowerCase();
+        const high=[
+            'חלבון','חומצות אמינו','קינטיקה','גליקוליזה','מטבוליזם ליפידים',
+            'תרגום','rna','כרומטין','אפיגנט','ממברנה','שלד התא','וזיק',
+            'פוטנציאל פעולה','מערכת העצבים','שריר שלד','התכווצות שריר'
+        ];
+        const medium=[
+            'שכפול','שעתוק','תיקון dna','רקומבינ','גליקוגן','זרחון חמצוני',
+            'מחזור התא','ecm','צומתי','נוזלי גוף','הומאוסטזיס','סינפט'
+        ];
+        if(high.some(k=>t.includes(k))) return 3;
+        if(medium.some(k=>t.includes(k))) return 2;
+        return 1;
+    }
+    function medWeightedSample(pool,count){
+        const remaining=[...pool],chosen=[];
+        while(remaining.length&&chosen.length<count){
+            const weights=remaining.map(medPriorityWeight);
+            const total=weights.reduce((a,b)=>a+b,0);
+            let r=Math.random()*total,idx=0;
+            for(;idx<remaining.length;idx++){r-=weights[idx];if(r<=0)break}
+            chosen.push(remaining.splice(Math.min(idx,remaining.length-1),1)[0]);
+        }
+        return chosen;
+    }
     function medLessonLabel(subject){
         return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject;
     }
     window.startMedQuickLesson=function(subject){
-        let pool=subject==='daily'?dbQuestions:dbQuestions.filter(q=>q.subject===subject);
-        pool=medShuffle(pool);
-        const count=subject==='daily'?10:8;
-        medQuickSession={subject,list:pool.slice(0,Math.min(count,pool.length)),index:0,correct:0,answered:false,rewarded:false};
+        let list=[];
+        if(subject==='daily'){
+            const subjects=['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה'];
+            list=subjects.flatMap(s=>medWeightedSample(dbQuestions.filter(q=>q.subject===s),2));
+            const chosen=new Set(list.map(q=>q.id));
+            list.push(...medWeightedSample(dbQuestions.filter(q=>!chosen.has(q.id)),2));
+            list=medShuffle(list);
+        }else{
+            list=medWeightedSample(dbQuestions.filter(q=>q.subject===subject),8);
+        }
+        medQuickSession={subject,list,index:0,correct:0,answered:false,rewarded:false};
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
         document.getElementById('quick-lesson').classList.add('active');
@@ -3224,15 +3261,17 @@
 
     // --- Simulation Logic ---
     window.startSimulation = function() {
-        let allQ = dbQuestions.map(q=>({...q,options:[...q.options]}));
-        allQ.sort(() => 0.5 - Math.random());
-        simQuestions = allQ.slice(0, 15);
-        if(simQuestions.length < 15) simQuestions = allQ;
+        const subjects=['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה'];
+        simQuestions=subjects.flatMap(s=>
+            medWeightedSample(dbQuestions.filter(q=>q.subject===s),4)
+                .map(q=>({...q,options:[...q.options]}))
+        );
+        simQuestions=medShuffle(simQuestions);
         simQuestions.forEach(q=>delete q.userAnswer);
 
         currentSimIndex = 0;
         simScore = 0;
-        simTimeLeft = 15 * 60;
+        simTimeLeft = 24 * 60;
 
         document.getElementById('sim-intro').classList.add('hidden');
         document.getElementById('sim-results').classList.add('hidden');
