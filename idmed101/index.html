@@ -109,6 +109,12 @@
         .status-col.unseen-col { border-top: 3px solid #7f8c8d; }
 
         .sync-box { margin-top: 30px; padding: 20px; background: var(--option-bg); border-radius: 10px; border: 1px dashed #7f8c8d; }
+        .cloud-status { margin: 10px 0; font-weight: 700; }
+        .cloud-status.ok { color:#27ae60; }
+        .cloud-status.off { color:#e67e22; }
+        .sync-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+        .sync-grid input { width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); }
+        @media(max-width:600px){ .sync-grid{grid-template-columns:1fr;} }
         .weakpoint-item { background: var(--option-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #e74c3c; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .book-ref { display: block; margin-top: 8px; font-size: 15px; color: #2980b9; font-weight: bold; }
         .dark-mode .book-ref { color: #3498db; }
@@ -275,14 +281,139 @@
         <button class="btn btn-danger" onclick="resetStats()" style="margin-top: 20px;">איפוס זמנים וסטטיסטיקות (התחל מחדש)</button>
 
         <div class="sync-box">
-            <h3>סנכרון נתונים בין מכשירים</h3>
-            <p style="font-size: 14px;">כדי להעביר התקדמות מהמחשב לטלפון, ייצא את הנתונים והדבק במכשיר השני.</p>
-            <button class="btn btn-sync" onclick="exportData()">ייצא נתונים (העתק קוד)</button>
-            <button class="btn btn-sync" onclick="importData()">ייבא נתונים (הדבק קוד)</button>
+            <h3>סנכרון ענן בין מכשירים</h3>
+            <div id="cloud-status" class="cloud-status off">בודק חיבור...</div>
+            <div id="cloud-login-area">
+                <p style="font-size:14px;">השתמש באותו אימייל וסיסמה שכבר הגדרת ב-IDpsycho101.</p>
+                <div class="sync-grid">
+                    <input id="cloud-email" type="email" autocomplete="email" placeholder="אימייל">
+                    <input id="cloud-password" type="password" autocomplete="current-password" placeholder="סיסמה">
+                </div>
+                <button class="btn btn-sync" onclick="cloudLogin()">התחבר לענן</button>
+            </div>
+            <div id="cloud-actions" class="hidden">
+                <button class="btn btn-sync" onclick="syncNow()">סנכרן עכשיו</button>
+                <button class="btn btn-primary" onclick="cloudLogout()">התנתק</button>
+            </div>
+            <p id="cloud-msg" style="font-size:14px;"></p>
+            <hr style="border:none;border-top:1px solid rgba(127,140,141,.35);margin:18px 0;">
+            <p style="font-size:14px;">גיבוי ידני נשאר זמין.</p>
+            <button class="btn btn-sync" onclick="exportData()">ייצא נתונים</button>
+            <button class="btn btn-sync" onclick="importData()">ייבא נתונים</button>
         </div>
-    </div>
-</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const MED101_SUPABASE_URL = "https://pqxlhfykmnlkmbrjuwhr.supabase.co";
+    const MED101_SUPABASE_KEY = "sb_publishable_WkfZvZJgGSLu8AHuAb7E9w_wqWAJ7Y6";
+    const MED101_TABLE = "med101_progress";
+    const MED101_STORAGE = "med101_v18";
+    const MED101_META = "med101_cloud_meta_v1";
+    let medSupabase = null;
+    let medCloudUser = null;
+    let medSaveTimer = null;
+    let medCloudMeta = { updatedAt: 0 };
+    try { medCloudMeta = JSON.parse(localStorage.getItem(MED101_META) || '{"updatedAt":0}'); } catch(e) {}
+
+    function getMedSupabase(){
+        if (!medSupabase) medSupabase = window.supabase.createClient(MED101_SUPABASE_URL, MED101_SUPABASE_KEY);
+        return medSupabase;
+    }
+    function setCloudStatus(text, ok=false){
+        const el=document.getElementById('cloud-status');
+        if(!el) return;
+        el.textContent=text;
+        el.classList.toggle('ok',ok);
+        el.classList.toggle('off',!ok);
+    }
+    function refreshCloudUI(){
+        const login=document.getElementById('cloud-login-area');
+        const actions=document.getElementById('cloud-actions');
+        if(!login||!actions) return;
+        const on=!!medCloudUser;
+        login.classList.toggle('hidden',on);
+        actions.classList.toggle('hidden',!on);
+        setCloudStatus(on ? 'מסונכרן כ־' + (medCloudUser.email||'משתמש') : 'לא מחובר', on);
+    }
+    function mergeMedStates(localState, remoteState){
+        if(!remoteState || typeof remoteState!=='object') return localState;
+        const out={cards:{},questions:{},status:{},mistakes:{}};
+        out.cards={...(remoteState.cards||{})};
+        for(const [k,v] of Object.entries(localState.cards||{})) out.cards[k]=Math.max(Number(out.cards[k]||0),Number(v||0));
+        out.questions={...(remoteState.questions||{})};
+        for(const [k,v] of Object.entries(localState.questions||{})) out.questions[k]=Math.max(Number(out.questions[k]||0),Number(v||0));
+        out.status={...(remoteState.status||{}),...(localState.status||{})};
+        out.mistakes={...(remoteState.mistakes||{})};
+        for(const [k,v] of Object.entries(localState.mistakes||{})) out.mistakes[k]=Math.max(Number(out.mistakes[k]||0),Number(v||0));
+        return out;
+    }
+    async function hydrateMedCloud(){
+        try{
+            const sb=getMedSupabase();
+            const {data:{session}}=await sb.auth.getSession();
+            medCloudUser=session?.user||null;
+            refreshCloudUI();
+            if(medCloudUser) await syncNow(true);
+        }catch(e){
+            console.error('Cloud init error',e);
+            refreshCloudUI();
+        }
+    }
+    async function cloudLogin(){
+        const email=document.getElementById('cloud-email')?.value?.trim();
+        const password=document.getElementById('cloud-password')?.value||'';
+        const msg=document.getElementById('cloud-msg');
+        if(!email||!password){ if(msg) msg.textContent='הזן אימייל וסיסמה'; return; }
+        if(msg) msg.textContent='מתחבר...';
+        try{
+            const sb=getMedSupabase();
+            const {data,error}=await sb.auth.signInWithPassword({email,password});
+            if(error) throw error;
+            medCloudUser=data.user;
+            refreshCloudUI();
+            await syncNow(true);
+            if(msg) msg.textContent='התחברת והנתונים סונכרנו';
+        }catch(e){
+            console.error(e);
+            if(msg) msg.textContent='הכניסה נכשלה. בדוק את האימייל והסיסמה.';
+        }
+    }
+    async function cloudLogout(){
+        try{ await getMedSupabase().auth.signOut(); }catch(e){}
+        medCloudUser=null;
+        refreshCloudUI();
+    }
+    async function syncNow(silent=false){
+        if(!medCloudUser) return;
+        const msg=document.getElementById('cloud-msg');
+        if(msg && !silent) msg.textContent='מסנכרן...';
+        try{
+            const sb=getMedSupabase();
+            const {data,error}=await sb.from(MED101_TABLE).select('state,updated_at').eq('user_id',medCloudUser.id).maybeSingle();
+            if(error) throw error;
+            if(data?.state){
+                appData=mergeMedStates(appData,data.state);
+                localStorage.setItem(MED101_STORAGE,JSON.stringify(appData));
+            }
+            const {error:upsertError}=await sb.from(MED101_TABLE).upsert({
+                user_id:medCloudUser.id,
+                state:appData,
+                updated_at:new Date().toISOString()
+            },{onConflict:'user_id'});
+            if(upsertError) throw upsertError;
+            medCloudMeta.updatedAt=Date.now();
+            localStorage.setItem(MED101_META,JSON.stringify(medCloudMeta));
+            if(msg && !silent) msg.textContent='הסנכרון הושלם';
+        }catch(e){
+            console.error('Cloud sync error',e);
+            if(msg) msg.textContent='הסנכרון נכשל. נסה שוב.';
+        }
+    }
+    function scheduleCloudSave(){
+        clearTimeout(medSaveTimer);
+        medSaveTimer=setTimeout(()=>{ if(medCloudUser) syncNow(true); },1200);
+    }
+</script>
 <script>
     // --- Topic To Book Chapters Dictionary ---
     const topicReferences = {
@@ -439,7 +570,7 @@
     let appData = { cards: {}, questions: {}, status: {}, mistakes: {} };
 
     try {
-        let savedData = localStorage.getItem('med101_v18'); 
+        let savedData = localStorage.getItem(MED101_STORAGE); 
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
@@ -454,7 +585,12 @@
     }
 
     function saveData() { 
-        try { localStorage.setItem('med101_v18', JSON.stringify(appData)); } catch (e) {}
+        try {
+            localStorage.setItem(MED101_STORAGE, JSON.stringify(appData));
+            medCloudMeta.updatedAt=Date.now();
+            localStorage.setItem(MED101_META,JSON.stringify(medCloudMeta));
+        } catch (e) {}
+        scheduleCloudSave();
     }
 
     let showingFront = true; 
@@ -477,14 +613,17 @@
         document.getElementById('dynamic-title').innerText = greeting + " | מבחן ידע 101";
     }
 
+    function applyMedTheme(theme){
+        const dark=theme==='dark';
+        document.body.classList.toggle('dark-mode',dark);
+        const btn=document.getElementById('theme-btn');
+        if(btn) btn.innerText=dark?'☀️ תצוגה':'🌙 תצוגה';
+    }
+
     function toggleDarkMode() { 
-        document.body.classList.toggle('dark-mode'); 
-        const btn = document.getElementById('theme-btn');
-        if (document.body.classList.contains('dark-mode')) {
-            btn.innerText = '☀️ תצוגה';
-        } else {
-            btn.innerText = '🌙 תצוגה';
-        }
+        const next=document.body.classList.contains('dark-mode')?'light':'dark';
+        localStorage.setItem('med101-theme',next);
+        applyMedTheme(next);
     }
 
     function toggleStatus(contentId, iconId) {
@@ -911,11 +1050,19 @@
         } catch(e) { alert("שגיאה בפענוח."); }
     };
 
-    window.onload = () => { 
+    window.onload = async () => { 
+        const savedTheme=localStorage.getItem('med101-theme');
+        applyMedTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
         populateFilters();
         setGreeting();
         loadFlashcard(); 
-        loadQuestion(); 
+        loadQuestion();
+        await hydrateMedCloud();
+        getMedSupabase().auth.onAuthStateChange(async (_event,session)=>{
+            medCloudUser=session?.user||null;
+            refreshCloudUI();
+            if(medCloudUser) await syncNow(true);
+        });
     };
 </script>
 </body>
