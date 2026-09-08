@@ -1,0 +1,12 @@
+{
+  "name": "IDpsycho101",
+  "short_name": "IDpsycho101",
+  "description": "תרגול פסיכומטרי במילים, חשיבה כמותית וחשיבה מילולית",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#5965e0",
+  "lang": "he",
+  "dir": "rtl"
+}
