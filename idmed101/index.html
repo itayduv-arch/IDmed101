@@ -119,6 +119,18 @@
         .book-ref { display: block; margin-top: 8px; font-size: 15px; color: #2980b9; font-weight: bold; }
         .dark-mode .book-ref { color: #3498db; }
 
+
+        .dashboard-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0; }
+        .dash-stat { background:var(--option-bg); border-radius:12px; padding:16px 10px; text-align:center; }
+        .dash-stat strong { display:block; font-size:25px; margin-bottom:4px; }
+        .recommend-card { border:2px solid var(--border-color); border-radius:14px; padding:18px; background:var(--card-bg); text-align:right; margin:16px 0; }
+        .progress-bar { height:10px; background:rgba(127,140,141,.22); border-radius:999px; overflow:hidden; }
+        .progress-fill { height:100%; background:var(--border-color); }
+        .error-item-med { background:var(--option-bg); border-radius:10px; padding:14px; margin:10px 0; text-align:right; border-right:4px solid #c0392b; }
+        .topic-progress-row { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid rgba(127,140,141,.25); text-align:right; }
+        .pill-med { display:inline-block; padding:4px 9px; border-radius:999px; background:var(--tab-bg); font-size:13px; font-weight:700; }
+        @media(max-width:650px){ .dashboard-grid{grid-template-columns:1fr 1fr;} }
+
         #sim-timer { font-size: 24px; font-weight: bold; color: #e74c3c; margin-bottom: 15px; text-align: center; }
         #sim-progress { font-size: 16px; margin-bottom: 20px; color: #7f8c8d; }
     </style>
@@ -130,13 +142,39 @@
     <h1 id="dynamic-title">מבחן ידע 101</h1>
     
     <div class="tabs">
-        <button class="tab active" id="tab-flashcards" onclick="showSection('flashcards')">כרטיסיות</button>
+        <button class="tab active" id="tab-home" onclick="showSection('home')">בית</button>
+        <button class="tab" id="tab-flashcards" onclick="showSection('flashcards')">כרטיסיות</button>
         <button class="tab" id="tab-questions" onclick="showSection('questions')">שאלות</button>
         <button class="tab" id="tab-simulation" onclick="showSection('simulation')">סימולציה</button>
-        <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">נקודות חיזוק</button>
+        <button class="tab" id="tab-errors" onclick="showSection('errors')">טעויות</button>
+        <button class="tab" id="tab-progress" onclick="showSection('progress')">התקדמות</button>
+        <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">חולשות</button>
     </div>
 
-    <div id="flashcards" class="section active">
+    <div id="home" class="section active">
+        <h2>מרכז הלמידה</h2>
+        <div class="dashboard-grid">
+            <div class="dash-stat"><strong id="home-due">0</strong><span>לחזרה עכשיו</span></div>
+            <div class="dash-stat"><strong id="home-accuracy">0%</strong><span>דיוק כללי</span></div>
+            <div class="dash-stat"><strong id="home-streak">0 🔥</strong><span>רצף ימים</span></div>
+            <div class="dash-stat"><strong id="home-xp">0</strong><span>XP</span></div>
+        </div>
+        <div class="recommend-card">
+            <h3 style="margin-top:0;">מה כדאי ללמוד עכשיו?</h3>
+            <p id="home-recommendation">מנתח את ההתקדמות שלך...</p>
+            <button class="btn btn-primary" onclick="startRecommendedStudy()">התחל אימון מומלץ</button>
+        </div>
+        <div class="recommend-card">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><strong>היעד היומי</strong><span id="home-goal-text">0/20</span></div>
+            <div class="progress-bar" style="margin-top:10px;"><div id="home-goal-fill" class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <div class="recommend-card">
+            <h3 style="margin-top:0;">3 נושאים שדורשים תשומת לב</h3>
+            <div id="home-weak-topics">התחל לתרגל כדי שנוכל לזהות חולשות.</div>
+        </div>
+    </div>
+
+    <div id="flashcards" class="section">
         <div class="filters">
             <select class="filter-select" id="fc-subj-filter" onchange="loadFlashcard(true)">
                 <option value="all">כל התחומים</option>
@@ -273,6 +311,24 @@
         </div>
     </div>
 
+    <div id="errors" class="section">
+        <h2>מחברת טעויות</h2>
+        <p>טעויות משאלות רגילות ומסימולציות נשמרות כאן, עם אפשרות לתרגול חוזר.</p>
+        <div id="med-errors-list"></div>
+        <button class="btn btn-danger" onclick="practiceMistakes()">תרגל את הטעויות שלי</button>
+    </div>
+
+    <div id="progress" class="section">
+        <h2>התקדמות</h2>
+        <div class="dashboard-grid">
+            <div class="dash-stat"><strong id="progress-answered">0</strong><span>נענו</span></div>
+            <div class="dash-stat"><strong id="progress-correct">0</strong><span>נכונות</span></div>
+            <div class="dash-stat"><strong id="progress-accuracy">0%</strong><span>דיוק</span></div>
+            <div class="dash-stat"><strong id="progress-mastered">0</strong><span>בשליטה גבוהה</span></div>
+        </div>
+        <div id="topic-progress-list"></div>
+    </div>
+
     <div id="weakpoints" class="section">
         <h2>מיקוד חולשות והמלצות קריאה</h2>
         <ul id="weak-list" style="text-align: right; font-size: 18px; line-height: 1.8; list-style-type: none; padding: 0;">
@@ -301,6 +357,9 @@
             <button class="btn btn-sync" onclick="exportData()">ייצא נתונים</button>
             <button class="btn btn-sync" onclick="importData()">ייבא נתונים</button>
         </div>
+
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
