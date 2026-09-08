@@ -4342,7 +4342,7 @@ const CAMPUS_ALIGNMENT = {
   quantitative:[
     {group:"אלגברה",topics:["אחוזים","חזקות ושורשים","תכונות מספרים","אי־שוויונות","פירוק לגורמים","שברים","יחסים","ממוצעים","מערכת צירים"],tip:"תרגם את הנתון ליחס או משוואה לפני שאתה מחשב; חפש פישוט במקום חישוב ארוך."},
     {group:"בעיות",topics:["תנועה","הספק","קומבינטוריקה","הסתברות"],tip:"הגדר מהי היחידה: דרך, זמן, עבודה או מספר אפשרויות. בדוק תמיד מה נשאר קבוע."},
-    {group:"גיאומטריה",topics:["משולשים","מרובעים","מעגלים","גופים"],tip:"סמן נתונים על שרטוט משלך. אל תניח שרטוט בקנה מידה אלא אם הנתון מחייב זאת."},
+    {group:"גיאומטריה",topics:["גאומטריה","משולשים","מרובעים","מעגלים","גופים"],tip:"סמן נתונים על שרטוט משלך. אל תניח שרטוט בקנה מידה אלא אם הנתון מחייב זאת."},
     {group:"תרשימים",topics:["תרשימים וטבלאות"],tip:"קרא קודם את הצירים, היחידות והמקרא. לאחר מכן חפש רק את הנתון הנדרש לשאלה."}
   ],
   verbal:[
@@ -4564,6 +4564,7 @@ function campusView(){
 }
 function startCampusGroup(type,index){
   const g=CAMPUS_ALIGNMENT[type][index];
+  if(g.topics.includes("מטלת כתיבה")){startWritingPractice();return}
   let list=questions[type].filter(q=>g.topics.includes(q.topic));
   if(!list.length) list=questions[type];
   practice={list:shuffle(list).slice(0,20),index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'campus'};
