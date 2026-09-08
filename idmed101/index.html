@@ -1200,6 +1200,7 @@
             if(el&&s?.completed)el.innerText='✓ '+s.bestAccuracy+'%';
         }
     }
+    function medEscapeHtml(s){return String(s??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]))}
     async function shareMedApp(){
         const url=location.origin+location.pathname;
         const data={title:'מבחן ידע 101',text:'בוא ללמוד איתי למבחן הידע 🎯',url};
@@ -1230,7 +1231,7 @@
         try{
             const sb=getMedSupabase();const {data,error}=await sb.from('med101_leaderboard').select('user_id,display_name,xp,streak,answered,correct,updated_at').limit(100);
             if(error)throw error;const rows=(data||[]).sort(compareMedLeaderboard),me=medCloudUser?.id,medals=['🥇','🥈','🥉'];
-            el.innerHTML=rows.length?rows.map((r,i)=>`<div class="leader-row-med ${r.user_id===me?'leader-me-med':''}"><div class="leader-rank-med">${medals[i]||'#'+(i+1)}</div><div><div class="leader-name-med">${r.display_name}${r.user_id===me?' · אתה':''}</div><div class="leader-sub-med">דיוק ${medLeaderboardAccuracy(r)}% · 🔥 ${r.streak||0} · ${r.answered||0} שאלות</div></div><div class="leader-xp-med">${r.xp||0} XP</div></div>`).join(''):'עדיין אין משתמשים בדירוג.';
+            el.innerHTML=rows.length?rows.map((r,i)=>`<div class="leader-row-med ${r.user_id===me?'leader-me-med':''}"><div class="leader-rank-med">${medals[i]||'#'+(i+1)}</div><div><div class="leader-name-med">${medEscapeHtml(r.display_name)}${r.user_id===me?' · אתה':''}</div><div class="leader-sub-med">דיוק ${medLeaderboardAccuracy(r)}% · 🔥 ${r.streak||0} · ${r.answered||0} שאלות</div></div><div class="leader-xp-med">${r.xp||0} XP</div></div>`).join(''):'עדיין אין משתמשים בדירוג.';
         }catch(e){el.innerHTML='לא הצלחנו לטעון את הדירוג.'}
     }
     async function saveMedDisplayName(){
