@@ -408,6 +408,11 @@
         @media(prefers-reduced-motion:reduce){
             *,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
         }
+
+        .option.med-animate-correct{animation:correctPop .42s ease}
+        .option.med-animate-wrong{animation:wrongShake .38s ease}
+        .quick-question-enter{animation:questionIn .30s cubic-bezier(.2,.85,.35,1)}
+        .answer-celebrate{box-shadow:0 0 0 4px rgba(88,185,87,.10),0 10px 24px rgba(88,185,87,.12)}
 </style>
 </head>
 <body>
@@ -3882,6 +3887,11 @@
         const good=selectedIndex===currentQ.answer;
         const review=updateReview('questions',currentQ,good);
         recordAnswer(currentQ,good,'question',selectedIndex);
+        medXpFloat(good?10:3);medHaptic(good);
+        const selectedBtn=document.getElementById('opt-'+selectedIndex);
+        const correctBtn=document.getElementById('opt-'+currentQ.answer);
+        if(good&&correctBtn){correctBtn.classList.add('med-animate-correct');medConfetti(8)}
+        else if(selectedBtn)selectedBtn.classList.add('med-animate-wrong');
 
         if(good){
             feedback.innerText = review.box>=4 ? "נכון! השאלה בשליטה גבוהה ותתרחק בחזרות." : "נכון! מרווח החזרה גדל.";
@@ -3896,6 +3906,46 @@
     };
 
     window.nextQuestion = function() { loadQuestion(true); };
+
+    function medQuickShell(){
+        return `<div class="med-quick-card" id="med-quick-card">
+            <div id="med-quick-progress" class="small"></div>
+            <div class="duo-progress"><div id="med-quick-fill" style="width:0%"></div></div>
+            <h3 id="med-quick-title"></h3>
+            <div id="med-quick-options"></div>
+            <div id="med-quick-feedback" class="explanation-box hidden"></div>
+            <button id="med-quick-next" class="btn btn-primary hidden" onclick="nextMedQuickQuestion()">לשאלה הבאה</button>
+        </div>`;
+    }
+    function medConfetti(count=16){
+        if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+        const colors=['#58b957','#4f8ef7','#8667e8','#ff9f43','#ffd166'];
+        for(let i=0;i<count;i++){
+            const el=document.createElement('i');
+            el.className='confetti-piece';
+            el.style.left=(45+Math.random()*10)+'vw';
+            el.style.top=(12+Math.random()*8)+'vh';
+            el.style.background=colors[i%colors.length];
+            el.style.setProperty('--drift',((Math.random()-.5)*260)+'px');
+            el.style.animationDelay=(Math.random()*.12)+'s';
+            document.body.appendChild(el);
+            setTimeout(()=>el.remove(),1400);
+        }
+    }
+    function medXpFloat(amount){
+        const el=document.createElement('div');
+        el.className='xp-float';
+        el.textContent='+'+amount+' XP';
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(),1150);
+    }
+    function medHaptic(good){
+        try{if(navigator.vibrate)navigator.vibrate(good?18:[28,35,28])}catch(e){}
+    }
+    function animateStat(id){
+        const el=document.getElementById(id);if(!el)return;
+        el.classList.remove('stat-bump');void el.offsetWidth;el.classList.add('stat-bump');
+    }
 
     function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
     function medPriorityWeight(q){
@@ -3941,7 +3991,9 @@
         medQuickSession={subject,list,index:0,correct:0,answered:false,rewarded:false};
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
         document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-        document.getElementById('quick-lesson').classList.add('active');
+        const quick=document.getElementById('quick-lesson');
+        quick.innerHTML=medQuickShell();
+        quick.classList.add('active');
         renderMedQuickQuestion();
     };
     function renderMedQuickQuestion(){
@@ -3949,6 +4001,9 @@
         if(s.index>=s.list.length){finishMedQuickLesson();return}
         const q=s.list[s.index];
         document.getElementById('med-quick-progress').innerText=`שאלה ${s.index+1} מתוך ${s.list.length} · ${medLessonLabel(s.subject)}`;
+        const fill=document.getElementById('med-quick-fill');if(fill)fill.style.width=Math.round((s.index/s.list.length)*100)+'%';
+        const card=document.getElementById('med-quick-card');
+        if(card){card.classList.remove('quick-question-enter','answer-celebrate');void card.offsetWidth;card.classList.add('quick-question-enter')}
         document.getElementById('med-quick-title').innerText=q.text;
         document.getElementById('med-quick-options').innerHTML=q.options.map((o,i)=>`<button class="med-quick-option" id="mqo-${i}" onclick="answerMedQuick(${i})">${o}</button>`).join('');
         document.getElementById('med-quick-feedback').classList.add('hidden');
@@ -3960,9 +4015,15 @@
         s.answered=true;const q=s.list[s.index],good=choice===q.answer;
         if(good)s.correct++;
         updateReview('questions',q,good);recordAnswer(q,good,'quick',choice);
-        document.querySelectorAll('.med-quick-option').forEach((b,i)=>{b.disabled=true;if(i===q.answer)b.classList.add('correct');else if(i===choice)b.classList.add('wrong')});
+        document.querySelectorAll('.med-quick-option').forEach((b,i)=>{
+            b.disabled=true;
+            if(i===q.answer)b.classList.add('correct');
+            else if(i===choice)b.classList.add('wrong');
+        });
+        medXpFloat(good?10:3);medHaptic(good);
+        if(good){medConfetti(10);const card=document.getElementById('med-quick-card');if(card)card.classList.add('answer-celebrate')}
         const fb=document.getElementById('med-quick-feedback');
-        fb.innerHTML=(good?'<strong>✓ נכון</strong>':'<strong>✗ לא נכון</strong>')+'<br>'+q.explanation+(q.reference?'<span class="reference">📚 '+q.reference+'</span>':'');
+        fb.innerHTML=(good?'<strong>✓ נכון! מעולה</strong>':'<strong>✗ כמעט — הנה ההסבר</strong>')+'<br>'+q.explanation+(q.reference?'<span class="reference">📚 '+q.reference+'</span>':'');
         fb.classList.remove('hidden');document.getElementById('med-quick-next').classList.remove('hidden');saveData();
     };
     window.nextMedQuickQuestion=function(){const s=medQuickSession;if(!s)return;s.index++;renderMedQuickQuestion()};
@@ -3973,7 +4034,9 @@
             appData.lessonStats[key]={completed:(old.completed||0)+1,bestAccuracy:Math.max(old.bestAccuracy||0,acc)};
             appData.xp=(appData.xp||0)+20;s.rewarded=true;saveData();
         }
-        document.getElementById('quick-lesson').innerHTML=`<div class="med-quick-card" style="text-align:center"><div style="font-size:42px">🎉</div><h2>השיעור הושלם</h2><p>${s.correct} נכונות מתוך ${s.list.length} · ${Math.round(s.correct/Math.max(1,s.list.length)*100)}%</p><button class="btn btn-primary" onclick="showSection('home')">חזרה לבית</button><button class="btn btn-sync" onclick="startMedQuickLesson('${s.subject}')">עוד שיעור</button></div>`;
+        const accuracy=Math.round(s.correct/Math.max(1,s.list.length)*100);
+        medConfetti(42);medXpFloat(20);medHaptic(true);
+        document.getElementById('quick-lesson').innerHTML=`<div class="med-quick-card"><div class="lesson-finish"><div class="finish-emoji">${accuracy>=80?'🏆':'🎉'}</div><h2>השיעור הושלם!</h2><div class="score-ring" style="--score:${accuracy}%"><strong>${accuracy}%</strong></div><p><strong>${s.correct}</strong> נכונות מתוך ${s.list.length} · קיבלת בונוס 20 XP</p><button class="btn btn-primary" onclick="showSection('home')">חזרה למסלול</button><button class="btn btn-sync" onclick="startMedQuickLesson('${s.subject}')">עוד שיעור</button></div></div>`;
         updateHomeDashboard();
     }
     function updateMedLessonMeta(){
@@ -4163,6 +4226,9 @@
         set('home-accuracy',acc+'%');
         set('home-streak',(appData.streak||1)+' 🔥');
         set('home-xp',appData.xp||0);
+        set('hero-streak','🔥 '+(appData.streak||1));
+        const orb=document.getElementById('hero-streak-orb');
+        if(orb)orb.classList.toggle('streak-pulse',(appData.streak||1)>1);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
         updateMedLessonMeta();
