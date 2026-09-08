@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260908-15">
+<link rel="manifest" href="./manifest.webmanifest?v=20260908-16">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260908-15";
+const PSYCHO101_BUILD_VERSION="20260908-16";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4892,11 +4892,89 @@ function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filt
 function startPsychoSimulation(){clearInterval(psychoTimer);const list=shuffle([...questions.quantitative,...questions.verbal]).slice(0,20);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
-function answerQuestion(choice){if(!practice||practice.answeredCurrent)return;const q=practice.list[practice.index];practice.answeredCurrent=true;lastChoice=choice;const good=choice===q.correct;state.answered++;state.todayAnswered++;state.xp+=good?10:3;if(good){state.correct++;practice.sessionCorrect++}updateStreak();const t=topicStat(q.topic);state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};updateWordReview(q,good);if(!good){const existing=state.errors.find(e=>e.id===q.id);if(existing){existing.count++;existing.lastAt=new Date().toISOString()}else state.errors.push({id:q.id,word:q.word||null,category:q.category,topic:q.topic,prompt:q.prompt.replace(/<[^>]*>/g,''),correctText:q.answers[q.correct],explanation:q.explanation.replace(/<[^>]*>/g,''),count:1,lastAt:new Date().toISOString()})}saveLocal();renderQuestion()}
-function renderQuestion(){const q=practice.list[practice.index],done=practice.answeredCurrent,progress=Math.round((practice.index+1)/practice.list.length*100);const answers=q.answers.map((a,i)=>{let cls='answer';if(done&&i===q.correct)cls+=' correct';if(done&&i===lastChoice&&i!==q.correct)cls+=' wrong';return`<button class="${cls}" ${done?'disabled':''} onclick="answerQuestion(${i})">${formatMathHtml(a)}</button>`}).join('');let feedback='';if(done){const good=lastChoice===q.correct;feedback=`<div class="feedback ${good?'good':'bad'}"><strong>${good?'✓ נכון':'✗ לא נכון'}</strong><div class="explanation">${formatMathHtml(q.explanation)}</div></div><div style="margin-top:12px"><button class="primary-btn" onclick="nextQuestion()">${practice.index===practice.list.length-1?'סיום האימון':'לשאלה הבאה'}</button></div>`}const timer=practice.timed?`<span id="psycho-timer" class="pill">⏱ ${formatPsychoTime(practice.timeLeft)}</span>`:'';document.getElementById('app').innerHTML=`<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">${q.category} · ${q.topic}</span>${timer}</div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${progress}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${practice.index+1} מתוך ${practice.list.length}</div><div class="question">${formatMathHtml(q.prompt)}</div><div class="answers">${answers}</div>${feedback}</div></div>`}
+function psyConfetti(count=14){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const colors=['#58b957','#4f8ef7','#8667e8','#ff9f43','#ffd166'];
+  for(let i=0;i<count;i++){
+    const el=document.createElement('i');
+    el.className='psy-confetti';
+    el.style.left=(45+Math.random()*10)+'vw';
+    el.style.top=(12+Math.random()*8)+'vh';
+    el.style.background=colors[i%colors.length];
+    el.style.setProperty('--drift',((Math.random()-.5)*260)+'px');
+    el.style.animationDelay=(Math.random()*.12)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),1400);
+  }
+}
+function psyXpFloat(amount){
+  const el=document.createElement('div');
+  el.className='psy-xp-float';
+  el.textContent='+'+amount+' XP';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1150);
+}
+function psyHaptic(good){
+  try{if(navigator.vibrate)navigator.vibrate(good?18:[28,35,28])}catch(e){}
+}
+
+function answerQuestion(choice){
+  if(!practice||practice.answeredCurrent)return;
+  const q=practice.list[practice.index];
+  practice.answeredCurrent=true;lastChoice=choice;
+  const good=choice===q.correct;
+  state.answered++;state.todayAnswered++;state.xp+=good?10:3;
+  if(good){state.correct++;practice.sessionCorrect++}
+  updateStreak();
+  const t=topicStat(q.topic);
+  state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
+  updateWordReview(q,good);
+  if(!good){
+    const existing=state.errors.find(e=>e.id===q.id);
+    if(existing){existing.count++;existing.lastAt=new Date().toISOString()}
+    else state.errors.push({id:q.id,word:q.word||null,category:q.category,topic:q.topic,prompt:q.prompt.replace(/<[^>]*>/g,''),correctText:q.answers[q.correct],explanation:q.explanation.replace(/<[^>]*>/g,''),count:1,lastAt:new Date().toISOString()})
+  }
+  saveLocal();
+  renderQuestion();
+  psyXpFloat(good?10:3);psyHaptic(good);if(good)psyConfetti(9);
+}
+function renderQuestion(){const q=practice.list[practice.index],done=practice.answeredCurrent,progress=Math.round((practice.index+1)/practice.list.length*100);const answers=q.answers.map((a,i)=>{let cls='answer';if(done&&i===q.correct)cls+=' correct';if(done&&i===lastChoice&&i!==q.correct)cls+=' wrong';return`<button class="${cls}" ${done?'disabled':''} onclick="answerQuestion(${i})">${formatMathHtml(a)}</button>`}).join('');let feedback='';if(done){const good=lastChoice===q.correct;feedback=`<div class="feedback ${good?'good':'bad'}"><strong>${good?'✓ נכון! מעולה':'✗ כמעט — הנה ההסבר'}</strong><div class="explanation">${formatMathHtml(q.explanation)}</div></div><div style="margin-top:12px"><button class="primary-btn" onclick="nextQuestion()">${practice.index===practice.list.length-1?'סיום האימון':'לשאלה הבאה'}</button></div>`}const timer=practice.timed?`<span id="psycho-timer" class="pill">⏱ ${formatPsychoTime(practice.timeLeft)}</span>`:'';document.getElementById('app').innerHTML=`<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">${q.category} · ${q.topic}</span>${timer}</div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${progress}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${practice.index+1} מתוך ${practice.list.length}</div><div class="question">${formatMathHtml(q.prompt)}</div><div class="answers">${answers}</div>${feedback}</div></div>`}
 function nextQuestion(){if(practice.index<practice.list.length-1){practice.index++;practice.answeredCurrent=false;lastChoice=null;renderQuestion()}else finishPractice()}
-function finishPractice(){clearInterval(psychoTimer);if(practice?.timed){state.simulationHistory=state.simulationHistory||[];state.simulationHistory.push({date:new Date().toISOString(),score:percent(practice.sessionCorrect,practice.list.length),correct:practice.sessionCorrect,total:practice.list.length});state.simulationHistory=state.simulationHistory.slice(-20)}if(practice?.kind==='quick'&&!practice.rewarded){const id=practice.lessonId||'daily',acc=percent(practice.sessionCorrect,practice.list.length),s=state.lessonStats?.[id]||{completed:0,bestAccuracy:0};state.lessonStats=state.lessonStats||{};state.lessonStats[id]={completed:(s.completed||0)+1,bestAccuracy:Math.max(s.bestAccuracy||0,acc)};state.xp+=20;practice.rewarded=true}saveLocal();view='summary';render()}
-function summary(){const sim=practice?.timed;return`<div class="app-shell">${topbar()}<div class="practice-card" style="text-align:center"><div class="emoji">🏁</div><h2>${sim?'הסימולציה הושלמה':'השיעור הושלם 🎉'}</h2><p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':'יפה. ההתקדמות נשמרה ואפשר להמשיך לעוד שיעור קצר.'}</p><div class="stats" style="margin:20px 0"><div class="stat"><strong>${practice?.sessionCorrect||0}</strong><span>נכונות</span></div><div class="stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div><div class="stat"><strong>${percent(practice?.sessionCorrect||0,practice?.list.length||0)}%</strong><span>דיוק</span></div></div><button class="primary-btn" onclick="go('home')">חזרה לבית</button></div>${nav('')}</div>`}
+function finishPractice(){
+  clearInterval(psychoTimer);
+  if(practice?.timed){
+    state.simulationHistory=state.simulationHistory||[];
+    state.simulationHistory.push({date:new Date().toISOString(),score:percent(practice.sessionCorrect,practice.list.length),correct:practice.sessionCorrect,total:practice.list.length});
+    state.simulationHistory=state.simulationHistory.slice(-20);
+  }
+  let bonus=0;
+  if(practice?.kind==='quick'&&!practice.rewarded){
+    const id=practice.lessonId||'daily',acc=percent(practice.sessionCorrect,practice.list.length),s=state.lessonStats?.[id]||{completed:0,bestAccuracy:0};
+    state.lessonStats=state.lessonStats||{};
+    state.lessonStats[id]={completed:(s.completed||0)+1,bestAccuracy:Math.max(s.bestAccuracy||0,acc)};
+    state.xp+=20;practice.rewarded=true;bonus=20;
+  }
+  practice.finishBonus=bonus;
+  saveLocal();view='summary';render();
+  if(!practice?.timed){psyConfetti(38);psyHaptic(true);if(bonus)psyXpFloat(bonus)}
+}
+function summary(){
+  const sim=practice?.timed;
+  const accuracy=percent(practice?.sessionCorrect||0,practice?.list.length||0);
+  return`<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center">
+    <div class="finish-emoji">${sim?'🏁':accuracy>=80?'🏆':'🎉'}</div>
+    <h2>${sim?'הסימולציה הושלמה':'השיעור הושלם!'}</h2>
+    <div class="psy-score-ring" style="--score:${accuracy}%"><strong>${accuracy}%</strong></div>
+    <p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':`ענית נכון על ${practice?.sessionCorrect||0} מתוך ${practice?.list.length||0}${practice?.finishBonus?' · קיבלת בונוס '+practice.finishBonus+' XP':''}`}</p>
+    <div class="friendly-stats" style="margin:20px 0">
+      <div class="friendly-stat"><strong>${practice?.sessionCorrect||0}</strong><span>נכונות</span></div>
+      <div class="friendly-stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div>
+      <div class="friendly-stat"><strong>${accuracy}%</strong><span>דיוק</span></div>
+      <div class="friendly-stat"><strong>${state.xp}</strong><span>XP כולל</span></div>
+    </div>
+    <button class="primary-btn" onclick="go('home')">חזרה למסלול</button>
+  </div>${nav('')}</div>`
+}
 function findErrorQuestion(e){let q=[...questions.quantitative,...questions.verbal].find(x=>x.id===e.id);if(q)return q;if(e.word){const w=wordBank.find(x=>x.word===e.word);if(w)return makeWordQuestion(w,0)}return null}
 function startErrorPractice(){const list=shuffle((state.errors||[]).map(findErrorQuestion).filter(Boolean)).slice(0,20);if(!list.length){alert('אין כרגע טעויות שניתן לתרגל.');return}practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'errors'};lastChoice=null;view='question';render()}
 function errorsView(){const content=state.errors.length?state.errors.slice().sort((a,b)=>(b.count||1)-(a.count||1)).map(e=>`<div class="error-item"><strong>${escapeHtml(e.topic)} · ${escapeHtml(e.category)}</strong><div>${formatMathHtml(escapeHtml(e.prompt))}</div><div class="small" style="margin-top:5px">תשובה נכונה — ${formatMathHtml(escapeHtml(e.correctText))}</div><div class="small">${formatMathHtml(escapeHtml(e.explanation))}</div>${e.count>1?`<span class="pill">טעית ${e.count} פעמים</span>`:''}</div>`).join(''):`<div class="empty">עדיין אין טעויות במחברת 🎉</div>`;return`<div class="app-shell">${topbar()}<div class="section-title">מחברת טעויות</div><div class="card">${content}</div>${state.errors.length?'<button class="primary-btn" onclick="startErrorPractice()">תרגל את הטעויות שלי</button>':''}${nav('errors')}</div>`}
