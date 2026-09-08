@@ -413,6 +413,8 @@
         .option.med-animate-wrong{animation:wrongShake .38s ease}
         .quick-question-enter{animation:questionIn .30s cubic-bezier(.2,.85,.35,1)}
         .answer-celebrate{box-shadow:0 0 0 4px rgba(88,185,87,.10),0 10px 24px rgba(88,185,87,.12)}
+
+        button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid rgba(79,142,247,.45);outline-offset:3px}
 </style>
 </head>
 <body>
@@ -462,6 +464,7 @@
             <div class="med-lesson-node" data-tone="purple" onclick="startMedQuickLesson('מולקולרית')"><div class="med-lesson-icon">🧬</div><div class="med-lesson-main"><h3>ביולוגיה מולקולרית</h3><p>כרומטין, תרגום, שעתוק, שכפול ושיטות</p></div><div class="med-lesson-meta" id="lesson-meta-מולקולרית">8 שאלות</div></div>
             <div class="med-lesson-node" data-tone="blue" onclick="startMedQuickLesson('ביולוגיה של התא')"><div class="med-lesson-icon">🔬</div><div class="med-lesson-main"><h3>ביולוגיה של התא</h3><p>מיון חלבונים, ממברנות, וזיקולות ואיתות</p></div><div class="med-lesson-meta" id="lesson-meta-ביולוגיה של התא">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>ממברנה, סינפסה, פוטנציאל פעולה ושריר</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">8 שאלות</div></div>
+            <div class="med-lesson-node" data-tone="purple" onclick="startMedQuickLesson('high-yield')"><div class="med-lesson-icon">🔥</div><div class="med-lesson-main"><h3>נושאים חוזרים 2025–2026</h3><p>High-yield לפי השחזורים האחרונים, ורק מתוך הסילבוס</p></div><div class="med-lesson-meta" id="lesson-meta-high-yield">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('daily')"><div class="med-lesson-icon">⭐</div><div class="med-lesson-main"><h3>שיעור יומי מעורב</h3><p>תרגול מאוזן מכל ארבעת התחומים</p></div><div class="med-lesson-meta" id="lesson-meta-daily">10 שאלות</div></div>
         </div>
 
@@ -3632,7 +3635,7 @@
         const text=getMedGreeting();
         const title=document.getElementById('dynamic-title');
         const home=document.getElementById('home-greeting');
-        if(title) title.innerText = text + " | מבחן ידע 101";
+        if(title) title.innerText = "מבחן ידע 101";
         if(home) home.innerText = text;
     }
 
@@ -3950,18 +3953,22 @@
     function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
     function medPriorityWeight(q){
         const t=((q.subtopic||'')+' '+(q.text||'')).toLowerCase();
+        const veryHigh=[
+            'גליקוליזה','קינטיקה אנזימטית','גליקוגן','מטבוליזם ליפידים','מבנה חלבונים',
+            'מבנה הכרומטין','תרגום','שעתוק ועיבוד rna','שיטות מחקר והדמיה',
+            'מיון חלבונים','מערכת ההפרשה','תנועת וזיקולות','מבנה הממברנה',
+            'פיזיולוגיית ממברנה','העברה סינפטית','פיזיולוגיית שריר שלד'
+        ];
         const high=[
-            'חלבון','חומצות אמינו','קינטיקה','גליקוליזה','מטבוליזם ליפידים',
-            'תרגום','rna','כרומטין','אפיגנט','ממברנה','שלד התא','וזיק',
-            'פוטנציאל פעולה','מערכת העצבים','שריר שלד','התכווצות שריר'
+            'שכפול dna','מנגנוני תיקון dna','רקומבינציה','איתות תאי','שלד התא',
+            'מחזור התא','צומתי תא','פוטנציאל פעולה','מערכת העצבים','חומצות אמינו'
         ];
-        const medium=[
-            'שכפול','שעתוק','תיקון dna','רקומבינ','גליקוגן','זרחון חמצוני',
-            'מחזור התא','ecm','צומתי','נוזלי גוף','הומאוסטזיס','סינפט'
-        ];
-        if(high.some(k=>t.includes(k))) return 3;
-        if(medium.some(k=>t.includes(k))) return 2;
-        return 1;
+        if(veryHigh.some(k=>t.includes(k)))return 4;
+        if(high.some(k=>t.includes(k)))return 3;
+        return 1.5;
+    }
+    function medHighYieldPool(){
+        return dbQuestions.filter(q=>medPriorityWeight(q)>=4);
     }
     function medRandomizeQuestion(q){
         const pairs=(q.options||[]).map(function(t,i){return {text:t,correct:i===q.answer};});
@@ -3983,11 +3990,13 @@
         return chosen;
     }
     function medLessonLabel(subject){
-        return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject;
+        return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject==='high-yield'?'נושאים חוזרים 2025–2026':subject;
     }
     window.startMedQuickLesson=function(subject){
         let list=[];
-        if(subject==='daily'){
+        if(subject==='high-yield'){
+            list=medWeightedSample(medHighYieldPool(),8).map(medRandomizeQuestion);
+        }else if(subject==='daily'){
             const subjects=['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה'];
             list=subjects.flatMap(s=>medWeightedSample(dbQuestions.filter(q=>q.subject===s),2).map(medRandomizeQuestion));
             const chosen=new Set(list.map(q=>q.id));
@@ -4048,9 +4057,9 @@
         updateHomeDashboard();
     }
     function updateMedLessonMeta(){
-        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','daily']){
+        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){
             const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];
-            const available=key==='daily'?Math.min(10,dbQuestions.length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
+            const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
             if(el)el.innerText=s?.completed?'✓ '+s.bestAccuracy+'%':available+' שאלות';
         }
     }
