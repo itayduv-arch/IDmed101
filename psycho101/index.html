@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260908-11">
+<link rel="manifest" href="./manifest.webmanifest?v=20260908-12">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -22,6 +22,13 @@
 .lesson-main{flex:1}.lesson-main h3{margin:0 0 4px;font-size:17px}.lesson-main p{margin:0;color:var(--muted);font-size:13px}
 .lesson-meta{font-size:12px;font-weight:800;color:var(--primary);white-space:nowrap}
 .quick-chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-soft);color:var(--primary);padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.leader-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:13px 8px;border-bottom:1px solid var(--border)}
+.leader-row:last-child{border-bottom:0}.leader-rank{font-size:20px;font-weight:900;text-align:center}
+.leader-name{font-weight:800}.leader-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.leader-xp{font-weight:900;color:var(--primary);white-space:nowrap}.leader-me{background:var(--primary-soft);border-radius:14px}
+.share-card{text-align:center}.share-card .emoji{font-size:38px;margin-bottom:8px}
+.leader-legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+
 .duo-hero{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .duo-hero .big-start{width:auto;min-width:150px;background:#fff;color:var(--primary)}
 @media(max-width:520px){.duo-hero{align-items:flex-start;flex-direction:column}.duo-hero .big-start{width:100%}}
@@ -79,7 +86,7 @@ body.dark-mode .sync-dot.on{background:var(--success)}
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260908-11";
+const PSYCHO101_BUILD_VERSION="20260908-12";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4499,7 +4506,7 @@ questions.verbal.push(...buildCampusVerbalBank());
 
 
 
-function defaultState(){return{version:7,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{}}}
+function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
@@ -4518,9 +4525,9 @@ function selectWords(count=15){const n=Date.now();const scored=wordBank.map(w=>{
 function makeWordQuestion(entry,index){const sameLevel=wordBank.filter(w=>w.word!==entry.word&&Math.abs((w.level||2)-(entry.level||2))<=1);const pool=sameLevel.length>=3?sameLevel:wordBank.filter(w=>w.word!==entry.word);const distractors=shuffle(pool).slice(0,3);const useContext=index%2===1;const options=shuffle([entry,...distractors]);const official=entry.official?'<span class="official-mark">✓</span>':'';const syn=(entry.synonyms||[]).map(escapeHtml).join(' · ');const extra=`<div class="learning-extra"><strong>מילים קרובות</strong> ${syn||'—'}<br><strong>רמה</strong> ${entry.level||2}/4 ${entry.official?' · ✓ נצפתה בחומר מאל״ו שנבדק':''}</div>`;if(useContext){return{id:`w-${entry.word}-context`,word:entry.word,category:"מילים",topic:"אוצר מילים בהקשר",prompt:`איזו מילה משלימה את המשפט בצורה הטובה ביותר?<br><br>“${entry.sentence.replace('[[word]]','_____')}”`,answers:options.map(o=>o.word),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}return{id:`w-${entry.word}-definition`,word:entry.word,category:"מילים",topic:"פירושי מילים",prompt:`מה פירוש המילה „${entry.word}”? ${official}`,answers:options.map(o=>o.definition),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}
 function buildWordQuestions(count=15){return selectWords(count).map(makeWordQuestion)}
 
-function nav(active){return`<nav class="bottom-nav"><button class="nav-btn ${active==='home'?'active':''}" onclick="go('home')"><b>⌂</b>בית</button><button class="nav-btn ${active==='practice'?'active':''}" onclick="go('practice-menu')"><b>✎</b>תרגול</button><button class="nav-btn ${active==='words'?'active':''}" onclick="go('words-dashboard')"><b>א</b>מילים</button><button class="nav-btn ${active==='errors'?'active':''}" onclick="go('errors')"><b>!</b>טעויות</button><button class="nav-btn ${active==='progress'?'active':''}" onclick="go('progress')"><b>↗</b>התקדמות</button></nav>`}
+function nav(active){return`<nav class="bottom-nav" style="grid-template-columns:repeat(6,1fr)"><button class="nav-btn ${active==='home'?'active':''}" onclick="go('home')"><b>⌂</b>בית</button><button class="nav-btn ${active==='practice'?'active':''}" onclick="go('practice-menu')"><b>✎</b>תרגול</button><button class="nav-btn ${active==='words'?'active':''}" onclick="go('words-dashboard')"><b>א</b>מילים</button><button class="nav-btn ${active==='leaderboard'?'active':''}" onclick="go('leaderboard')"><b>🏆</b>דירוג</button><button class="nav-btn ${active==='errors'?'active':''}" onclick="go('errors')"><b>!</b>טעויות</button><button class="nav-btn ${active==='progress'?'active':''}" onclick="go('progress')"><b>↗</b>התקדמות</button></nav>`}
 function syncBadge(){const cloud=cloudConfigured();return`<span class="sync-state" title="${cloud?'סנכרון ענן זמין':'התקדמות נשמרת במכשיר זה'}"><span class="sync-dot ${cloud&&state.user?'on':''}"></span>${cloud?(state.user?'מסונכרן':'לא מחובר'):'מקומי'}</span>`}
-function topbar(){const dark=isDarkMode();return`<div class="topbar"><div class="logo">IDpsycho<span>101</span></div><div class="top-actions">${syncBadge()}<button class="icon-btn" onclick="toggleTheme()" title="${dark?'מצב בהיר':'מצב חושך'}">${dark?'☀️':'🌙'}</button><button class="icon-btn" onclick="go('account')" title="חשבון וסנכרון">☁</button></div></div>`}
+function topbar(){const dark=isDarkMode();return`<div class="topbar"><div class="logo">IDpsycho<span>101</span></div><div class="top-actions">${syncBadge()}<button class="icon-btn" onclick="shareApp()" title="שתף">↗</button><button class="icon-btn" onclick="toggleTheme()" title="${dark?'מצב בהיר':'מצב חושך'}">${dark?'☀️':'🌙'}</button><button class="icon-btn" onclick="go('account')" title="חשבון וסנכרון">☁</button></div></div>`}
 function home(){
   updateStreak();saveLocal();
   const goal=Math.min(100,percent(state.todayAnswered,state.dailyGoal));
@@ -4664,7 +4671,99 @@ function startErrorPractice(){const list=shuffle((state.errors||[]).map(findErro
 function errorsView(){const content=state.errors.length?state.errors.slice().sort((a,b)=>(b.count||1)-(a.count||1)).map(e=>`<div class="error-item"><strong>${escapeHtml(e.topic)} · ${escapeHtml(e.category)}</strong><div>${escapeHtml(e.prompt)}</div><div class="small" style="margin-top:5px">תשובה נכונה — ${escapeHtml(e.correctText)}</div><div class="small">${escapeHtml(e.explanation)}</div>${e.count>1?`<span class="pill">טעית ${e.count} פעמים</span>`:''}</div>`).join(''):`<div class="empty">עדיין אין טעויות במחברת 🎉</div>`;return`<div class="app-shell">${topbar()}<div class="section-title">מחברת טעויות</div><div class="card">${content}</div>${state.errors.length?'<button class="primary-btn" onclick="startErrorPractice()">תרגל את הטעויות שלי</button>':''}${nav('errors')}</div>`}
 function progressView(){const topics=Object.entries(state.topicStats);const content=topics.length?topics.sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered)).map(([topic,s])=>`<div class="topic-row"><div><strong>${topic}</strong><div class="small">${s.correct} נכונות מתוך ${s.answered}</div></div><span class="pill">${percent(s.correct,s.answered)}%</span></div>`).join(''):`<div class="empty">פתור כמה שאלות כדי לראות ניתוח לפי נושא.</div>`;const sims=(state.simulationHistory||[]).slice(-5).reverse();const simHtml=sims.length?sims.map(s=>`<div class="topic-row"><span>${new Date(s.date).toLocaleDateString('he-IL')} · ${s.full?'מלאה':'מיני'}</span><span class="pill">${s.score}%</span></div>`).join(''):'<div class="empty">עדיין לא בוצעה סימולציה.</div>';return`<div class="app-shell">${topbar()}<div class="section-title">התקדמות</div><div class="stats" style="margin-bottom:12px"><div class="stat"><strong>${state.answered}</strong><span>שאלות</span></div><div class="stat"><strong>${state.correct}</strong><span>נכונות</span></div><div class="stat"><strong>${percent(state.correct,state.answered)}%</strong><span>דיוק</span></div></div><div class="card">${content}</div><div class="section-title">סימולציות אחרונות</div><div class="card">${simHtml}</div>${nav('progress')}</div>`}
 
-function accountView(){const configured=cloudConfigured(),logged=!!state.user;return`<div class="app-shell">${topbar()}<div class="section-title">חשבון וסנכרון</div><div class="card">${configured?(logged?`<div class="success-note">מחובר כ־${escapeHtml(state.user.email||'משתמש')}. ההתקדמות נשמרת בענן וניתנת למשיכה ממחשב ומטלפון.</div><div class="section-title">סיסמה לכניסה ממכשיר נוסף</div><p class="small">אפשר להגדיר כאן סיסמה פעם אחת. אחר כך בטלפון או במחשב אחר אפשר להתחבר מיד עם האימייל והסיסמה בלי לחכות למייל.</p><div class="form-group"><label>סיסמה חדשה</label><input id="new-password" type="password" autocomplete="new-password" placeholder="לפחות 6 תווים"></div><button class="secondary-btn" onclick="setCloudPassword()">הגדר / שנה סיסמה</button><div id="password-msg" class="small" style="margin-top:10px"></div><div class="actions"><button class="primary-btn" onclick="syncNow()">סנכרן עכשיו</button><button class="secondary-btn" onclick="cloudLogout()">התנתק</button></div>`:`<p><strong>כניסה מהירה עם סיסמה</strong></p><div class="form-group"><label>אימייל</label><input id="login-email" type="email" autocomplete="email" placeholder="name@example.com"></div><div class="form-group"><label>סיסמה</label><input id="login-password" type="password" autocomplete="current-password" placeholder="הסיסמה שהגדרת"></div><button class="primary-btn" onclick="loginWithPassword()">התחבר</button><div id="password-login-msg" class="small" style="margin-top:10px"></div><div class="section-title">או התחברות בקישור למייל</div><p class="small">Magic Link מוגבל בכמות המיילים ש-Supabase שולח. אם קיבלת הודעת מגבלה, עדיף להשתמש בסיסמה.</p><div class="form-group"><label>אימייל</label><input id="email" type="email" autocomplete="email" placeholder="name@example.com"></div><button class="secondary-btn" onclick="requestMagicLink()">שלח קישור התחברות</button><div id="auth-msg" class="small" style="margin-top:10px"></div>`):`<div class="notice"><strong>מצב מקומי פעיל.</strong><br>האפליקציה כבר עובדת בטלפון ובמחשב, אך סנכרון אוטומטי ביניהם דורש חיבור חד־פעמי ל־Supabase.</div>`}<div class="section-title">גיבוי ידני</div><p class="small">אפשר להעביר את ההתקדמות בין מכשירים גם באופן ידני.</p><div class="actions"><button class="secondary-btn" onclick="exportProgress()">ייצא התקדמות</button><label class="file-label">ייבא התקדמות<input hidden type="file" accept="application/json" onchange="importProgress(event)"></label></div></div><div class="section-title">התקנה בטלפון</div><div class="card"><p class="small">באנדרואיד אפשר לבחור התקנת אפליקציה בדפדפן. ב־iPhone אפשר לבחור שיתוף ואז הוספה למסך הבית.</p>${deferredInstallPrompt?'<button class="primary-btn" onclick="installApp()">התקן את IDpsycho101</button>':''}</div>${nav('')}</div>`}
+
+async function shareApp(){
+  const url=location.origin+location.pathname;
+  const data={title:"IDpsycho101",text:"בוא ללמוד איתי פסיכומטרי ב-IDpsycho101 🎯",url};
+  try{
+    if(navigator.share)await navigator.share(data);
+    else{await navigator.clipboard.writeText(url);alert("הקישור הועתק")}
+  }catch(e){}
+}
+function leaderboardAccuracy(r){return r.answered?Math.round((r.correct||0)/r.answered*100):0}
+function compareLeaderboard(a,b){
+  if((b.xp||0)!==(a.xp||0))return (b.xp||0)-(a.xp||0);
+  const accDiff=leaderboardAccuracy(b)-leaderboardAccuracy(a);if(accDiff)return accDiff;
+  if((b.streak||0)!==(a.streak||0))return (b.streak||0)-(a.streak||0);
+  return (b.answered||0)-(a.answered||0);
+}
+async function pushLeaderboard(){
+  if(!state.user||!state.displayName)return;
+  try{
+    const sb=await getSupabase();
+    const {error}=await sb.from('psycho101_leaderboard').upsert({
+      user_id:state.user.id,
+      display_name:state.displayName.trim().slice(0,24),
+      xp:Math.max(0,state.xp||0),
+      streak:Math.max(0,state.streak||0),
+      answered:Math.max(0,state.answered||0),
+      correct:Math.max(0,state.correct||0),
+      updated_at:new Date().toISOString()
+    },{onConflict:'user_id'});
+    if(error)throw error;
+  }catch(e){console.error("Leaderboard push failed",e)}
+}
+async function loadLeaderboard(){
+  try{
+    const sb=await getSupabase();
+    const {data,error}=await sb.from('psycho101_leaderboard')
+      .select('user_id,display_name,xp,streak,answered,correct,updated_at')
+      .limit(100);
+    if(error)throw error;
+    return (data||[]).sort(compareLeaderboard);
+  }catch(e){console.error("Leaderboard load failed",e);return[]}
+}
+async function leaderboardView(){
+  document.getElementById('app').innerHTML=`<div class="app-shell">${topbar()}<div class="section-title">🏆 Leaderboard</div><div class="card"><div class="empty">טוען דירוג...</div></div>${nav('leaderboard')}</div>`;
+  const rows=await loadLeaderboard(),me=state.user?.id,medals=['🥇','🥈','🥉'];
+  const html=rows.length?rows.map((r,i)=>{
+    const acc=leaderboardAccuracy(r);
+    return `<div class="leader-row ${r.user_id===me?'leader-me':''}"><div class="leader-rank">${medals[i]||'#'+(i+1)}</div><div><div class="leader-name">${escapeHtml(r.display_name)}${r.user_id===me?' · אתה':''}</div><div class="leader-sub">דיוק ${acc}% · 🔥 ${r.streak||0} · ${r.answered||0} שאלות</div></div><div class="leader-xp">${r.xp||0} XP</div></div>`;
+  }).join(''):'<div class="empty">עדיין אין אף אחד בדירוג. תהיה הראשון 🏆</div>';
+  document.getElementById('app').innerHTML=`<div class="app-shell">${topbar()}<div class="section-title">🏆 Leaderboard</div><div class="leader-legend"><span class="quick-chip">1. XP</span><span class="quick-chip">2. דיוק</span><span class="quick-chip">3. רצף</span><span class="quick-chip">4. שאלות שנענו</span></div><div class="card">${html}</div><div class="section-title">הזמן חברים</div><div class="card share-card"><div class="emoji">👥</div><p>כל מי שמקבל את הקישור יכול להשתמש באפליקציה. כדי להופיע בדירוג צריך חשבון וכינוי.</p><button class="primary-btn" onclick="shareApp()">שתף את IDpsycho101</button></div>${nav('leaderboard')}</div>`;
+}
+async function saveDisplayName(){
+  const input=document.getElementById('display-name'),msg=document.getElementById('display-name-msg'),name=input?.value?.trim();
+  if(!name||name.length<2){if(msg)msg.textContent='בחר כינוי של לפחות 2 תווים';return}
+  state.displayName=name.slice(0,24);saveLocal();await pushLeaderboard();
+  if(msg)msg.textContent='הכינוי נשמר';render();
+}
+async function signUpWithPassword(){
+  const name=document.getElementById('signup-name')?.value?.trim();
+  const email=document.getElementById('signup-email')?.value?.trim();
+  const password=document.getElementById('signup-password')?.value||'';
+  const msg=document.getElementById('signup-msg');
+  if(!name||name.length<2||!email||password.length<6){if(msg)msg.textContent='צריך כינוי, אימייל וסיסמה של לפחות 6 תווים';return}
+  if(msg)msg.textContent='יוצר חשבון...';
+  try{
+    const sb=await getSupabase(),redirect=location.origin+location.pathname;
+    const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirect,data:{display_name:name.slice(0,24)}}});
+    if(error)throw error;
+    state.displayName=name.slice(0,24);saveLocal();
+    if(data?.session&&data?.user){state.user={id:data.user.id,email:data.user.email};await pushLeaderboard();await cloudPush();if(msg)msg.textContent='החשבון נוצר והתחברת';render()}
+    else if(msg)msg.textContent='החשבון נוצר. אשר את המייל ואז התחבר.';
+  }catch(e){if(msg)msg.textContent='לא הצלחנו ליצור חשבון: '+(e?.message||'שגיאה לא ידועה')}
+}
+function accountView(){const configured=cloudConfigured(),logged=!!state.user;return`<div class="app-shell">${topbar()}<div class="section-title">חשבון וסנכרון</div><div class="card">${configured?(logged?`
+<div class="success-note">מחובר כ־${escapeHtml(state.user.email||'משתמש')}.</div>
+<div class="section-title">הכינוי שלך ב-Leaderboard</div>
+<div class="form-group"><label>כינוי ציבורי</label><input id="display-name" maxlength="24" value="${escapeHtml(state.displayName||'')}" placeholder="למשל Itay"></div>
+<button class="secondary-btn" onclick="saveDisplayName()">שמור כינוי</button><div id="display-name-msg" class="small" style="margin-top:8px"></div>
+<div class="actions"><button class="primary-btn" onclick="syncNow()">סנכרן עכשיו</button><button class="secondary-btn" onclick="cloudLogout()">התנתק</button></div>
+`:`
+<div class="section-title" style="margin-top:0">יש לי חשבון</div>
+<div class="form-group"><label>אימייל</label><input id="login-email" type="email" autocomplete="email" placeholder="name@example.com"></div>
+<div class="form-group"><label>סיסמה</label><input id="login-password" type="password" autocomplete="current-password" placeholder="סיסמה"></div>
+<button class="primary-btn" onclick="loginWithPassword()">התחבר</button><div id="password-login-msg" class="small" style="margin-top:8px"></div>
+<div class="section-title">משתמש חדש</div>
+<div class="form-group"><label>כינוי ל-Leaderboard</label><input id="signup-name" maxlength="24" placeholder="כינוי ציבורי"></div>
+<div class="form-group"><label>אימייל</label><input id="signup-email" type="email" autocomplete="email" placeholder="name@example.com"></div>
+<div class="form-group"><label>סיסמה</label><input id="signup-password" type="password" autocomplete="new-password" placeholder="לפחות 6 תווים"></div>
+<button class="secondary-btn" onclick="signUpWithPassword()">צור חשבון</button><div id="signup-msg" class="small" style="margin-top:8px"></div>
+`):`<div class="notice">מצב מקומי פעיל.</div>`}
+<div class="section-title">שיתוף</div><button class="secondary-btn" onclick="shareApp()">שתף את IDpsycho101</button>
+<div class="section-title">גיבוי ידני</div><div class="actions"><button class="secondary-btn" onclick="exportProgress()">ייצא התקדמות</button><label class="file-label">ייבא התקדמות<input hidden type="file" accept="application/json" onchange="importProgress(event)"></label></div>
+</div>${nav('')}</div>`}
 function go(next){clearInterval(psychoTimer);view=next;practice=null;lastChoice=null;render()}
 function resetData(){if(confirm('לאפס את כל נתוני התרגול במכשיר זה?')){state=defaultState();saveLocal();render()}}
 function exportProgress(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='psycho101-progress.json';a.click();URL.revokeObjectURL(url)}
@@ -4674,7 +4773,7 @@ function importProgress(ev){const f=ev.target.files?.[0];if(!f)return;const r=ne
 let supabaseClient=null,supabaseLoadPromise=null;
 function cloudConfigured(){return Boolean(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_ANON_KEY)}
 function loadSupabaseSdk(){if(window.supabase)return Promise.resolve(window.supabase);if(supabaseLoadPromise)return supabaseLoadPromise;supabaseLoadPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';script.async=true;script.onload=()=>resolve(window.supabase);script.onerror=()=>reject(new Error('Supabase SDK failed to load'));document.head.appendChild(script)});return supabaseLoadPromise}
-async function getSupabase(){if(!cloudConfigured())return null;if(supabaseClient)return supabaseClient;const sdk=await loadSupabaseSdk();supabaseClient=sdk.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});supabaseClient.auth.onAuthStateChange(async(event,session)=>{const user=session?.user||null;state.user=user?{id:user.id,email:user.email}:null;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));if(user&&(event==='SIGNED_IN'||event==='INITIAL_SESSION')){await syncNow(true)}render()});return supabaseClient}
+async function getSupabase(){if(!cloudConfigured())return null;if(supabaseClient)return supabaseClient;const sdk=await loadSupabaseSdk();supabaseClient=sdk.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});supabaseClient.auth.onAuthStateChange(async(event,session)=>{const user=session?.user||null;state.user=user?{id:user.id,email:user.email}:null;if(user&&!state.displayName&&user.user_metadata?.display_name)state.displayName=String(user.user_metadata.display_name).slice(0,24);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));if(user&&(event==='SIGNED_IN'||event==='INITIAL_SESSION')){await syncNow(true);await pushLeaderboard()}render()});return supabaseClient}
 async function requestMagicLink(){const email=document.getElementById('email')?.value?.trim(),msg=document.getElementById('auth-msg');if(!email){msg.textContent='הזן אימייל תקין';return}msg.textContent='שולח…';try{const sb=await getSupabase();const redirect=location.origin+location.pathname;const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirect}});if(error)throw error;msg.textContent='נשלח קישור התחברות. פתח אותו, ואז חזור ל-IDpsycho101.'}catch(e){const code=e?.code||e?.status||'';const details=e?.message||'שגיאה לא ידועה';if(String(code)==='429'||/rate|seconds|minute|limit/i.test(details)){msg.textContent='מכסת מיילי ההתחברות הזמנית של Supabase נוצלה. אל תלחץ שוב ושוב. נסה מאוחר יותר, או התחבר עם סיסמה.'}else{msg.textContent='שליחת הקישור נכשלה: '+details+(code?' ('+code+')':'');}console.error('Supabase login error',e)}}
 async function loginWithPassword(){const email=document.getElementById('login-email')?.value?.trim(),password=document.getElementById('login-password')?.value||'',msg=document.getElementById('password-login-msg');if(!email||!password){msg.textContent='הזן אימייל וסיסמה';return}msg.textContent='מתחבר…';try{const sb=await getSupabase();const{data,error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;const user=data?.user;state.user=user?{id:user.id,email:user.email}:state.user;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));await syncNow(true);msg.textContent='התחברת בהצלחה';render()}catch(e){msg.textContent='הכניסה נכשלה. בדוק את האימייל והסיסמה.';console.error('Password login error',e)}}
 async function setCloudPassword(){const password=document.getElementById('new-password')?.value||'',msg=document.getElementById('password-msg');if(password.length<6){msg.textContent='הסיסמה צריכה להכיל לפחות 6 תווים';return}msg.textContent='שומר…';try{const sb=await getSupabase();const{error}=await sb.auth.updateUser({password});if(error)throw error;msg.textContent='הסיסמה נשמרה. מעכשיו אפשר להתחבר איתה ממכשיר אחר.'}catch(e){msg.textContent='לא הצלחנו לשמור את הסיסמה: '+(e?.message||'שגיאה לא ידועה');console.error('Set password error',e)}}
@@ -4682,9 +4781,9 @@ async function hydrateCloudUser(){if(!cloudConfigured())return;try{const sb=awai
 async function cloudLogout(){try{const sb=await getSupabase();await sb.auth.signOut()}catch{}state.user=null;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));render()}
 let cloudTimer=null;function debouncedCloudSave(){clearTimeout(cloudTimer);if(cloudConfigured()&&state.user)cloudTimer=setTimeout(()=>cloudPush().catch(()=>{}),1200)}
 function syncPayload(){const copy=JSON.parse(JSON.stringify(state));delete copy.user;delete copy.lastSync;return copy}
-async function cloudPush(){if(!state.user)return;const sb=await getSupabase();const{error}=await sb.from('psycho101_progress').upsert({user_id:state.user.id,state:syncPayload(),updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;state.lastSync=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+async function cloudPush(){if(!state.user)return;const sb=await getSupabase();const{error}=await sb.from('psycho101_progress').upsert({user_id:state.user.id,state:syncPayload(),updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;state.lastSync=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));await pushLeaderboard()}
 async function cloudPull(){if(!state.user)return null;const sb=await getSupabase();const{data,error}=await sb.from('psycho101_progress').select('state,updated_at').eq('user_id',state.user.id).maybeSingle();if(error)throw error;return data||null}
-function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={...(remote.topicStats||{}),...(local.topicStats||{})};out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lessonStats={...(remote.lessonStats||{})};for(const [id,s] of Object.entries(local.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.user=local.user;return out}
+function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={...(remote.topicStats||{}),...(local.topicStats||{})};out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lessonStats={...(remote.lessonStats||{})};for(const [id,s] of Object.entries(local.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.displayName=local.displayName||remote.displayName||"";out.user=local.user;return out}
 async function syncNow(silent=false){try{const row=await cloudPull();if(row?.state)state=mergeStates(state,row.state);await cloudPush();if(!silent)alert('הסנכרון הושלם');render()}catch(e){if(!silent)alert('הסנכרון נכשל. בדוק חיבור והגדרות ענן.')}}
 
 const THEME_KEY='idpsycho101-theme';
@@ -4704,7 +4803,7 @@ applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (async()=>{if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}render()})();
 
