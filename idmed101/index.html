@@ -626,21 +626,116 @@
     ];
 
     // --- Safe Storage Initialization ---
-    let appData = { cards: {}, questions: {}, status: {}, mistakes: {} };
+    let appData = {
+        cards:{}, questions:{}, status:{}, mistakes:{},
+        itemStats:{}, errors:[], topicStats:{},
+        answered:0, correct:0, xp:0, streak:1,
+        todayAnswered:0, dailyGoal:20, lastStudyDate:null,
+        simulationHistory:[]
+    };
 
     try {
         let savedData = localStorage.getItem(MED101_STORAGE); 
         if (savedData) {
             let parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object') {
-                appData.cards = parsed.cards || {};
-                appData.questions = parsed.questions || {};
-                appData.status = parsed.status || {}; 
-                appData.mistakes = parsed.mistakes || {}; 
+                appData = {
+                    ...appData,
+                    ...parsed,
+                    cards: parsed.cards || {},
+                    questions: parsed.questions || {},
+                    status: parsed.status || {},
+                    mistakes: parsed.mistakes || {},
+                    itemStats: parsed.itemStats || {},
+                    errors: parsed.errors || [],
+                    topicStats: parsed.topicStats || {},
+                    simulationHistory: parsed.simulationHistory || []
+                };
             }
         }
     } catch (e) {
         console.error("Local Storage Error");
+    }
+
+    const MED_DAY = 24*60*60*1000;
+    const MED_REVIEW_INTERVALS = [0, 1, 2, 4, 8, 16, 32];
+
+    function medToday(){ return new Date().toISOString().slice(0,10); }
+    function updateMedStreak(){
+        const today=medToday();
+        if(!appData.lastStudyDate){ appData.lastStudyDate=today; return; }
+        if(appData.lastStudyDate===today) return;
+        const prev=new Date(appData.lastStudyDate+'T12:00:00');
+        const cur=new Date(today+'T12:00:00');
+        const days=Math.round((cur-prev)/MED_DAY);
+        appData.streak=days===1?(appData.streak||1)+1:1;
+        appData.todayAnswered=0;
+        appData.lastStudyDate=today;
+    }
+    function getItemStat(id){
+        return appData.itemStats[id] || {box:0,seen:0,correct:0,lastReviewed:null};
+    }
+    function updateReview(type,item,good){
+        const s=getItemStat(item.id);
+        const box=good?Math.min(6,(s.box||0)+1):0;
+        const dueAt=good?Date.now()+MED_REVIEW_INTERVALS[box]*MED_DAY:Date.now()+10*60*1000;
+        appData.itemStats[item.id]={
+            box,
+            seen:(s.seen||0)+1,
+            correct:(s.correct||0)+(good?1:0),
+            lastReviewed:new Date().toISOString()
+        };
+        appData[type][item.id]=dueAt;
+        appData.status[item.id]=good?'correct':'wrong';
+        return {box,dueAt};
+    }
+    function topicStatMed(topic){
+        return appData.topicStats[topic] || {answered:0,correct:0};
+    }
+    function recordAnswer(item,good,source='practice',userAnswer=null){
+        updateMedStreak();
+        appData.answered=(appData.answered||0)+1;
+        appData.todayAnswered=(appData.todayAnswered||0)+1;
+        appData.xp=(appData.xp||0)+(good?10:3);
+        if(good) appData.correct=(appData.correct||0)+1;
+        const t=topicStatMed(item.subtopic);
+        appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
+        if(!good){
+            appData.mistakes[item.subtopic]=(appData.mistakes[item.subtopic]||0)+1;
+            const id=item.id;
+            const existing=appData.errors.find(e=>e.id===id);
+            const payload={
+                id,
+                subject:item.subject||'',
+                subtopic:item.subtopic||'',
+                prompt:item.text||item.front||'',
+                correctText:item.options?item.options[item.answer]:(item.back||''),
+                explanation:item.explanation||'',
+                reference:item.reference||'',
+                source,
+                count:1,
+                lastAt:new Date().toISOString()
+            };
+            if(existing){ existing.count=(existing.count||1)+1; existing.lastAt=payload.lastAt; existing.source=source; }
+            else appData.errors.push(payload);
+        }
+    }
+    function accuracyMed(){ return appData.answered?Math.round((appData.correct||0)/appData.answered*100):0; }
+    function dueCountMed(){
+        const now=Date.now();
+        let n=0;
+        for(const q of dbQuestions) if((appData.questions[q.id]||0)<=now) n++;
+        for(const q of dbFlashcards) if((appData.cards[q.id]||0)<=now) n++;
+        return n;
+    }
+    function masteredCountMed(){
+        return Object.values(appData.itemStats||{}).filter(s=>(s.box||0)>=4).length;
+    }
+    function weakestTopicsMed(){
+        return Object.entries(appData.topicStats||{})
+            .filter(([,s])=>s.answered>0)
+            .map(([topic,s])=>({topic,answered:s.answered,accuracy:Math.round(s.correct/s.answered*100)}))
+            .sort((a,b)=>a.accuracy-b.accuracy || b.answered-a.answered);
     }
 
     function saveData() { 
@@ -700,10 +795,12 @@
     function showSection(sectionId) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        
-        document.getElementById('tab-' + sectionId).classList.add('active');
-        document.getElementById(sectionId).classList.add('active');
-        
+        const tab=document.getElementById('tab-' + sectionId);
+        const section=document.getElementById(sectionId);
+        if(tab) tab.classList.add('active');
+        if(section) section.classList.add('active');
+
+        if(sectionId === 'home') updateHomeDashboard();
         if(sectionId === 'flashcards') {
             if(!currentFC) loadFlashcard();
             updateStatusLists('cards', dbFlashcards, 'fc');
@@ -713,6 +810,8 @@
             updateStatusLists('questions', dbQuestions, 'q');
         }
         if(sectionId === 'weakpoints') updateWeakPoints();
+        if(sectionId === 'errors') renderMedErrors();
+        if(sectionId === 'progress') renderMedProgress();
     }
 
     function populateFilters() {
@@ -853,19 +952,11 @@
 
     window.processFlashcard = function(knewIt) {
         if (!currentFC) return;
-        const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
-        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-
-        if (knewIt) { 
-            appData.cards[currentFC.id] = Date.now() + SEVEN_DAYS; 
-            appData.status[currentFC.id] = 'correct';
-        } else { 
-            appData.cards[currentFC.id] = Date.now() + TWO_DAYS;
-            appData.status[currentFC.id] = 'wrong';
-            appData.mistakes[currentFC.subtopic] = (appData.mistakes[currentFC.subtopic] || 0) + 1;
-        }
-        saveData(); 
-        loadFlashcard(true); 
+        updateReview('cards',currentFC,knewIt);
+        recordAnswer(currentFC,knewIt,'flashcard');
+        saveData();
+        updateHomeDashboard();
+        loadFlashcard(true);
     };
 
     // --- Questions Logic ---
@@ -907,16 +998,14 @@
 
     window.checkAnswer = function(selectedIndex) {
         if (!currentQ) return;
-        const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
-        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
         let feedback = document.getElementById('q-feedback');
         let expl = document.getElementById('q-explanation');
         let nextBtn = document.getElementById('q-next');
-        
+
         expl.classList.remove('hidden');
         nextBtn.classList.remove('hidden');
-        
+
         let buttons = document.querySelectorAll('#q-options .option');
         buttons.forEach((btn, idx) => {
             btn.disabled = true;
@@ -924,32 +1013,32 @@
             else if (idx === selectedIndex) btn.classList.add('wrong');
         });
 
-        if (selectedIndex === currentQ.answer) {
-            feedback.innerText = "תשובה נכונה! (יופיע שוב בעוד שבוע לחזרה)";
+        const good=selectedIndex===currentQ.answer;
+        const review=updateReview('questions',currentQ,good);
+        recordAnswer(currentQ,good,'question',selectedIndex);
+
+        if(good){
+            feedback.innerText = review.box>=4 ? "נכון! השאלה בשליטה גבוהה ותתרחק בחזרות." : "נכון! מרווח החזרה גדל.";
             feedback.style.color = "#27ae60";
-            appData.questions[currentQ.id] = Date.now() + SEVEN_DAYS;
-            appData.status[currentQ.id] = 'correct';
-        } else {
-            feedback.innerText = "טעות. קרא את ההסבר ולמד להבא (יופיע שוב בעוד יומיים)";
+        }else{
+            feedback.innerText = "טעות. השאלה תופיע שוב בקרוב ותיכנס למחברת הטעויות.";
             feedback.style.color = "#e74c3c";
-            appData.questions[currentQ.id] = Date.now() + TWO_DAYS;
-            appData.status[currentQ.id] = 'wrong';
-            appData.mistakes[currentQ.subtopic] = (appData.mistakes[currentQ.subtopic] || 0) + 2; 
         }
-        
         saveData();
         feedback.classList.remove('hidden');
+        updateHomeDashboard();
     };
 
     window.nextQuestion = function() { loadQuestion(true); };
 
     // --- Simulation Logic ---
     window.startSimulation = function() {
-        let allQ = [...dbQuestions];
+        let allQ = dbQuestions.map(q=>({...q,options:[...q.options]}));
         allQ.sort(() => 0.5 - Math.random());
         simQuestions = allQ.slice(0, 15);
         if(simQuestions.length < 15) simQuestions = allQ;
-        
+        simQuestions.forEach(q=>delete q.userAnswer);
+
         currentSimIndex = 0;
         simScore = 0;
         simTimeLeft = 15 * 60;
@@ -957,10 +1046,9 @@
         document.getElementById('sim-intro').classList.add('hidden');
         document.getElementById('sim-results').classList.add('hidden');
         document.getElementById('sim-active').classList.remove('hidden');
-        
+
         clearInterval(simTimerInterval);
         simTimerInterval = setInterval(updateSimTimer, 1000);
-        
         renderSimQuestion();
     };
 
@@ -984,7 +1072,6 @@
         let q = simQuestions[currentSimIndex];
         document.getElementById('sim-progress').innerText = `שאלה ${currentSimIndex + 1} מתוך ${simQuestions.length}`;
         document.getElementById('sim-q-text').innerText = q.text;
-        
         let optionsHtml = "";
         q.options.forEach((opt, idx) => {
             optionsHtml += `<button class="option sim-option" id="sim-opt-${idx}" onclick="selectSimOption(${idx})">${opt}</button>`;
@@ -1004,9 +1091,6 @@
             alert("אנא בחר תשובה לפני המעבר לשאלה הבאה.");
             return;
         }
-        if (simQuestions[currentSimIndex].userAnswer === simQuestions[currentSimIndex].answer) {
-            simScore++;
-        }
         currentSimIndex++;
         renderSimQuestion();
     };
@@ -1015,70 +1099,131 @@
         clearInterval(simTimerInterval);
         document.getElementById('sim-active').classList.add('hidden');
         document.getElementById('sim-results').classList.remove('hidden');
-        document.getElementById('sim-score').innerText = `ציון: ${Math.round((simScore / simQuestions.length) * 100)}`;
-        
+
+        simScore=0;
         let mistakesHtml = "<h3>פירוט טעויות:</h3>";
         let hasMistakes = false;
+
         simQuestions.forEach((q, i) => {
-            if (q.userAnswer !== q.answer) {
-                hasMistakes = true;
+            const good=q.userAnswer===q.answer;
+            if(good) simScore++;
+            updateReview('questions',q,good);
+            recordAnswer(q,good,'simulation',q.userAnswer);
+            if(!good){
+                hasMistakes=true;
                 mistakesHtml += `
                     <div style="margin-bottom:15px; border-bottom:1px solid #bdc3c7; padding-bottom:10px;">
                         <strong>שאלה ${i+1}:</strong> ${q.text}<br>
                         <span style="color:#c0392b;">ענית: ${q.userAnswer !== undefined ? q.options[q.userAnswer] : "לא נענה"}</span><br>
-                        <span style="color:#27ae60;">תשובה נכונה: ${q.options[q.answer]}</span>
+                        <span style="color:#27ae60;">תשובה נכונה: ${q.options[q.answer]}</span><br>
+                        <span class="reference">${q.reference||''}</span>
                     </div>`;
             }
         });
+
+        const score=Math.round((simScore / Math.max(1,simQuestions.length)) * 100);
+        document.getElementById('sim-score').innerText = `ציון: ${score}`;
         if(!hasMistakes) mistakesHtml += "<p>כל הכבוד! אין טעויות.</p>";
         document.getElementById('sim-mistakes').innerHTML = mistakesHtml;
+        appData.simulationHistory.push({date:new Date().toISOString(),score,total:simQuestions.length});
+        appData.simulationHistory=appData.simulationHistory.slice(-20);
+        saveData();
+        updateHomeDashboard();
     }
 
     // --- Weak Points ---
     function updateWeakPoints() {
-        let list = document.getElementById('weak-list');
-        list.innerHTML = "";
-        let weakTopics = {};
-        
-        dbQuestions.forEach(q => {
-            if (appData.status[q.id] === 'wrong') {
-                weakTopics[q.subtopic] = (weakTopics[q.subtopic] || 0) + 1;
-            }
-        });
-        dbFlashcards.forEach(c => {
-            if (appData.status[c.id] === 'wrong') {
-                weakTopics[c.subtopic] = (weakTopics[c.subtopic] || 0) + 1;
-            }
-        });
-
-        for (let sub in appData.mistakes) {
-            weakTopics[sub] = (weakTopics[sub] || 0) + appData.mistakes[sub];
+        const list=document.getElementById('weak-list');
+        const weak=weakestTopicsMed();
+        if(!weak.length){
+            list.innerHTML='<li>מעולה! אין עדיין מספיק נתונים לזיהוי חולשות.</li>';
+            return;
         }
+        list.innerHTML=weak.map(x=>{
+            const bookRef=topicReferences[x.topic]||"חזור על סיכומי ההרצאות והמצגות";
+            const severity=x.accuracy<50?'דחיפות גבוהה':x.accuracy<75?'מומלץ לחזק':'במגמת שיפור';
+            return `<li class="weakpoint-item"><strong>${x.topic}</strong> — ${x.accuracy}% דיוק (${severity})<span class="book-ref">📖 ${bookRef}</span></li>`;
+        }).join('');
+    }
 
-        let keys = Object.keys(weakTopics);
-        if (keys.length === 0) { 
-            list.innerHTML = "<li>מעולה! אין טעויות בינתיים. המשך לתרגל כדי שהמערכת תמליץ לך מה לקרוא.</li>"; 
-            return; 
+    function updateHomeDashboard(){
+        updateMedStreak();
+        const due=dueCountMed();
+        const acc=accuracyMed();
+        const goal=Math.min(100,Math.round((appData.todayAnswered||0)/(appData.dailyGoal||20)*100));
+        const weak=weakestTopicsMed().slice(0,3);
+        const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val};
+        set('home-due',due);
+        set('home-accuracy',acc+'%');
+        set('home-streak',(appData.streak||1)+' 🔥');
+        set('home-xp',appData.xp||0);
+        set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
+        const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
+        const weakEl=document.getElementById('home-weak-topics');
+        if(weakEl) weakEl.innerHTML=weak.length?weak.map(x=>`<div class="topic-progress-row"><span>${x.topic}</span><span class="pill-med">${x.accuracy}%</span></div>`).join(''):'אין עדיין מספיק נתונים.';
+        const rec=document.getElementById('home-recommendation');
+        if(rec){
+            if(weak.length&&weak[0].accuracy<70) rec.textContent=`כדאי להתחיל בשאלות בנושא "${weak[0].topic}" — זה כרגע הנושא החלש ביותר שלך.`;
+            else if(due>0) rec.textContent=`יש ${due} פריטים שהגיע זמן החזרה שלהם. עדיף לסגור אותם לפני חומר חדש.`;
+            else rec.textContent='אין חזרות דחופות. מומלץ לעשות סימולציה קצרה כדי לאתר נקודות חדשות לשיפור.';
         }
-        
-        keys.sort((a, b) => weakTopics[b] - weakTopics[a]);
-        keys.forEach(subtopic => {
-            let score = weakTopics[subtopic];
-            let severity = score > 3 ? "דחיפות גבוהה לחזרה" : "מומלץ לרענן";
-            let bookRef = topicReferences[subtopic] || "חזור על סיכומי ההרצאות ועל המצגות שלך";
-            
-            list.innerHTML += `
-                <li class="weakpoint-item">
-                    זיהינו קושי ב<strong>${subtopic}</strong> (${severity}).
-                    <span class="book-ref">📖 המלצת קריאה: ${bookRef}</span>
-                </li>`;
-        });
+    }
+
+    window.startRecommendedStudy=function(){
+        const weak=weakestTopicsMed();
+        if(weak.length&&weak[0].accuracy<70){
+            showSection('questions');
+            const sub=document.getElementById('q-sub-filter');
+            if(sub){ sub.value=weak[0].topic; loadQuestion(true); }
+        }else if(dueCountMed()>0){
+            showSection('questions');
+            loadQuestion(true);
+        }else{
+            showSection('simulation');
+        }
+    };
+
+    function renderMedErrors(){
+        const el=document.getElementById('med-errors-list');
+        if(!el)return;
+        const arr=[...(appData.errors||[])].sort((a,b)=>(b.count||1)-(a.count||1));
+        el.innerHTML=arr.length?arr.map(e=>`<div class="error-item-med"><strong>${e.subject} · ${e.subtopic}</strong><div>${e.prompt}</div><div style="margin-top:6px;">תשובה נכונה — <strong>${e.correctText}</strong></div><div>${e.explanation||''}</div>${e.reference?`<span class="book-ref">📖 ${e.reference}</span>`:''}<span class="pill-med">טעית ${e.count||1} פעמים</span></div>`).join(''):'<p>עדיין אין טעויות במחברת 🎉</p>';
+    }
+
+    window.practiceMistakes=function(){
+        const ids=new Set((appData.errors||[]).map(e=>e.id));
+        const pool=dbQuestions.filter(q=>ids.has(q.id));
+        if(!pool.length){alert('אין כרגע שאלות טעויות לתרגול.');return;}
+        pool.forEach(q=>appData.questions[q.id]=0);
+        saveData();
+        showSection('questions');
+        loadQuestion(true);
+    };
+
+    function renderMedProgress(){
+        const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val};
+        set('progress-answered',appData.answered||0);
+        set('progress-correct',appData.correct||0);
+        set('progress-accuracy',accuracyMed()+'%');
+        set('progress-mastered',masteredCountMed());
+        const el=document.getElementById('topic-progress-list');
+        if(el){
+            const topics=Object.entries(appData.topicStats||{}).sort((a,b)=>{
+                const aa=a[1].answered? a[1].correct/a[1].answered:0;
+                const bb=b[1].answered? b[1].correct/b[1].answered:0;
+                return aa-bb;
+            });
+            el.innerHTML=topics.length?topics.map(([topic,s])=>`<div class="topic-progress-row"><div><strong>${topic}</strong><div>${s.correct} נכונות מתוך ${s.answered}</div></div><span class="pill-med">${Math.round(s.correct/s.answered*100)}%</span></div>`).join(''):'<p>פתור שאלות כדי לראות התקדמות לפי נושא.</p>';
+        }
     }
 
     window.resetStats = function() {
-        if(confirm("לאפס את הנתונים? המערכת תתחיל ללמוד אותך מחדש.")) {
-            appData = { cards: {}, questions: {}, status: {}, mistakes: {} };
-            saveData(); showSection('flashcards'); alert("הנתונים אופסו!");
+        if(confirm("לאפס את כל נתוני הלמידה וההתקדמות?")) {
+            appData = {
+                cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
+                answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[]
+            };
+            saveData(); showSection('home'); alert("הנתונים אופסו!");
         }
     };
 
@@ -1087,10 +1232,8 @@
         try {
             const dataStr = btoa(unescape(encodeURIComponent(JSON.stringify(appData))));
             navigator.clipboard.writeText(dataStr).then(() => {
-                alert("קוד הנתונים הועתק בהצלחה! העבר אותו למכשיר השני.");
-            }).catch(err => {
-                prompt("העתק ידנית:", dataStr);
-            });
+                alert("קוד הנתונים הועתק בהצלחה!");
+            }).catch(() => prompt("העתק ידנית:", dataStr));
         } catch(e) { alert("שגיאה בייצוא."); }
     };
 
@@ -1100,11 +1243,8 @@
         try {
             const parsed = JSON.parse(decodeURIComponent(escape(atob(input))));
             if (parsed && typeof parsed === 'object') {
-                appData.cards = parsed.cards || {};
-                appData.questions = parsed.questions || {};
-                appData.status = parsed.status || {};
-                appData.mistakes = parsed.mistakes || {};
-                saveData(); alert("הנתונים סונכרנו בהצלחה!"); location.reload();
+                appData={...appData,...parsed};
+                saveData(); alert("הנתונים יובאו בהצלחה!"); location.reload();
             }
         } catch(e) { alert("שגיאה בפענוח."); }
     };
@@ -1114,6 +1254,7 @@
         applyMedTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
         populateFilters();
         setGreeting();
+        updateHomeDashboard();
         loadFlashcard(); 
         loadQuestion();
         await hydrateMedCloud();
