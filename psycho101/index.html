@@ -14,6 +14,35 @@
 @media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}.word-dashboard{grid-template-columns:repeat(2,1fr)}.actions{grid-template-columns:1fr}.question{font-size:20px}.hero h1{font-size:26px}}
 @media(max-width:370px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.word-dashboard{grid-template-columns:1fr 1fr}}
 
+
+body.dark-mode{
+  --bg:#11131a;
+  --panel:#1b1f2a;
+  --text:#f3f5f8;
+  --muted:#aab1c0;
+  --primary:#8b95ff;
+  --primary-soft:#292f50;
+  --success:#58d49d;
+  --danger:#ff7188;
+  --warning:#f4bd5b;
+  --border:#303646;
+  --shadow:0 12px 35px rgba(0,0,0,.32);
+}
+body.dark-mode .answer,
+body.dark-mode .input,
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea{background:var(--panel);color:var(--text);border-color:var(--border)}
+body.dark-mode .answer.correct{background:#163d30}
+body.dark-mode .answer.wrong{background:#48202a}
+body.dark-mode .feedback.good{background:#163d30}
+body.dark-mode .feedback.bad{background:#48202a}
+body.dark-mode .bottom-nav{background:rgba(27,31,42,.96);border-top-color:var(--border)}
+body.dark-mode .pill{background:#2a3040;color:var(--text)}
+body.dark-mode .progress{background:#303646}
+body.dark-mode .hero .progress{background:rgba(255,255,255,.22)}
+body.dark-mode .icon-btn:hover{background:#252b39}
+
 </style>
 </head>
 <body>
@@ -4180,7 +4209,7 @@ function buildWordQuestions(count=15){return selectWords(count).map(makeWordQues
 
 function nav(active){return`<nav class="bottom-nav"><button class="nav-btn ${active==='home'?'active':''}" onclick="go('home')"><b>⌂</b>בית</button><button class="nav-btn ${active==='practice'?'active':''}" onclick="go('practice-menu')"><b>✎</b>תרגול</button><button class="nav-btn ${active==='words'?'active':''}" onclick="go('words-dashboard')"><b>א</b>מילים</button><button class="nav-btn ${active==='errors'?'active':''}" onclick="go('errors')"><b>!</b>טעויות</button><button class="nav-btn ${active==='progress'?'active':''}" onclick="go('progress')"><b>↗</b>התקדמות</button></nav>`}
 function syncBadge(){const cloud=cloudConfigured();return`<span class="sync-state" title="${cloud?'סנכרון ענן זמין':'התקדמות נשמרת במכשיר זה'}"><span class="sync-dot ${cloud&&state.user?'on':''}"></span>${cloud?(state.user?'מסונכרן':'ענן מוכן'):'מקומי'}</span>`}
-function topbar(){return`<div class="topbar"><div class="logo">פסיכו <span>101</span></div><div class="top-actions">${syncBadge()}<button class="icon-btn" onclick="go('account')" title="חשבון וסנכרון">☁</button></div></div>`}
+function topbar(){const dark=isDarkMode();return`<div class="topbar"><div class="logo">פסיכו <span>101</span></div><div class="top-actions">${syncBadge()}<button class="icon-btn" onclick="toggleTheme()" title="${dark?'מצב בהיר':'מצב חושך'}">${dark?'☀️':'🌙'}</button><button class="icon-btn" onclick="go('account')" title="חשבון וסנכרון">☁</button></div></div>`}
 function home(){updateStreak();saveLocal();const goal=Math.min(100,percent(state.todayAnswered,state.dailyGoal));return`<div class="app-shell">${topbar()}<div class="desktop-layout"><div><section class="hero"><h1>מוכנים לאימון?</h1><p>IDpsycho101 בוחר קודם מילים שהגיע הזמן לחזור עליהן, אחר כך מילים חדשות וחולשות שזוהו בתרגול.</p><div class="progress-wrap"><div class="progress-row"><span>היעד היומי</span><strong>${state.todayAnswered}/${state.dailyGoal}</strong></div><div class="progress"><div style="width:${goal}%"></div></div></div><div id="install-slot"></div></section><div class="section-title">בחר אימון</div><div class="grid"><div class="card mode-card" onclick="startPractice('words')"><div class="emoji">א</div><div><h3>מילים בעברית</h3><p>${wordBank.length} מילים · חזרה חכמה לפי שליטה.</p></div></div><div class="card mode-card" onclick="startPractice('quantitative')"><div class="emoji">∑</div><div><h3>חשיבה כמותית</h3><p>אחוזים, יחס, אלגברה, הספק ועוד.</p></div></div><div class="card mode-card" onclick="startPractice('verbal')"><div class="emoji">◎</div><div><h3>חשיבה מילולית</h3><p>אנלוגיות, השלמות, היגיון והסקה.</p></div></div><div class="card mode-card" onclick="startMixed()"><div class="emoji">⚡</div><div><h3>אימון יומי</h3><p>שילוב אוטומטי מכל התחומים.</p></div></div></div></div><aside><div class="section-title">היום שלך</div><div class="stats"><div class="stat"><strong>${state.xp}</strong><span>XP</span></div><div class="stat"><strong>🔥 ${state.streak}</strong><span>רצף</span></div><div class="stat"><strong>${percent(state.correct,state.answered)}%</strong><span>דיוק</span></div></div><div class="section-title">מצב המילים</div><div class="card"><div class="topic-row"><span>לחזרה עכשיו</span><strong>${dueCount()}</strong></div><div class="topic-row"><span>טרם נלמדו</span><strong>${unseenCount()}</strong></div><div class="topic-row"><span>שליטה גבוהה</span><strong>${masteredCount()}</strong></div></div></aside></div>${nav('home')}</div>`}
 function practiceMenu(){return`<div class="app-shell">${topbar()}<div class="section-title">תרגול</div><div class="grid"><div class="card mode-card" onclick="startPractice('words')"><div class="emoji">א</div><div><h3>מילים</h3><p>${wordBank.length} מילים · 15 בכל אימון</p></div></div><div class="card mode-card" onclick="startPractice('quantitative')"><div class="emoji">∑</div><div><h3>כמותי</h3><p>תרגול ממוקד</p></div></div><div class="card mode-card" onclick="startPractice('verbal')"><div class="emoji">◎</div><div><h3>מילולי</h3><p>תרגול ממוקד</p></div></div><div class="card mode-card" onclick="startMixed()"><div class="emoji">⚡</div><div><h3>מעורב</h3><p>מילים + כמותי + מילולי</p></div></div></div><div class="section-title">על מאגר המילים</div><div class="card source-card"><div class="source-head"><strong>${WORD_BANK_META.name}</strong><span class="pill">${wordBank.length} מילים</span></div><p>${WORD_BANK_META.basis}.</p><p class="small">${WORD_BANK_META.disclaimer}</p><div class="source-legend"><span class="official-mark">✓</span> מסמן רק מילה שנצפתה בחומר רשמי שנבדק. משפטי התרגול וההגדרות באפליקציה הם ניסוחים מקוריים.</div></div>${nav('practice')}</div>`}
 function wordsDashboard(){const due=dueCount(),unseen=unseenCount(),mastered=masteredCount(),seen=wordBank.length-unseen;return`<div class="app-shell">${topbar()}<div class="section-title">אוצר המילים שלך</div><div class="word-dashboard"><div class="stat"><strong>${wordBank.length}</strong><span>במאגר</span></div><div class="stat"><strong>${seen}</strong><span>נלמדו</span></div><div class="stat"><strong>${due}</strong><span>לחזרה</span></div><div class="stat"><strong>${mastered}</strong><span>שליטה גבוהה</span></div></div><div class="section-title">חזרה חכמה</div><div class="card"><p class="small">תשובה נכונה מעלה את המילה שלב וקובעת חזרה רחוקה יותר. טעות מחזירה אותה לשלב הראשון, כך שמילים חלשות חוזרות מוקדם יותר.</p><button class="primary-btn" onclick="startPractice('words')">התחל אימון של 15 מילים</button></div><div class="section-title">רמות קושי במאגר</div><div class="card">${[1,2,3,4].map(l=>`<div class="topic-row"><span>רמה ${l}</span><strong>${wordBank.filter(w=>w.level===l).length}</strong></div>`).join('')}</div>${nav('words')}</div>`}
@@ -4213,6 +4242,21 @@ async function cloudPush(){if(!state.user)return;const sb=await getSupabase();co
 async function cloudPull(){if(!state.user)return null;const sb=await getSupabase();const{data,error}=await sb.from('psycho101_progress').select('state,updated_at').eq('user_id',state.user.id).maybeSingle();if(error)throw error;return data||null}
 function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={...(remote.topicStats||{}),...(local.topicStats||{})};out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.user=local.user;return out}
 async function syncNow(silent=false){try{const row=await cloudPull();if(row?.state)state=mergeStates(state,row.state);await cloudPush();if(!silent)alert('הסנכרון הושלם');render()}catch(e){if(!silent)alert('הסנכרון נכשל. בדוק חיבור והגדרות ענן.')}}
+
+const THEME_KEY='idpsycho101-theme';
+function isDarkMode(){return document.body.classList.contains('dark-mode')}
+function applySavedTheme(){
+  const saved=localStorage.getItem(THEME_KEY);
+  const useDark=saved==='dark'||(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.body.classList.toggle('dark-mode',useDark);
+}
+function toggleTheme(){
+  const next=!isDarkMode();
+  document.body.classList.toggle('dark-mode',next);
+  localStorage.setItem(THEME_KEY,next?'dark':'light');
+  render();
+}
+applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
