@@ -1,4 +1,4 @@
-const CACHE_NAME='idpsycho101-v11';
+const CACHE_NAME='idpsycho101-v12';
 const CORE=['./','./index.html','./version.json','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
