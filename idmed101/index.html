@@ -396,7 +396,11 @@
     }
     function mergeMedStates(localState, remoteState){
         if(!remoteState || typeof remoteState!=='object') return localState;
-        const out={cards:{},questions:{},status:{},mistakes:{}};
+        const base={
+            cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
+            answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[]
+        };
+        const out={...base,...remoteState,...localState};
         out.cards={...(remoteState.cards||{})};
         for(const [k,v] of Object.entries(localState.cards||{})) out.cards[k]=Math.max(Number(out.cards[k]||0),Number(v||0));
         out.questions={...(remoteState.questions||{})};
@@ -404,6 +408,31 @@
         out.status={...(remoteState.status||{}),...(localState.status||{})};
         out.mistakes={...(remoteState.mistakes||{})};
         for(const [k,v] of Object.entries(localState.mistakes||{})) out.mistakes[k]=Math.max(Number(out.mistakes[k]||0),Number(v||0));
+        out.itemStats={...(remoteState.itemStats||{})};
+        for(const id of new Set([...Object.keys(remoteState.itemStats||{}),...Object.keys(localState.itemStats||{})])){
+            const a=localState.itemStats?.[id],b=remoteState.itemStats?.[id];
+            if(!a)out.itemStats[id]=b;else if(!b)out.itemStats[id]=a;
+            else out.itemStats[id]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b;
+        }
+        out.topicStats={...(remoteState.topicStats||{})};
+        for(const [topic,s] of Object.entries(localState.topicStats||{})){
+            const r=out.topicStats[topic]||{answered:0,correct:0};
+            out.topicStats[topic]={answered:Math.max(r.answered||0,s.answered||0),correct:Math.max(r.correct||0,s.correct||0)};
+        }
+        out.errors=[...(remoteState.errors||[])];
+        for(const e of(localState.errors||[])){
+            const ix=out.errors.findIndex(x=>x.id===e.id);
+            if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e;
+        }
+        out.answered=Math.max(localState.answered||0,remoteState.answered||0);
+        out.correct=Math.max(localState.correct||0,remoteState.correct||0);
+        out.xp=Math.max(localState.xp||0,remoteState.xp||0);
+        out.streak=Math.max(localState.streak||1,remoteState.streak||1);
+        out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);
+        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;
+        const histories=[...(remoteState.simulationHistory||[]),...(localState.simulationHistory||[])];
+        const seen=new Set();
+        out.simulationHistory=histories.filter(x=>{const k=(x.date||'')+'|'+(x.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);
         return out;
     }
     async function hydrateMedCloud(){
