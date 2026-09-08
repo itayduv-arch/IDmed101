@@ -3843,7 +3843,7 @@
         document.getElementById('q-done-area').classList.add('hidden');
 
         if (forceReload || !currentQ || !dueQuestions.find(q => q.id === currentQ.id)) {
-            currentQ = getRandomItem(dueQuestions);
+            currentQ = medRandomizeQuestion(getRandomItem(dueQuestions));
         }
 
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
@@ -3963,6 +3963,14 @@
         if(medium.some(k=>t.includes(k))) return 2;
         return 1;
     }
+    function medRandomizeQuestion(q){
+        const pairs=(q.options||[]).map(function(t,i){return {text:t,correct:i===q.answer};});
+        for(let i=pairs.length-1;i>0;i--){
+            const j=Math.floor(Math.random()*(i+1));
+            const tmp=pairs[i];pairs[i]=pairs[j];pairs[j]=tmp;
+        }
+        return Object.assign({},q,{options:pairs.map(function(x){return x.text;}),answer:pairs.findIndex(function(x){return x.correct;})});
+    }
     function medWeightedSample(pool,count){
         const remaining=[...pool],chosen=[];
         while(remaining.length&&chosen.length<count){
@@ -3981,12 +3989,12 @@
         let list=[];
         if(subject==='daily'){
             const subjects=['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה'];
-            list=subjects.flatMap(s=>medWeightedSample(dbQuestions.filter(q=>q.subject===s),2));
+            list=subjects.flatMap(s=>medWeightedSample(dbQuestions.filter(q=>q.subject===s),2).map(medRandomizeQuestion));
             const chosen=new Set(list.map(q=>q.id));
-            list.push(...medWeightedSample(dbQuestions.filter(q=>!chosen.has(q.id)),2));
+            list.push(...medWeightedSample(dbQuestions.filter(q=>!chosen.has(q.id)),2).map(medRandomizeQuestion));
             list=medShuffle(list);
         }else{
-            list=medWeightedSample(dbQuestions.filter(q=>q.subject===subject),8);
+            list=medWeightedSample(dbQuestions.filter(q=>q.subject===subject),8).map(medRandomizeQuestion);
         }
         medQuickSession={subject,list,index:0,correct:0,answered:false,rewarded:false};
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -4103,7 +4111,7 @@
         const subjects=['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה'];
         simQuestions=subjects.flatMap(s=>
             medWeightedSample(dbQuestions.filter(q=>q.subject===s),4)
-                .map(q=>({...q,options:[...q.options]}))
+                .map(medRandomizeQuestion)
         );
         simQuestions=medShuffle(simQuestions);
         simQuestions.forEach(q=>delete q.userAnswer);
