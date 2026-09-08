@@ -180,12 +180,12 @@
 
     <div id="home" class="section active">
         <h2 id="home-greeting">שלום 👋</h2>
-        <p style="margin-top:-6px;">כמה דקות וזהו — שיעורים קצרים של 8 שאלות.</p>
+        <p style="margin-top:-6px;">כמה דקות וזהו — שיעורים קצרים ועד 8 שאלות בכל תחום.</p>
         <div class="med-lesson-path">
             <div class="med-lesson-node" onclick="startMedQuickLesson('ביוכימיה')"><div class="med-lesson-icon">⚗️</div><div class="med-lesson-main"><h3>ביוכימיה</h3><p>אנזימים, מטבוליזם, חלבונים ועוד</p></div><div class="med-lesson-meta" id="lesson-meta-ביוכימיה">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('מולקולרית')"><div class="med-lesson-icon">🧬</div><div class="med-lesson-main"><h3>ביולוגיה מולקולרית</h3><p>DNA, שכפול, שעתוק, תרגום ושיטות</p></div><div class="med-lesson-meta" id="lesson-meta-מולקולרית">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('ביולוגיה של התא')"><div class="med-lesson-icon">🔬</div><div class="med-lesson-main"><h3>ביולוגיה של התא</h3><p>ממברנות, איתות, שלד התא ומחזור התא</p></div><div class="med-lesson-meta" id="lesson-meta-ביולוגיה של התא">8 שאלות</div></div>
-            <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>עצב, שריר, מערכות ובקרה</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">8 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>עצב, שריר, מערכות ובקרה</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">5 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('daily')"><div class="med-lesson-icon">★</div><div class="med-lesson-main"><h3>שיעור יומי</h3><p>שילוב קצר מכל ארבעת התחומים</p></div><div class="med-lesson-meta" id="lesson-meta-daily">10 שאלות</div></div>
         </div>
         <div class="dashboard-grid">
@@ -1197,7 +1197,8 @@
     function updateMedLessonMeta(){
         for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','daily']){
             const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];
-            if(el&&s?.completed)el.innerText='✓ '+s.bestAccuracy+'%';
+            const available=key==='daily'?Math.min(10,dbQuestions.length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
+            if(el)el.innerText=s?.completed?'✓ '+s.bestAccuracy+'%':available+' שאלות';
         }
     }
     function medEscapeHtml(s){return String(s??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]))}
