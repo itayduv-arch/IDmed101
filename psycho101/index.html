@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260908-9">
+<link rel="manifest" href="./manifest.webmanifest?v=20260908-10">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -79,7 +79,7 @@ body.dark-mode .sync-dot.on{background:var(--success)}
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260908-9";
+const PSYCHO101_BUILD_VERSION="20260908-10";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4522,9 +4522,9 @@ const WRITING_PROMPTS = [
 ];
 
 
-function defaultState(){return{version:5,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],writingHistory:[]}}
+function defaultState(){return{version:6,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[]}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
-let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null,fullSim=null,fullSimTimer=null,writingSession=null;
+let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
 function percent(a,b){return b?Math.round(a/b*100):0}
 function shuffle(a){return[...a].sort(()=>Math.random()-.5)}
@@ -4605,7 +4605,76 @@ function practiceMenu(){return`<div class="app-shell">${topbar()}
   </div>
   ${nav('practice')}
 </div>`}
-function wordsDashboard(){const due=dueCount(),unseen=unseenCount(),mastered=masteredCount(),seen=wordBank.length-unseen;return`<div class="app-shell">${topbar()}<div class="section-title">אוצר המילים שלך</div><div class="word-dashboard"><div class="stat"><strong>${wordBank.length}</strong><span>במאגר</span></div><div class="stat"><strong>${seen}</strong><span>נלמדו</span></div><div class="stat"><strong>${due}</strong><span>לחזרה</span></div><div class="stat"><strong>${mastered}</strong><span>שליטה גבוהה</span></div></div><div class="section-title">חזרה חכמה</div><div class="card"><p class="small">תשובה נכונה מעלה את המילה שלב וקובעת חזרה רחוקה יותר. טעות מחזירה אותה לשלב הראשון, כך שמילים חלשות חוזרות מוקדם יותר.</p><button class="primary-btn" onclick="startPractice('words')">התחל אימון של 15 מילים</button></div><div class="section-title">רמות קושי במאגר</div><div class="card">${[1,2,3,4].map(l=>`<div class="topic-row"><span>רמה ${l}</span><strong>${wordBank.filter(w=>w.level===l).length}</strong></div>`).join('')}</div>${nav('words')}</div>`}
+function wordsDashboard(){const due=dueCount(),unseen=unseenCount(),mastered=masteredCount(),seen=wordBank.length-unseen;return`<div class="app-shell">${topbar()}<div class="section-title">אוצר המילים שלך</div><div class="word-dashboard"><div class="stat"><strong>${wordBank.length}</strong><span>במאגר</span></div><div class="stat"><strong>${seen}</strong><span>נלמדו</span></div><div class="stat"><strong>${due}</strong><span>לחזרה</span></div><div class="stat"><strong>${mastered}</strong><span>שליטה גבוהה</span></div></div><div class="section-title">חזרה חכמה</div><div class="card"><p class="small">תשובה נכונה מעלה את המילה שלב וקובעת חזרה רחוקה יותר. טעות מחזירה אותה לשלב הראשון, כך שמילים חלשות חוזרות מוקדם יותר.</p><button class="primary-btn" onclick="startPractice('words')">התחל שיעור של 8 מילים</button></div><div class="section-title">רמות קושי במאגר</div><div class="card">${[1,2,3,4].map(l=>`<div class="topic-row"><span>רמה ${l}</span><strong>${wordBank.filter(w=>w.level===l).length}</strong></div>`).join('')}</div>${nav('words')}</div>`}
+
+function quickNumericQuestion(id,topic,prompt,correct,distractors,explanation,seed=0){
+  const uniq=[String(correct),...distractors.map(String)].filter((v,i,a)=>a.indexOf(v)===i);
+  let bump=1;
+  while(uniq.length<4){const x=String(Number(correct)+bump++);if(!uniq.includes(x))uniq.push(x)}
+  const shift=seed%4,answers=[...uniq.slice(shift),...uniq.slice(0,shift)];
+  return {id,category:"כמותי",topic,prompt,answers,correct:answers.indexOf(String(correct)),explanation};
+}
+function buildWarmupQuestions(count=8){
+  const out=[];
+  for(let i=0;i<count;i++){
+    const mode=i%4;
+    if(mode===0){
+      const a=6+(i*3)%7,b=7+(i*5)%6,ans=a*b;
+      out.push(quickNumericQuestion(`quick-mul-${a}-${b}`,"חשבון מהיר",`${a} × ${b} = ?`,ans,[ans-a,ans+b,ans+10],`${a} × ${b} = ${ans}.`,i));
+    }else if(mode===1){
+      const b=4+(i%5),ans=6+(i%7),a=b*ans;
+      out.push(quickNumericQuestion(`quick-div-${a}-${b}`,"חשבון מהיר",`${a} ÷ ${b} = ?`,ans,[ans-1,ans+1,b],`${a} ÷ ${b} = ${ans}.`,i));
+    }else if(mode===2){
+      const a=35+7*i,b=18+3*i,ans=a+b;
+      out.push(quickNumericQuestion(`quick-add-${a}-${b}`,"חשבון מהיר",`${a} + ${b} = ?`,ans,[ans-10,ans+10,ans-3],`${a} + ${b} = ${ans}.`,i));
+    }else{
+      const b=12+2*i,ans=25+3*i,a=b+ans;
+      out.push(quickNumericQuestion(`quick-sub-${a}-${b}`,"חשבון מהיר",`${a} − ${b} = ?`,ans,[ans-2,ans+2,b],`${a} − ${b} = ${ans}.`,i));
+    }
+  }
+  return shuffle(out);
+}
+function buildPercentQuick(count=8){
+  const ps=[10,20,25,50],bases=[40,60,80,100,120,160,200,240],out=[];
+  for(let i=0;i<count;i++){
+    const p=ps[i%ps.length],base=bases[(i*3)%bases.length],ans=base*p/100;
+    out.push(quickNumericQuestion(`quick-pct-${p}-${base}`,"אחוזים",`${p}% מ־${base} = ?`,ans,[ans+5,ans*2,base-ans],`${p}% = ${p}/100, ולכן ${base} × ${p/100} = ${ans}.`,i));
+  }
+  return shuffle(out);
+}
+function buildFractionQuick(count=8){
+  const out=[];
+  for(let i=0;i<count;i++){
+    if(i%2===0){
+      const den=[2,4,5][i%3],whole=den*(6+i),ans=whole/den;
+      out.push(quickNumericQuestion(`quick-frac-${den}-${whole}`,"שברים ויחסים",`כמה זה 1/${den} מתוך ${whole}?`,ans,[ans+den,ans-den,whole-den],`מחלקים את ${whole} ב־${den}: התוצאה היא ${ans}.`,i));
+    }else{
+      const a=2+(i%3),b=3+(i%4),k=3+(i%5),left=a*k,ans=b*k;
+      out.push(quickNumericQuestion(`quick-ratio-${a}-${b}-${left}`,"שברים ויחסים",`היחס בין A ל־B הוא ${a}:${b}. אם A = ${left}, כמה B?`,ans,[ans+b,ans-b,left],`כל חלק שווה ${k}, לכן B = ${b} × ${k} = ${ans}.`,i));
+    }
+  }
+  return shuffle(out);
+}
+function startQuickLesson(id){
+  let list=[];
+  if(id==='warmup') list=buildWarmupQuestions(8);
+  else if(id==='percent') list=buildPercentQuick(8);
+  else if(id==='fractions') list=buildFractionQuick(8);
+  else if(id==='words') list=buildWordQuestions(8);
+  else if(id==='analogies') list=shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,8);
+  else if(id==='logic') list=shuffle(questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic))).slice(0,8);
+  else{
+    list=shuffle([
+      ...buildWarmupQuestions(3),
+      ...buildPercentQuick(2),
+      ...buildFractionQuick(2),
+      ...buildWordQuestions(2),
+      ...shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,1)
+    ]).slice(0,10);
+  }
+  practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick'};
+  lastChoice=null;view='question';render();
+}
 function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(8):questions[type].filter(q=>topic==='all'||q.topic===topic);list=shuffle(list).slice(0,8);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
 function startMixed(){const list=shuffle([...buildWordQuestions(4),...questions.quantitative,...questions.verbal]).slice(0,10);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
@@ -4617,154 +4686,14 @@ function answerQuestion(choice){if(!practice||practice.answeredCurrent)return;co
 function renderQuestion(){const q=practice.list[practice.index],done=practice.answeredCurrent,progress=Math.round((practice.index+1)/practice.list.length*100);const answers=q.answers.map((a,i)=>{let cls='answer';if(done&&i===q.correct)cls+=' correct';if(done&&i===lastChoice&&i!==q.correct)cls+=' wrong';return`<button class="${cls}" ${done?'disabled':''} onclick="answerQuestion(${i})">${a}</button>`}).join('');let feedback='';if(done){const good=lastChoice===q.correct;feedback=`<div class="feedback ${good?'good':'bad'}"><strong>${good?'✓ נכון':'✗ לא נכון'}</strong><div class="explanation">${q.explanation}</div></div><div style="margin-top:12px"><button class="primary-btn" onclick="nextQuestion()">${practice.index===practice.list.length-1?'סיום האימון':'לשאלה הבאה'}</button></div>`}const timer=practice.timed?`<span id="psycho-timer" class="pill">⏱ ${formatPsychoTime(practice.timeLeft)}</span>`:'';document.getElementById('app').innerHTML=`<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">${q.category} · ${q.topic}</span>${timer}</div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${progress}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${practice.index+1} מתוך ${practice.list.length}</div><div class="question">${q.prompt}</div><div class="answers">${answers}</div>${feedback}</div></div>`}
 function nextQuestion(){if(practice.index<practice.list.length-1){practice.index++;practice.answeredCurrent=false;lastChoice=null;renderQuestion()}else finishPractice()}
 function finishPractice(){clearInterval(psychoTimer);if(practice?.timed){state.simulationHistory=state.simulationHistory||[];state.simulationHistory.push({date:new Date().toISOString(),score:percent(practice.sessionCorrect,practice.list.length),correct:practice.sessionCorrect,total:practice.list.length});state.simulationHistory=state.simulationHistory.slice(-20);saveLocal()}view='summary';render()}
-function summary(){const sim=practice?.timed;return`<div class="app-shell">${topbar()}<div class="practice-card" style="text-align:center"><div class="emoji">🏁</div><h2>${sim?'הסימולציה הושלמה':'האימון הושלם'}</h2><p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':'המילים והנושאים עודכנו אוטומטית לפי הביצועים.'}</p><div class="stats" style="margin:20px 0"><div class="stat"><strong>${practice?.sessionCorrect||0}</strong><span>נכונות</span></div><div class="stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div><div class="stat"><strong>${percent(practice?.sessionCorrect||0,practice?.list.length||0)}%</strong><span>דיוק</span></div></div><button class="primary-btn" onclick="go('home')">חזרה לבית</button></div>${nav('')}</div>`}
+function summary(){const sim=practice?.timed;return`<div class="app-shell">${topbar()}<div class="practice-card" style="text-align:center"><div class="emoji">🏁</div><h2>${sim?'הסימולציה הושלמה':'השיעור הושלם 🎉'}</h2><p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':'יפה. ההתקדמות נשמרה ואפשר להמשיך לעוד שיעור קצר.'}</p><div class="stats" style="margin:20px 0"><div class="stat"><strong>${practice?.sessionCorrect||0}</strong><span>נכונות</span></div><div class="stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div><div class="stat"><strong>${percent(practice?.sessionCorrect||0,practice?.list.length||0)}%</strong><span>דיוק</span></div></div><button class="primary-btn" onclick="go('home')">חזרה לבית</button></div>${nav('')}</div>`}
 function findErrorQuestion(e){let q=[...questions.quantitative,...questions.verbal].find(x=>x.id===e.id);if(q)return q;if(e.word){const w=wordBank.find(x=>x.word===e.word);if(w)return makeWordQuestion(w,0)}return null}
 function startErrorPractice(){const list=shuffle((state.errors||[]).map(findErrorQuestion).filter(Boolean)).slice(0,20);if(!list.length){alert('אין כרגע טעויות שניתן לתרגל.');return}practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'errors'};lastChoice=null;view='question';render()}
 function errorsView(){const content=state.errors.length?state.errors.slice().sort((a,b)=>(b.count||1)-(a.count||1)).map(e=>`<div class="error-item"><strong>${escapeHtml(e.topic)} · ${escapeHtml(e.category)}</strong><div>${escapeHtml(e.prompt)}</div><div class="small" style="margin-top:5px">תשובה נכונה — ${escapeHtml(e.correctText)}</div><div class="small">${escapeHtml(e.explanation)}</div>${e.count>1?`<span class="pill">טעית ${e.count} פעמים</span>`:''}</div>`).join(''):`<div class="empty">עדיין אין טעויות במחברת 🎉</div>`;return`<div class="app-shell">${topbar()}<div class="section-title">מחברת טעויות</div><div class="card">${content}</div>${state.errors.length?'<button class="primary-btn" onclick="startErrorPractice()">תרגל את הטעויות שלי</button>':''}${nav('errors')}</div>`}
 function progressView(){const topics=Object.entries(state.topicStats);const content=topics.length?topics.sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered)).map(([topic,s])=>`<div class="topic-row"><div><strong>${topic}</strong><div class="small">${s.correct} נכונות מתוך ${s.answered}</div></div><span class="pill">${percent(s.correct,s.answered)}%</span></div>`).join(''):`<div class="empty">פתור כמה שאלות כדי לראות ניתוח לפי נושא.</div>`;const sims=(state.simulationHistory||[]).slice(-5).reverse();const simHtml=sims.length?sims.map(s=>`<div class="topic-row"><span>${new Date(s.date).toLocaleDateString('he-IL')} · ${s.full?'מלאה':'מיני'}</span><span class="pill">${s.score}%</span></div>`).join(''):'<div class="empty">עדיין לא בוצעה סימולציה.</div>';return`<div class="app-shell">${topbar()}<div class="section-title">התקדמות</div><div class="stats" style="margin-bottom:12px"><div class="stat"><strong>${state.answered}</strong><span>שאלות</span></div><div class="stat"><strong>${state.correct}</strong><span>נכונות</span></div><div class="stat"><strong>${percent(state.correct,state.answered)}%</strong><span>דיוק</span></div></div><div class="card">${content}</div><div class="section-title">סימולציות אחרונות</div><div class="card">${simHtml}</div>${nav('progress')}</div>`}
 
-function campusView(){
-  const renderGroup=(type,g,idx)=>{
-    const pool=questions[type].filter(q=>g.topics.includes(q.topic));
-    const stats=g.topics.map(t=>{const s=topicStat(t);return s.answered?`${t} — ${percent(s.correct,s.answered)}%`:t}).join(' · ');
-    return `<div class="campus-card"><h3>${g.group}</h3><p class="small">${g.tip}</p><div class="small" style="margin:10px 0">${stats}</div><div class="pill">${pool.length} שאלות זמינות</div><button class="secondary-btn" style="margin-top:12px" onclick="startCampusGroup('${type}',${idx})">תרגל את הקבוצה</button></div>`;
-  };
-  return `<div class="app-shell">${topbar()}<div class="section-title">מסלול Campus IL</div><div class="campus-source"><strong>${CAMPUS_ALIGNMENT.source}</strong><br>${CAMPUS_ALIGNMENT.note}<br><span class="small">החומרים של Campus משמשים כאן לכיול סילבוס ורמת מיומנויות בלבד. השאלות באפליקציה מקוריות.</span><div style="margin-top:10px"><a href="https://campus.gov.il/course/mse-gov-psychometry-he/" target="_blank" rel="noopener" style="color:var(--primary);font-weight:800">פתיחת קורס הפסיכומטרי של המדינה ↗</a></div></div><div class="section-title">חשיבה כמותית</div><div class="campus-grid">${CAMPUS_ALIGNMENT.quantitative.map((g,i)=>renderGroup('quantitative',g,i)).join('')}</div><div class="section-title">חשיבה מילולית</div><div class="campus-grid">${CAMPUS_ALIGNMENT.verbal.map((g,i)=>renderGroup('verbal',g,i)).join('')}</div><div class="section-title">מתכונת הבחינה מדצמבר 2026</div><div class="card"><p>מטלת כתיבה של 30 דקות, ולאחריה חמישה פרקי ברֵרה בני 20 דקות: שני מילוליים, שני כמותיים ופרק ניסיוני אחד שלא ניתן לזהות בזמן הבחינה.</p><p class="small">IDpsycho101 משתמש ב־20 שאלות לפרק לצורכי אימון. מספר השאלות הרשמי עשוי להשתנות לפי נוסח הבחינה.</p><div class="actions"><button class="primary-btn" onclick="startFullSimulation()">התחל סימולציה מלאה</button><button class="secondary-btn" onclick="startWritingPractice()">תרגל חיבור בלבד</button></div></div>${nav('practice')}</div>`;
-}
-function startCampusGroup(type,index){
-  const g=CAMPUS_ALIGNMENT[type][index];
-  if(g.topics.includes("מטלת כתיבה")){startWritingPractice();return}
-  let list=questions[type].filter(q=>g.topics.includes(q.topic));
-  if(!list.length) list=questions[type];
-  practice={list:shuffle(list).slice(0,20),index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'campus'};
-  lastChoice=null;view='question';render();
-}
-
-function startWritingPractice(){
-  clearInterval(psychoTimer);clearInterval(fullSimTimer);
-  writingSession={prompt:WRITING_PROMPTS[Math.floor(Math.random()*WRITING_PROMPTS.length)],text:'',timeLeft:30*60,finished:false};
-  view='writing';startWritingTimer();render();
-}
-function startWritingTimer(){
-  clearInterval(fullSimTimer);
-  fullSimTimer=setInterval(()=>{
-    if(!writingSession||view!=='writing')return;
-    writingSession.timeLeft--;
-    const el=document.getElementById('writing-timer');if(el)el.textContent=formatPsychoTime(Math.max(0,writingSession.timeLeft));
-    if(writingSession.timeLeft<=0)finishWritingPractice();
-  },1000);
-}
-function updateWritingText(value){if(writingSession)writingSession.text=value}
-function writingView(){
-  const words=(writingSession?.text.trim()?writingSession.text.trim().split(/\s+/).length:0);
-  return `<div class="app-shell">${topbar()}<div class="practice-head"><button class="back" onclick="go('campus')">← יציאה</button><span class="pill">⏱ <span id="writing-timer">${formatPsychoTime(writingSession.timeLeft)}</span></span></div><div class="practice-card writing-box"><div class="section-title" style="margin-top:0">מטלת כתיבה</div><p class="question" style="font-size:18px">${escapeHtml(writingSession.prompt)}</p><textarea oninput="updateWritingText(this.value)" placeholder="כתוב כאן את החיבור...">${escapeHtml(writingSession.text)}</textarea><div class="small" style="margin-top:8px">מספר מילים נוכחי: ${words}</div><div class="checklist"><label><input type="checkbox"> עמדה מרכזית ברורה</label><label><input type="checkbox"> לפחות שני נימוקים מפותחים</label><label><input type="checkbox"> התייחסות לטענה נגדית או מורכבות</label><label><input type="checkbox"> קשרים לוגיים בין פסקאות</label><label><input type="checkbox"> סיום שמחזיר לטענה המרכזית</label></div><button class="primary-btn" onclick="finishWritingPractice()">סיים ושמור נתוני תרגול</button></div></div>`;
-}
-function finishWritingPractice(){
-  if(!writingSession||writingSession.finished)return;
-  writingSession.finished=true;clearInterval(fullSimTimer);
-  const words=writingSession.text.trim()?writingSession.text.trim().split(/\s+/).length:0;
-  state.writingHistory=state.writingHistory||[];
-  state.writingHistory.push({date:new Date().toISOString(),words,secondsUsed:30*60-Math.max(0,writingSession.timeLeft)});
-  state.writingHistory=state.writingHistory.slice(-20);saveLocal();
-  view='writing-summary';render();
-}
-function writingSummaryView(){
-  const words=writingSession?.text.trim()?writingSession.text.trim().split(/\s+/).length:0;
-  return `<div class="app-shell">${topbar()}<div class="practice-card" style="text-align:center"><div class="emoji">✍️</div><h2>תרגול הכתיבה הושלם</h2><p>כתבת ${words} מילים. הטקסט עצמו לא נשמר בענן; נשמרים רק נתוני התרגול.</p><div class="actions"><button class="primary-btn" onclick="startWritingPractice()">מטלה נוספת</button><button class="secondary-btn" onclick="go('campus')">חזרה למסלול Campus</button></div></div></div>`;
-}
-
-function buildFullSections(){
-  const pilotType=Math.random()<0.5?'quantitative':'verbal';
-  const types=shuffle(['quantitative','quantitative','verbal','verbal',pilotType]);
-  const qPools={quantitative:shuffle(questions.quantitative),verbal:shuffle(questions.verbal)};
-  const cursors={quantitative:0,verbal:0};
-  return types.map((type,i)=>{
-    let pool=qPools[type],start=cursors[type],list=pool.slice(start,start+20);
-    cursors[type]+=20;
-    if(list.length<20) list=[...list,...shuffle(questions[type]).slice(0,20-list.length)];
-    const sameTypeIndices=types.map((t,ix)=>t===type?ix:-1).filter(ix=>ix>=0);
-    const pilotIndex=sameTypeIndices[sameTypeIndices.length-1];
-    return {type,pilot:i===pilotIndex&&types.filter(t=>t===type).length===3,questions:list,answers:Array(list.length).fill(null),index:0,correct:0,applied:false};
-  });
-}
-function startFullSimulation(){
-  clearInterval(psychoTimer);clearInterval(fullSimTimer);
-  fullSim={prompt:WRITING_PROMPTS[Math.floor(Math.random()*WRITING_PROMPTS.length)],writingText:'',writingTime:30*60,sections:buildFullSections(),currentSection:-1,phase:'writing',sectionTime:20*60,saved:false};
-  view='full-writing';startFullWritingTimer();render();
-}
-function startFullWritingTimer(){
-  clearInterval(fullSimTimer);
-  fullSimTimer=setInterval(()=>{
-    if(!fullSim||view!=='full-writing')return;
-    fullSim.writingTime--;
-    const el=document.getElementById('full-writing-timer');if(el)el.textContent=formatPsychoTime(Math.max(0,fullSim.writingTime));
-    if(fullSim.writingTime<=0)finishFullWriting();
-  },1000);
-}
-function updateFullWriting(value){if(fullSim)fullSim.writingText=value}
-function fullWritingView(){
-  return `<div class="app-shell">${topbar()}<div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="pill">מטלת כתיבה · <span id="full-writing-timer">${formatPsychoTime(fullSim.writingTime)}</span></span></div><div class="practice-card writing-box"><h2>סימולציה מלאה — שלב הכתיבה</h2><p class="question" style="font-size:18px">${escapeHtml(fullSim.prompt)}</p><textarea oninput="updateFullWriting(this.value)" placeholder="כתוב כאן...">${escapeHtml(fullSim.writingText)}</textarea><p class="small">לאחר שלב זה יתחילו חמישה פרקים בני 20 דקות. אין סימון בזמן אמת איזה פרק הוא הפיילוט.</p><button class="primary-btn" onclick="finishFullWriting()">סיים כתיבה ועבור לפרקים</button></div></div>`;
-}
-function finishFullWriting(){
-  if(!fullSim)return;
-  clearInterval(fullSimTimer);fullSim.currentSection=0;fullSim.phase='sections';startFullSection();  
-}
-function startFullSection(){
-  const s=fullSim.sections[fullSim.currentSection];s.index=0;fullSim.sectionTime=20*60;view='full-question';startFullSectionTimer();render();
-}
-function startFullSectionTimer(){
-  clearInterval(fullSimTimer);
-  fullSimTimer=setInterval(()=>{
-    if(!fullSim||view!=='full-question')return;
-    fullSim.sectionTime--;
-    const el=document.getElementById('full-section-timer');if(el)el.textContent=formatPsychoTime(Math.max(0,fullSim.sectionTime));
-    if(fullSim.sectionTime<=0)finishFullSection();
-  },1000);
-}
-function fullQuestionView(){
-  const s=fullSim.sections[fullSim.currentSection],q=s.questions[s.index],selected=s.answers[s.index];
-  const answers=q.answers.map((a,i)=>`<button class="answer" style="${selected===i?'border-color:var(--primary);background:var(--primary-soft);':''}" onclick="selectFullAnswer(${i})">${a}</button>`).join('');
-  const overall=fullSim.currentSection+1;
-  return `<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">פרק ${overall} מתוך 5 · ${s.type==='quantitative'?'כמותי':'מילולי'}</span><span class="pill">⏱ <span id="full-section-timer">${formatPsychoTime(fullSim.sectionTime)}</span></span></div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${Math.round((s.index+1)/s.questions.length*100)}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${s.index+1} מתוך ${s.questions.length}</div><div class="question">${q.prompt}</div><div class="answers">${answers}</div><div class="actions"><button class="secondary-btn" onclick="fullPrevQuestion()" ${s.index===0?'disabled':''}>הקודמת</button><button class="primary-btn" onclick="fullNextQuestion()">${s.index===s.questions.length-1?'סיים פרק':'הבאה'}</button></div></div></div>`;
-}
-function selectFullAnswer(i){const s=fullSim.sections[fullSim.currentSection];s.answers[s.index]=i;render()}
-function fullPrevQuestion(){const s=fullSim.sections[fullSim.currentSection];if(s.index>0){s.index--;render()}}
-function fullNextQuestion(){const s=fullSim.sections[fullSim.currentSection];if(s.index<s.questions.length-1){s.index++;render()}else finishFullSection()}
-function recordFullQuestion(q,choice){
-  const good=choice===q.correct;
-  state.answered++;state.todayAnswered++;state.xp+=good?10:3;if(good)state.correct++;
-  updateStreak();const t=topicStat(q.topic);state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
-  if(!good){
-    const existing=state.errors.find(e=>e.id===q.id);
-    if(existing){existing.count++;existing.lastAt=new Date().toISOString()}
-    else state.errors.push({id:q.id,word:null,category:q.category,topic:q.topic,prompt:q.prompt.replace(/<[^>]*>/g,''),correctText:q.answers[q.correct],explanation:q.explanation.replace(/<[^>]*>/g,''),count:1,lastAt:new Date().toISOString()});
-  }
-  return good;
-}
-function finishFullSection(){
-  if(!fullSim)return;clearInterval(fullSimTimer);
-  const s=fullSim.sections[fullSim.currentSection];
-  if(!s.applied){s.correct=0;s.questions.forEach((q,i)=>{if(recordFullQuestion(q,s.answers[i]))s.correct++});s.applied=true;saveLocal()}
-  if(fullSim.currentSection<4){fullSim.currentSection++;startFullSection()}else finishFullSimulation();
-}
-function finishFullSimulation(){
-  clearInterval(fullSimTimer);
-  const scored=fullSim.sections.filter(s=>!s.pilot),correct=scored.reduce((n,s)=>n+s.correct,0),total=scored.reduce((n,s)=>n+s.questions.length,0),score=percent(correct,total);
-  if(!fullSim.saved){
-    state.simulationHistory=state.simulationHistory||[];
-    state.simulationHistory.push({date:new Date().toISOString(),score,correct,total,full:true,sections:fullSim.sections.map(s=>({type:s.type,pilot:s.pilot,correct:s.correct,total:s.questions.length}))});
-    state.simulationHistory=state.simulationHistory.slice(-20);fullSim.saved=true;saveLocal();
-  }
-  view='full-summary';render();
-}
-function fullSummaryView(){
-  const scored=fullSim.sections.filter(s=>!s.pilot),correct=scored.reduce((n,s)=>n+s.correct,0),total=scored.reduce((n,s)=>n+s.questions.length,0);
-  const rows=fullSim.sections.map((s,i)=>`<div class="sim-section-row"><span>פרק ${i+1} · ${s.type==='quantitative'?'כמותי':'מילולי'} ${s.pilot?'<span class="pill">פיילוט</span>':''}</span><strong>${s.correct}/${s.questions.length}</strong></div>`).join('');
-  return `<div class="app-shell">${topbar()}<div class="practice-card"><div style="text-align:center"><div class="emoji">🏁</div><h2>הסימולציה הסתיימה</h2><div class="stats" style="margin:18px 0"><div class="stat"><strong>${percent(correct,total)}%</strong><span>דיוק בפרקים הנספרים</span></div><div class="stat"><strong>${correct}</strong><span>נכונות</span></div><div class="stat"><strong>${total}</strong><span>שאלות נספרות</span></div></div></div>${rows}<p class="small" style="margin-top:14px">הפיילוט אינו נכלל באחוז המסכם. זהו מדד תרגול פנימי ולא המרה לציון פסיכומטרי רשמי.</p><button class="primary-btn" onclick="go('progress')">למסך ההתקדמות</button></div></div>`;
-}
-
 function accountView(){const configured=cloudConfigured(),logged=!!state.user;return`<div class="app-shell">${topbar()}<div class="section-title">חשבון וסנכרון</div><div class="card">${configured?(logged?`<div class="success-note">מחובר כ־${escapeHtml(state.user.email||'משתמש')}. ההתקדמות נשמרת בענן וניתנת למשיכה ממחשב ומטלפון.</div><div class="section-title">סיסמה לכניסה ממכשיר נוסף</div><p class="small">אפשר להגדיר כאן סיסמה פעם אחת. אחר כך בטלפון או במחשב אחר אפשר להתחבר מיד עם האימייל והסיסמה בלי לחכות למייל.</p><div class="form-group"><label>סיסמה חדשה</label><input id="new-password" type="password" autocomplete="new-password" placeholder="לפחות 6 תווים"></div><button class="secondary-btn" onclick="setCloudPassword()">הגדר / שנה סיסמה</button><div id="password-msg" class="small" style="margin-top:10px"></div><div class="actions"><button class="primary-btn" onclick="syncNow()">סנכרן עכשיו</button><button class="secondary-btn" onclick="cloudLogout()">התנתק</button></div>`:`<p><strong>כניסה מהירה עם סיסמה</strong></p><div class="form-group"><label>אימייל</label><input id="login-email" type="email" autocomplete="email" placeholder="name@example.com"></div><div class="form-group"><label>סיסמה</label><input id="login-password" type="password" autocomplete="current-password" placeholder="הסיסמה שהגדרת"></div><button class="primary-btn" onclick="loginWithPassword()">התחבר</button><div id="password-login-msg" class="small" style="margin-top:10px"></div><div class="section-title">או התחברות בקישור למייל</div><p class="small">Magic Link מוגבל בכמות המיילים ש-Supabase שולח. אם קיבלת הודעת מגבלה, עדיף להשתמש בסיסמה.</p><div class="form-group"><label>אימייל</label><input id="email" type="email" autocomplete="email" placeholder="name@example.com"></div><button class="secondary-btn" onclick="requestMagicLink()">שלח קישור התחברות</button><div id="auth-msg" class="small" style="margin-top:10px"></div>`):`<div class="notice"><strong>מצב מקומי פעיל.</strong><br>האפליקציה כבר עובדת בטלפון ובמחשב, אך סנכרון אוטומטי ביניהם דורש חיבור חד־פעמי ל־Supabase.</div>`}<div class="section-title">גיבוי ידני</div><p class="small">אפשר להעביר את ההתקדמות בין מכשירים גם באופן ידני.</p><div class="actions"><button class="secondary-btn" onclick="exportProgress()">ייצא התקדמות</button><label class="file-label">ייבא התקדמות<input hidden type="file" accept="application/json" onchange="importProgress(event)"></label></div></div><div class="section-title">התקנה בטלפון</div><div class="card"><p class="small">באנדרואיד אפשר לבחור התקנת אפליקציה בדפדפן. ב־iPhone אפשר לבחור שיתוף ואז הוספה למסך הבית.</p>${deferredInstallPrompt?'<button class="primary-btn" onclick="installApp()">התקן את IDpsycho101</button>':''}</div>${nav('')}</div>`}
-function go(next){clearInterval(psychoTimer);clearInterval(fullSimTimer);view=next;practice=null;lastChoice=null;render()}
+function go(next){clearInterval(psychoTimer);view=next;practice=null;lastChoice=null;render()}
 function resetData(){if(confirm('לאפס את כל נתוני התרגול במכשיר זה?')){state=defaultState();saveLocal();render()}}
 function exportProgress(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='psycho101-progress.json';a.click();URL.revokeObjectURL(url)}
 function importProgress(ev){const f=ev.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);state={...defaultState(),...imported};saveLocal();alert('ההתקדמות יובאה בהצלחה');render()}catch{alert('הקובץ אינו קובץ התקדמות תקין')}};r.readAsText(f)}
@@ -4783,7 +4712,7 @@ let cloudTimer=null;function debouncedCloudSave(){clearTimeout(cloudTimer);if(cl
 function syncPayload(){const copy=JSON.parse(JSON.stringify(state));delete copy.user;delete copy.lastSync;return copy}
 async function cloudPush(){if(!state.user)return;const sb=await getSupabase();const{error}=await sb.from('psycho101_progress').upsert({user_id:state.user.id,state:syncPayload(),updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;state.lastSync=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 async function cloudPull(){if(!state.user)return null;const sb=await getSupabase();const{data,error}=await sb.from('psycho101_progress').select('state,updated_at').eq('user_id',state.user.id).maybeSingle();if(error)throw error;return data||null}
-function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={...(remote.topicStats||{}),...(local.topicStats||{})};out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);const writes=[...(remote.writingHistory||[]),...(local.writingHistory||[])];const wseen=new Set();out.writingHistory=writes.filter(w=>{const k=(w.date||'')+'|'+(w.words||0);if(wseen.has(k))return false;wseen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.user=local.user;return out}
+function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={...(remote.topicStats||{}),...(local.topicStats||{})};out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.user=local.user;return out}
 async function syncNow(silent=false){try{const row=await cloudPull();if(row?.state)state=mergeStates(state,row.state);await cloudPush();if(!silent)alert('הסנכרון הושלם');render()}catch(e){if(!silent)alert('הסנכרון נכשל. בדוק חיבור והגדרות ענן.')}}
 
 const THEME_KEY='idpsycho101-theme';
@@ -4803,7 +4732,7 @@ applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='campus')app.innerHTML=campusView();else if(view==='writing')app.innerHTML=writingView();else if(view==='writing-summary')app.innerHTML=writingSummaryView();else if(view==='full-writing')app.innerHTML=fullWritingView();else if(view==='full-question')app.innerHTML=fullQuestionView();else if(view==='full-summary')app.innerHTML=fullSummaryView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary()}
 
 (async()=>{if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}render()})();
 
