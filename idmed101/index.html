@@ -130,6 +130,31 @@
         .topic-progress-row { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid rgba(127,140,141,.25); text-align:right; }
         .pill-med { display:inline-block; padding:4px 9px; border-radius:999px; background:var(--tab-bg); font-size:13px; font-weight:700; }
         @media(max-width:650px){ .dashboard-grid{grid-template-columns:1fr 1fr;} }
+        .med-share-btn { position:absolute; top:20px; left:120px; background:none; border:2px solid var(--text-color); color:var(--text-color); padding:5px 10px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:bold; }
+        .med-lesson-path { display:grid; gap:12px; margin:18px 0; }
+        .med-lesson-node { display:flex; align-items:center; gap:14px; background:var(--card-bg); border:2px solid var(--border-color); border-radius:18px; padding:14px; cursor:pointer; text-align:right; transition:.2s; }
+        .med-lesson-node:hover { transform:translateY(-2px); }
+        .med-lesson-icon { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; background:var(--tab-bg); font-size:25px; flex:0 0 auto; }
+        .med-lesson-main { flex:1; }
+        .med-lesson-main h3 { margin:0 0 4px; }
+        .med-lesson-main p { margin:0; font-size:13px; color:#7f8c8d; }
+        .med-lesson-meta { font-weight:800; color:var(--border-color); white-space:nowrap; }
+        .med-quick-card { max-width:720px; margin:20px auto; background:var(--card-bg); border:2px solid var(--border-color); border-radius:18px; padding:22px; text-align:right; }
+        .med-quick-option { display:block; width:100%; text-align:right; padding:14px; margin:9px 0; border:1px solid var(--border-color); border-radius:10px; background:var(--option-bg); color:var(--text-color); cursor:pointer; }
+        .med-quick-option.correct { background:#d4edda; color:#155724; border-color:#28a745; }
+        .med-quick-option.wrong { background:#f8d7da; color:#721c24; border-color:#dc3545; }
+        .dark-mode .med-quick-option.correct { background:#1e4620; color:#d4edda; }
+        .dark-mode .med-quick-option.wrong { background:#4a191e; color:#f8d7da; }
+        .leader-row-med { display:grid; grid-template-columns:42px 1fr auto; gap:10px; align-items:center; padding:13px 8px; border-bottom:1px solid rgba(127,140,141,.25); text-align:right; }
+        .leader-rank-med { font-size:20px; font-weight:900; text-align:center; }
+        .leader-name-med { font-weight:800; }
+        .leader-sub-med { font-size:12px; color:#7f8c8d; margin-top:3px; }
+        .leader-xp-med { font-weight:900; color:var(--border-color); white-space:nowrap; }
+        .leader-me-med { background:var(--option-bg); border-radius:12px; }
+        .leader-legend-med { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px; justify-content:center; }
+        .quick-chip-med { display:inline-block; padding:6px 9px; border-radius:999px; background:var(--tab-bg); font-size:12px; font-weight:800; }
+        @media(max-width:550px){ .med-share-btn{left:110px} .med-lesson-meta{font-size:12px} }
+
 
         #sim-timer { font-size: 24px; font-weight: bold; color: #e74c3c; margin-bottom: 15px; text-align: center; }
         #sim-progress { font-size: 16px; margin-bottom: 20px; color: #7f8c8d; }
@@ -139,6 +164,7 @@
 
 <div class="container">
     <button class="theme-toggle" id="theme-btn" onclick="toggleDarkMode()">☀️ תצוגה</button>
+    <button class="med-share-btn" onclick="shareMedApp()">↗ שתף</button>
     <h1 id="dynamic-title">מבחן ידע 101</h1>
     
     <div class="tabs">
@@ -148,11 +174,20 @@
         <button class="tab" id="tab-simulation" onclick="showSection('simulation')">סימולציה</button>
         <button class="tab" id="tab-errors" onclick="showSection('errors')">טעויות</button>
         <button class="tab" id="tab-progress" onclick="showSection('progress')">התקדמות</button>
+        <button class="tab" id="tab-leaderboard" onclick="showSection('leaderboard')">🏆 דירוג</button>
         <button class="tab" id="tab-weakpoints" onclick="showSection('weakpoints')">חולשות</button>
     </div>
 
     <div id="home" class="section active">
-        <h2>מרכז הלמידה</h2>
+        <h2 id="home-greeting">שלום 👋</h2>
+        <p style="margin-top:-6px;">כמה דקות וזהו — שיעורים קצרים של 8 שאלות.</p>
+        <div class="med-lesson-path">
+            <div class="med-lesson-node" onclick="startMedQuickLesson('ביוכימיה')"><div class="med-lesson-icon">⚗️</div><div class="med-lesson-main"><h3>ביוכימיה</h3><p>אנזימים, מטבוליזם, חלבונים ועוד</p></div><div class="med-lesson-meta" id="lesson-meta-ביוכימיה">8 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('מולקולרית')"><div class="med-lesson-icon">🧬</div><div class="med-lesson-main"><h3>ביולוגיה מולקולרית</h3><p>DNA, שכפול, שעתוק, תרגום ושיטות</p></div><div class="med-lesson-meta" id="lesson-meta-מולקולרית">8 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('ביולוגיה של התא')"><div class="med-lesson-icon">🔬</div><div class="med-lesson-main"><h3>ביולוגיה של התא</h3><p>ממברנות, איתות, שלד התא ומחזור התא</p></div><div class="med-lesson-meta" id="lesson-meta-ביולוגיה של התא">8 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>עצב, שריר, מערכות ובקרה</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">8 שאלות</div></div>
+            <div class="med-lesson-node" onclick="startMedQuickLesson('daily')"><div class="med-lesson-icon">★</div><div class="med-lesson-main"><h3>שיעור יומי</h3><p>שילוב קצר מכל ארבעת התחומים</p></div><div class="med-lesson-meta" id="lesson-meta-daily">10 שאלות</div></div>
+        </div>
         <div class="dashboard-grid">
             <div class="dash-stat"><strong id="home-due">0</strong><span>לחזרה עכשיו</span></div>
             <div class="dash-stat"><strong id="home-accuracy">0%</strong><span>דיוק כללי</span></div>
@@ -160,17 +195,29 @@
             <div class="dash-stat"><strong id="home-xp">0</strong><span>XP</span></div>
         </div>
         <div class="recommend-card">
-            <h3 style="margin-top:0;">מה כדאי ללמוד עכשיו?</h3>
-            <p id="home-recommendation">מנתח את ההתקדמות שלך...</p>
-            <button class="btn btn-primary" onclick="startRecommendedStudy()">התחל אימון מומלץ</button>
-        </div>
-        <div class="recommend-card">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;"><strong>היעד היומי</strong><span id="home-goal-text">0/20</span></div>
             <div class="progress-bar" style="margin-top:10px;"><div id="home-goal-fill" class="progress-fill" style="width:0%"></div></div>
         </div>
-        <div class="recommend-card">
-            <h3 style="margin-top:0;">3 נושאים שדורשים תשומת לב</h3>
-            <div id="home-weak-topics">התחל לתרגל כדי שנוכל לזהות חולשות.</div>
+    </div>
+
+    <div id="quick-lesson" class="section">
+        <div class="med-quick-card">
+            <div id="med-quick-progress" class="small"></div>
+            <h3 id="med-quick-title"></h3>
+            <div id="med-quick-options"></div>
+            <div id="med-quick-feedback" class="explanation-box hidden"></div>
+            <button id="med-quick-next" class="btn btn-primary hidden" onclick="nextMedQuickQuestion()">לשאלה הבאה</button>
+        </div>
+    </div>
+
+    <div id="leaderboard" class="section">
+        <h2>🏆 Leaderboard</h2>
+        <div class="leader-legend-med"><span class="quick-chip-med">1. XP</span><span class="quick-chip-med">2. דיוק</span><span class="quick-chip-med">3. רצף</span><span class="quick-chip-med">4. שאלות</span></div>
+        <div id="med-leaderboard-list" class="recommend-card">טוען דירוג...</div>
+        <div class="recommend-card" style="text-align:center;">
+            <h3>הזמן חברים</h3>
+            <p>כל מי שמקבל את הקישור יכול להשתמש באפליקציה. חשבון נדרש רק לסנכרון ולדירוג.</p>
+            <button class="btn btn-primary" onclick="shareMedApp()">שתף את מבחן ידע 101</button>
         </div>
     </div>
 
@@ -340,14 +387,27 @@
             <h3>סנכרון ענן בין מכשירים</h3>
             <div id="cloud-status" class="cloud-status off">בודק חיבור...</div>
             <div id="cloud-login-area">
-                <p style="font-size:14px;">השתמש באותו אימייל וסיסמה שכבר הגדרת ב-IDpsycho101.</p>
+                <p style="font-size:14px;">אם כבר יש לך חשבון ב-IDpsycho101, אותו חשבון עובד גם כאן.</p>
                 <div class="sync-grid">
                     <input id="cloud-email" type="email" autocomplete="email" placeholder="אימייל">
                     <input id="cloud-password" type="password" autocomplete="current-password" placeholder="סיסמה">
                 </div>
                 <button class="btn btn-sync" onclick="cloudLogin()">התחבר לענן</button>
+                <hr style="border:none;border-top:1px solid rgba(127,140,141,.35);margin:18px 0;">
+                <strong>משתמש חדש</strong>
+                <div class="sync-grid">
+                    <input id="signup-name-med" maxlength="24" placeholder="כינוי ל-Leaderboard">
+                    <input id="signup-email-med" type="email" autocomplete="email" placeholder="אימייל">
+                    <input id="signup-password-med" type="password" autocomplete="new-password" placeholder="סיסמה, לפחות 6 תווים">
+                </div>
+                <button class="btn btn-primary" onclick="signUpMed()">צור חשבון</button>
+                <p id="signup-msg-med" style="font-size:14px;"></p>
             </div>
             <div id="cloud-actions" class="hidden">
+                <p><strong>כינוי ציבורי ל-Leaderboard</strong></p>
+                <input id="med-display-name" maxlength="24" placeholder="כינוי" style="padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);">
+                <button class="btn btn-sync" onclick="saveMedDisplayName()">שמור כינוי</button>
+                <p id="med-display-name-msg" style="font-size:14px;"></p>
                 <button class="btn btn-sync" onclick="syncNow()">סנכרן עכשיו</button>
                 <button class="btn btn-primary" onclick="cloudLogout()">התנתק</button>
             </div>
@@ -393,12 +453,13 @@
         login.classList.toggle('hidden',on);
         actions.classList.toggle('hidden',!on);
         setCloudStatus(on ? 'מסונכרן כ־' + (medCloudUser.email||'משתמש') : 'לא מחובר', on);
+        const nameInput=document.getElementById('med-display-name');if(nameInput)nameInput.value=appData.displayName||'';
     }
     function mergeMedStates(localState, remoteState){
         if(!remoteState || typeof remoteState!=='object') return localState;
         const base={
             cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
-            answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[]
+            answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
         };
         const out={...base,...remoteState,...localState};
         out.cards={...(remoteState.cards||{})};
@@ -430,6 +491,9 @@
         out.streak=Math.max(localState.streak||1,remoteState.streak||1);
         out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);
         out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;
+        out.lessonStats={...(remoteState.lessonStats||{})};
+        for(const [id,s] of Object.entries(localState.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}
+        out.displayName=localState.displayName||remoteState.displayName||"";
         const histories=[...(remoteState.simulationHistory||[]),...(localState.simulationHistory||[])];
         const seen=new Set();
         out.simulationHistory=histories.filter(x=>{const k=(x.date||'')+'|'+(x.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);
@@ -440,8 +504,14 @@
             const sb=getMedSupabase();
             const {data:{session}}=await sb.auth.getSession();
             medCloudUser=session?.user||null;
+            if(medCloudUser&&!appData.displayName){
+                if(medCloudUser.user_metadata?.display_name) appData.displayName=String(medCloudUser.user_metadata.display_name).slice(0,24);
+                else{
+                    try{const {data:p}=await sb.from('psycho101_leaderboard').select('display_name').eq('user_id',medCloudUser.id).maybeSingle();if(p?.display_name)appData.displayName=p.display_name}catch(e){}
+                }
+            }
             refreshCloudUI();
-            if(medCloudUser) await syncNow(true);
+            if(medCloudUser){ await syncNow(true); await pushMedLeaderboard(); }
         }catch(e){
             console.error('Cloud init error',e);
             refreshCloudUI();
@@ -458,8 +528,10 @@
             const {data,error}=await sb.auth.signInWithPassword({email,password});
             if(error) throw error;
             medCloudUser=data.user;
+            if(!appData.displayName&&data.user?.user_metadata?.display_name)appData.displayName=String(data.user.user_metadata.display_name).slice(0,24);
             refreshCloudUI();
             await syncNow(true);
+            await pushMedLeaderboard();
             if(msg) msg.textContent='התחברת והנתונים סונכרנו';
         }catch(e){
             console.error(e);
@@ -491,6 +563,9 @@
             if(upsertError) throw upsertError;
             medCloudMeta.updatedAt=Date.now();
             localStorage.setItem(MED101_META,JSON.stringify(medCloudMeta));
+            await pushMedLeaderboard();
+            const nameInput=document.getElementById('med-display-name');if(nameInput)nameInput.value=appData.displayName||'';
+            setGreeting();
             if(msg && !silent) msg.textContent='הסנכרון הושלם';
         }catch(e){
             console.error('Cloud sync error',e);
@@ -660,7 +735,7 @@
         itemStats:{}, errors:[], topicStats:{},
         answered:0, correct:0, xp:0, streak:1,
         todayAnswered:0, dailyGoal:20, lastStudyDate:null,
-        simulationHistory:[]
+        simulationHistory:[], lessonStats:{}, displayName:""
     };
 
     try {
@@ -678,7 +753,9 @@
                     itemStats: parsed.itemStats || {},
                     errors: parsed.errors || [],
                     topicStats: parsed.topicStats || {},
-                    simulationHistory: parsed.simulationHistory || []
+                    simulationHistory: parsed.simulationHistory || [],
+                    lessonStats: parsed.lessonStats || {},
+                    displayName: parsed.displayName || ""
                 };
             }
         }
@@ -785,15 +862,24 @@
     let simScore = 0;
     let simTimerInterval = null;
     let simTimeLeft = 15 * 60;
+    let medQuickSession = null;
 
-    function setGreeting() {
+    function getMedGreeting() {
         const hour = new Date().getHours();
-        let greeting = "שלום!";
-        if (hour >= 5 && hour < 12) greeting = "בוקר טוב ☀️";
-        else if (hour >= 12 && hour < 18) greeting = "צהריים טובים 🌤️";
-        else if (hour >= 18 && hour < 22) greeting = "ערב טוב 🌙";
-        else greeting = "לילה טוב 🦉";
-        document.getElementById('dynamic-title').innerText = greeting + " | מבחן ידע 101";
+        let greeting = "שלום", emoji="👋";
+        if (hour >= 5 && hour < 12) { greeting = "בוקר טוב"; emoji="☀️"; }
+        else if (hour >= 12 && hour < 18) { greeting = "צהריים טובים"; emoji="🌤️"; }
+        else if (hour >= 18 && hour < 22) { greeting = "ערב טוב"; emoji="🌙"; }
+        else { greeting = "לילה טוב"; emoji="🦉"; }
+        const name=(appData.displayName||"").trim();
+        return greeting + (name ? ", " + name : "") + " " + emoji;
+    }
+    function setGreeting() {
+        const text=getMedGreeting();
+        const title=document.getElementById('dynamic-title');
+        const home=document.getElementById('home-greeting');
+        if(title) title.innerText = text + " | מבחן ידע 101";
+        if(home) home.innerText = text;
     }
 
     function applyMedTheme(theme){
@@ -841,6 +927,8 @@
         if(sectionId === 'weakpoints') updateWeakPoints();
         if(sectionId === 'errors') renderMedErrors();
         if(sectionId === 'progress') renderMedProgress();
+        if(sectionId === 'leaderboard') renderMedLeaderboard();
+        if(sectionId === 'home') setGreeting();
     }
 
     function populateFilters() {
@@ -1060,6 +1148,109 @@
 
     window.nextQuestion = function() { loadQuestion(true); };
 
+    function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+    function medLessonLabel(subject){
+        return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject;
+    }
+    window.startMedQuickLesson=function(subject){
+        let pool=subject==='daily'?dbQuestions:dbQuestions.filter(q=>q.subject===subject);
+        pool=medShuffle(pool);
+        const count=subject==='daily'?10:8;
+        medQuickSession={subject,list:pool.slice(0,Math.min(count,pool.length)),index:0,correct:0,answered:false,rewarded:false};
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+        document.getElementById('quick-lesson').classList.add('active');
+        renderMedQuickQuestion();
+    };
+    function renderMedQuickQuestion(){
+        const s=medQuickSession;if(!s)return;
+        if(s.index>=s.list.length){finishMedQuickLesson();return}
+        const q=s.list[s.index];
+        document.getElementById('med-quick-progress').innerText=`שאלה ${s.index+1} מתוך ${s.list.length} · ${medLessonLabel(s.subject)}`;
+        document.getElementById('med-quick-title').innerText=q.text;
+        document.getElementById('med-quick-options').innerHTML=q.options.map((o,i)=>`<button class="med-quick-option" id="mqo-${i}" onclick="answerMedQuick(${i})">${o}</button>`).join('');
+        document.getElementById('med-quick-feedback').classList.add('hidden');
+        document.getElementById('med-quick-next').classList.add('hidden');
+        s.answered=false;
+    }
+    window.answerMedQuick=function(choice){
+        const s=medQuickSession;if(!s||s.answered)return;
+        s.answered=true;const q=s.list[s.index],good=choice===q.answer;
+        if(good)s.correct++;
+        updateReview('questions',q,good);recordAnswer(q,good,'quick',choice);
+        document.querySelectorAll('.med-quick-option').forEach((b,i)=>{b.disabled=true;if(i===q.answer)b.classList.add('correct');else if(i===choice)b.classList.add('wrong')});
+        const fb=document.getElementById('med-quick-feedback');
+        fb.innerHTML=(good?'<strong>✓ נכון</strong>':'<strong>✗ לא נכון</strong>')+'<br>'+q.explanation+(q.reference?'<span class="reference">📚 '+q.reference+'</span>':'');
+        fb.classList.remove('hidden');document.getElementById('med-quick-next').classList.remove('hidden');saveData();
+    };
+    window.nextMedQuickQuestion=function(){const s=medQuickSession;if(!s)return;s.index++;renderMedQuickQuestion()};
+    function finishMedQuickLesson(){
+        const s=medQuickSession;if(!s)return;
+        if(!s.rewarded){
+            const key=s.subject,acc=Math.round((s.correct/Math.max(1,s.list.length))*100),old=appData.lessonStats[key]||{completed:0,bestAccuracy:0};
+            appData.lessonStats[key]={completed:(old.completed||0)+1,bestAccuracy:Math.max(old.bestAccuracy||0,acc)};
+            appData.xp=(appData.xp||0)+20;s.rewarded=true;saveData();
+        }
+        document.getElementById('quick-lesson').innerHTML=`<div class="med-quick-card" style="text-align:center"><div style="font-size:42px">🎉</div><h2>השיעור הושלם</h2><p>${s.correct} נכונות מתוך ${s.list.length} · ${Math.round(s.correct/Math.max(1,s.list.length)*100)}%</p><button class="btn btn-primary" onclick="showSection('home')">חזרה לבית</button><button class="btn btn-sync" onclick="startMedQuickLesson('${s.subject}')">עוד שיעור</button></div>`;
+        updateHomeDashboard();
+    }
+    function updateMedLessonMeta(){
+        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','daily']){
+            const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];
+            if(el&&s?.completed)el.innerText='✓ '+s.bestAccuracy+'%';
+        }
+    }
+    async function shareMedApp(){
+        const url=location.origin+location.pathname;
+        const data={title:'מבחן ידע 101',text:'בוא ללמוד איתי למבחן הידע 🎯',url};
+        try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(url);alert('הקישור הועתק')}}catch(e){}
+    }
+    function medLeaderboardAccuracy(r){return r.answered?Math.round((r.correct||0)/r.answered*100):0}
+    function compareMedLeaderboard(a,b){
+        if((b.xp||0)!==(a.xp||0))return (b.xp||0)-(a.xp||0);
+        const d=medLeaderboardAccuracy(b)-medLeaderboardAccuracy(a);if(d)return d;
+        if((b.streak||0)!==(a.streak||0))return (b.streak||0)-(a.streak||0);
+        return (b.answered||0)-(a.answered||0);
+    }
+    async function pushMedLeaderboard(){
+        if(!medCloudUser||!appData.displayName)return;
+        try{
+            const sb=getMedSupabase();
+            const {error}=await sb.from('med101_leaderboard').upsert({
+                user_id:medCloudUser.id,display_name:appData.displayName.trim().slice(0,24),
+                xp:Math.max(0,appData.xp||0),streak:Math.max(0,appData.streak||0),
+                answered:Math.max(0,appData.answered||0),correct:Math.max(0,appData.correct||0),
+                updated_at:new Date().toISOString()
+            },{onConflict:'user_id'});
+            if(error)throw error;
+        }catch(e){console.error('Med leaderboard push failed',e)}
+    }
+    async function renderMedLeaderboard(){
+        const el=document.getElementById('med-leaderboard-list');if(!el)return;el.innerHTML='טוען דירוג...';
+        try{
+            const sb=getMedSupabase();const {data,error}=await sb.from('med101_leaderboard').select('user_id,display_name,xp,streak,answered,correct,updated_at').limit(100);
+            if(error)throw error;const rows=(data||[]).sort(compareMedLeaderboard),me=medCloudUser?.id,medals=['🥇','🥈','🥉'];
+            el.innerHTML=rows.length?rows.map((r,i)=>`<div class="leader-row-med ${r.user_id===me?'leader-me-med':''}"><div class="leader-rank-med">${medals[i]||'#'+(i+1)}</div><div><div class="leader-name-med">${r.display_name}${r.user_id===me?' · אתה':''}</div><div class="leader-sub-med">דיוק ${medLeaderboardAccuracy(r)}% · 🔥 ${r.streak||0} · ${r.answered||0} שאלות</div></div><div class="leader-xp-med">${r.xp||0} XP</div></div>`).join(''):'עדיין אין משתמשים בדירוג.';
+        }catch(e){el.innerHTML='לא הצלחנו לטעון את הדירוג.'}
+    }
+    async function saveMedDisplayName(){
+        const input=document.getElementById('med-display-name'),msg=document.getElementById('med-display-name-msg'),name=input?.value?.trim();
+        if(!name||name.length<2){if(msg)msg.innerText='בחר כינוי של לפחות 2 תווים';return}
+        appData.displayName=name.slice(0,24);saveData();setGreeting();await pushMedLeaderboard();if(msg)msg.innerText='הכינוי נשמר';
+    }
+    async function signUpMed(){
+        const name=document.getElementById('signup-name-med')?.value?.trim(),email=document.getElementById('signup-email-med')?.value?.trim(),password=document.getElementById('signup-password-med')?.value||'',msg=document.getElementById('signup-msg-med');
+        if(!name||name.length<2||!email||password.length<6){if(msg)msg.innerText='צריך כינוי, אימייל וסיסמה של לפחות 6 תווים';return}
+        if(msg)msg.innerText='יוצר חשבון...';
+        try{
+            const sb=getMedSupabase(),redirect=location.origin+location.pathname;
+            const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirect,data:{display_name:name.slice(0,24)}}});
+            if(error)throw error;appData.displayName=name.slice(0,24);saveData();
+            if(data?.session&&data?.user){medCloudUser=data.user;await syncNow(true);await pushMedLeaderboard();refreshCloudUI();if(msg)msg.innerText='החשבון נוצר והתחברת'}
+            else if(msg)msg.innerText='החשבון נוצר. אשר את המייל ואז התחבר.';
+        }catch(e){if(msg)msg.innerText='לא הצלחנו ליצור חשבון: '+(e?.message||'שגיאה')}
+    }
+
     // --- Simulation Logic ---
     window.startSimulation = function() {
         let allQ = dbQuestions.map(q=>({...q,options:[...q.options]}));
@@ -1188,6 +1379,7 @@
         set('home-xp',appData.xp||0);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
+        updateMedLessonMeta();
         const weakEl=document.getElementById('home-weak-topics');
         if(weakEl) weakEl.innerHTML=weak.length?weak.map(x=>`<div class="topic-progress-row"><span>${x.topic}</span><span class="pill-med">${x.accuracy}%</span></div>`).join(''):'אין עדיין מספיק נתונים.';
         const rec=document.getElementById('home-recommendation');
@@ -1250,7 +1442,7 @@
         if(confirm("לאפס את כל נתוני הלמידה וההתקדמות?")) {
             appData = {
                 cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
-                answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[]
+                answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
             };
             saveData(); showSection('home'); alert("הנתונים אופסו!");
         }
@@ -1289,9 +1481,11 @@
         await hydrateMedCloud();
         getMedSupabase().auth.onAuthStateChange(async (_event,session)=>{
             medCloudUser=session?.user||null;
+            if(medCloudUser&&!appData.displayName&&session?.user?.user_metadata?.display_name)appData.displayName=String(session.user.user_metadata.display_name).slice(0,24);
             refreshCloudUI();
-            if(medCloudUser) await syncNow(true);
+            if(medCloudUser){await syncNow(true);await pushMedLeaderboard();}
         });
+        setInterval(setGreeting,60000);
     };
 </script>
 </body>
