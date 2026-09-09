@@ -8,7 +8,12 @@
     'rec_2023b_043',
     'rec_2021b_013',
     'rec_2021b_018',
-    'rec_2023a_040'
+    'rec_2023a_040',
+    'rec_2022a_023',
+    'rec_2022a_108',
+    'rec_2021b_069',
+    'rec_2021b_070',
+    'rec_2021b_086'
   ]);
 
   const corrections={
@@ -67,6 +72,20 @@
       answer:0,
       explanation:'ב-incomplete tetanus תדירות הגירוי גבוהה מספיק כדי שלא תהיה הרפיה מלאה. Ca2+ הציטוזולי והכוח נשארים מוגברים בין גירויים, אך עדיין יש תנודות; ב-complete tetanus התנודות בכוח כמעט נעלמות.',
       officialRef:'Berne & Levy 8e · Chapter 12 — Skeletal Muscle'
+    },
+    rec_2023a_063:{
+      text:'איזה אזור בכרומוזום דרוש להרכבת הקינטוכור ולהפרדה תקינה של כרומוזומים במיטוזה?',
+      options:['הצנטרומר','מוצא שכפול','הטלומר','אזור enhancer'],
+      answer:0,
+      explanation:'הצנטרומר הוא אזור כרומוזומלי שעליו מורכב הקינטוכור. Microtubules של ה-mitotic spindle נקשרים לקינטוכור וכך מאפשרים הפרדה של sister chromatids.',
+      officialRef:'Alberts 7e · Chapter 17 — The Cell Cycle'
+    },
+    rec_2021b_075:{
+      text:'מהו תפקידו העיקרי של adaptor protein ביצירת clathrin-coated pit?',
+      options:['לקשור את הזנבות הציטוזוליים של cargo receptors ובמקביל לגייס clathrin coat','לחתוך את צוואר הווזיקולה באמצעות GTP hydrolysis','להמיס את clathrin coat לאחר budding','לאחות את הווזיקולה ישירות עם endosome'],
+      answer:0,
+      explanation:'Adaptor proteins כגון AP2 מקשרים בין cargo receptors בממברנה לבין clathrin, וגם מתקשרים עם phosphoinositides. כך הם מרכזים cargo ומתחילים הרכבת coated pit.',
+      officialRef:'Alberts 7e · Chapter 13 — Intracellular Membrane Traffic'
     },
     rec_2025b_071:{
       text:'חלבון שמיועד ללומן התילקואיד בכלורופלסט זקוק בדרך כלל לשתי שכבות של אותות הכוונה. מה מתאר אותן בצורה הטובה ביותר?',
@@ -176,6 +195,12 @@
       if(has('מיצל','micell'))return 'ה-hydrophobic effect מניע יצירת micelles: קיבוץ השיירים ההידרופוביים מפחית את שטח המגע שלהם עם מים ומשחרר מולקולות מים מסודרות, ולכן מעלה אנטרופיה.';
       if(has('אנזים','enzyme','מצב המעבר'))return 'אנזים אינו משנה את ΔG או את שיווי המשקל; הוא מייצב את מצב המעבר ומקטין את אנרגיית השפעול ולכן מגדיל את קצב התגובה.';
       if(has('אלוסטר','alloster'))return 'Effector allosteric נקשר לאתר שאינו האתר הפעיל ומשנה את הקונפורמציה והפעילות של האנזים.';
+      if(has('שיער אדם','קרן של קרנף','ציסטאינים'))return 'שיער וקרן בנויים בעיקר מ-keratin. קשיחות גבוהה יותר יכולה לנבוע מריבוי cysteine ויצירת יותר disulfide crosslinks בין שרשראות keratin.';
+      if(has('מים בגוף','ph נייטרלי'))return 'מים משמשים solvent, reactant וגם product בתגובות רבות, אך הם אינם שומרים בעצמם על pH ניטרלי. שמירת pH נעשית באמצעות buffer systems ורגולציה פיזיולוגית.';
+      if(has('אטום פחמן','צורות ציקליות'))return 'Carbon יוצר ארבעה קשרים קוולנטיים יציבים ויכול להתחבר לעצמו במבנים ישרים, מסועפים וטבעתיים. יכולת זו היא בסיס למגוון העצום של biomolecules.';
+      if(has('חמצון בטא','הפקת אנרגיה'))return 'β-oxidation מפרק fatty acyl-CoA ל-acetyl-CoA ומייצר NADH ו-FADH2. אלה מזינים את TCA cycle ו-electron transport chain ולכן התהליך משמש להפקת אנרגיה.';
+      if(has('g6p phosphatase','קורטקס הכליה'))return 'Glucose-6-phosphatase מבוטא בעיקר בכבד וגם ב-kidney cortex, שם הוא מאפשר יצירת free glucose מ-G6P ושחרורו לדם. Muscle אינו מבטא את האנזים.';
+      if(has('protein data bank','pdb'))return 'Protein Data Bank הוא מאגר של מבנים תלת-ממדיים של proteins, nucleic acids ו-macromolecular complexes שנקבעו בשיטות מבניות כגון X-ray crystallography, NMR ו-cryo-EM.';
       if(has('2,3 bpg','2,3-bpg'))return '2,3-BPG נקשר ל-deoxyhemoglobin ומקטין את זיקתו ל-O2. עלייה בו מזיזה את עקומת הדיסוציאציה ימינה ומסייעת לשחרור O2 ברקמות בהיפוקסיה.';
       if(has('גליצין','glycine','פעילות אופטית'))return 'Glycine היא חומצת האמינו היחידה שבה לפחמן α קשורים שני אטומי H; לכן אין לה מרכז כיראלי והיא אינה פעילה אופטית.';
       if(has('uncompetitive'))return 'Uncompetitive inhibitor נקשר רק ל-ES, ולכן מוריד גם Vmax וגם Km באותו יחס.';
@@ -256,6 +281,21 @@
       if(has('פלאגלה','flagell'))return 'Eukaryotic flagella בנויים axoneme של microtubules, בעוד microvilli, filopodia ו-sarcomeres נשענים על actin filaments.';
       if(has('twist','e קדהרין','e-cadherin'))return 'Twist הוא transcription factor שמקדם EMT בין היתר על ידי repression של E-cadherin, וכך מפחית cell-cell adhesion ומגביר invasiveness.';
       if(has('פרוקסיזום','peroxisome','acetyl-coa'))return 'Peroxisomes מבצעים β-oxidation, ובשמרים הגדלים על fatty acids הם מקור חשוב ל-acetyl-CoA.';
+      if(has('multi photon','מולטי פוטון','עומק רב'))return 'Two-photon microscopy משתמשת בשני photons בעלי אנרגיה נמוכה יותר שמגיעים כמעט בו-זמנית ל-fluorophore. העירור מתרחש בעיקר בנקודת המיקוד, מה שמפחית scattering ו-photodamage ומאפשר imaging עמוק יותר ברקמה.';
+      if(has('כיצד עובדת שיטת fret','פליטה של b'))return 'ב-FRET donor מעורר מעביר אנרגיה ללא פליטת photon ל-acceptor סמוך. ה-acceptor פולט באורך גל ארוך יותר, והתהליך יעיל רק כאשר שני fluorophores קרובים מאוד.';
+      if(has('snorna','snorna','גרעינון'))return 'snoRNA מרוכזים בעיקר ב-nucleolus, שם הם מכוונים processing ומודיפיקציות כימיות של rRNA במהלך biogenesis של ribosomes.';
+      if(has('kdel'))return 'KDEL הוא signal קצר בקצה C-terminal של soluble ER-resident proteins. הוא מזוהה ב-Golgi על ידי KDEL receptor ומחזיר את החלבונים ל-ER ב-COPI vesicles.';
+      if(has('קולגן','שרשראות אלפא','21-90'))return 'בבני אדם קיימים עשרות genes המקודדים α chains של collagens, משום שקיימים סוגי collagen רבים והם מורכבים משילובים שונים של α chains. לכן טווח של עשרות genes מתאים.';
+      if(has('sphingos','ספינגוזין'))return 'Sphingosine הוא amino alcohol ארוך-שרשרת המכיל hydrocarbon chain, amino group ו-hydroxyl groups. Phosphate אינו חלק ממבנה sphingosine עצמו, אף שהוא מופיע בנגזרות כגון sphingosine-1-phosphate.';
+      if(has('שוגושין','shugoshin'))return 'Shugoshin מגן על centromeric cohesin בעיקר באמצעות גיוס PP2A phosphatase, שמונעת phosphorylation המקדמת הסרה מוקדמת של cohesin.';
+      if(has('pten','pip(3,4,5)3','pip3'))return 'PTEN הוא lipid phosphatase שמסיר את phosphate בעמדה 3 מ-PIP3 והופך אותו ל-PIP2. בכך הוא אנטגוניסט מרכזי למסלול PI3K–Akt.';
+      if(has('מלנוז','melanos'))return 'Melanosomes הם lysosome-related organelles המתמחים בסינתזה, אחסון והעברת melanin. הם שייכים למשפחת האברונים הקשורים ל-endolysosomal system.';
+      if(has('סידן','איחוי וזיקולות','תיקון פגמים'))return 'Ca2+ הוא signal מרכזי ל-membrane fusion. ב-presynaptic terminal הוא נקשר ל-synaptotagmin ומפעיל exocytosis, וגם membrane repair משתמש ב-Ca2+-dependent fusion של vesicles.';
+      if(has('pkc','dag'))return 'Conventional ו-novel PKC מגויסים לממברנה על ידי DAG; ב-conventional PKC נדרש גם Ca2+. הקישור לממברנה מסיר autoinhibition ומאפשר kinase activity.';
+      if(has('hyaluron','glucuronic'))return 'Hyaluronan מורכב מיחידות חוזרות של D-glucuronic acid ו-N-acetyl-D-glucosamine. לכן glucuronic acid הוא אחד משני הסוכרים בדיסכריד החוזר.';
+      if(has('myosin vi','מיוזין vi'))return 'Myosin VI יוצא דופן במשפחת myosins משום שהוא נע לכיוון minus end של actin filaments, בעוד רוב myosins נעים לכיוון plus end.';
+      if(has('stress fibers','כיווץ האפקטיבי'))return 'Stress fibers הם bundles contractile של actin ו-myosin II המעוגנים ב-focal adhesions. לכן הם מותאמים במיוחד ליצירת tension וכיווץ תאי.';
+      if(has('tips+','+tips','מיקרוטובולי לממברנת'))return '+TIP proteins נקשרים ל-growing plus ends של microtubules ויכולים לקשר אותם ל-cell cortex ולמבנים ממברנליים, וכך לייצב capture של microtubules בקצה התא.';
       if(has('gamma secretase','גמא סקרטאז','notch'))return 'לאחר קישור Delta, Notch עובר cleavage כולל חיתוך תוך-ממברנלי על ידי γ-secretase; ה-NICD המשתחרר נכנס לגרעין ומשנה transcription.';
       if(has('quantum dots','קוואנט'))return 'ב-quantum dots אנרגיית הפליטה תלויה בגודל הננו-גביש עקב quantum confinement; שינוי גודל משנה את wavelength של fluorescence.';
       if(has('c-cbl','cbl','ubiquitin'))return 'C-Cbl הוא E3 ubiquitin ligase שמוסיף ubiquitin ל-activated RTKs ומקדם endocytosis ומיון שלהם לפירוק.';
@@ -326,7 +366,7 @@
     if(!x||exclude.has(q.id))return null;
     if(corrections[q.id])x={...x,...corrections[q.id]};
     x.subject=subjectByNumber(x);
-    const e=(corrections[q.id]&&corrections[q.id].explanation)||explain(x);
+    const e=(corrections[q.id]&&corrections[q.id].explanation)||(x.bookReviewed===true&&x.explanation&&!String(x.explanation).includes('הניסוח נוקה')?x.explanation:explain(x));
     const ref=(corrections[q.id]&&corrections[q.id].officialRef)||officialRef(x);
     if(!e||!ref)return null;
     return {
