@@ -17,6 +17,27 @@
   ]);
 
   const corrections={
+    rec_2025b_055:{
+      text:'מדוע cohesin מחזיק sister chromatids יחד עד תחילת anaphase?',
+      options:['כדי לאפשר הפרדה מתוזמנת של שתי הכרומטידות לתאי בת שונים','כדי ששתי הכרומטידות יגיעו לאותו תא בת','כדי לבצע non-homologous end joining','כדי לאפשר מעבר מ-G1 ל-S'],
+      answer:0,
+      explanation:'Cohesin שומר את sister chromatids מחוברות לאחר replication. ב-anaphase cohesin נחתך/מוסר, ואז spindle יכול למשוך כל כרומטידה לקוטב אחר וכך להבטיח חלוקה שווה של הגנום.',
+      officialRef:'Alberts 7e · Chapter 17 — The Cell Cycle'
+    },
+    rec_2022a_011:{
+      text:'באיזה מצב פיזיולוגי עלייה ב-2,3-BPG בכדוריות דם אדומות יכולה להועיל במיוחד?',
+      options:['התייבשות ללא היפוקסיה','חום גוף תקין','חשיפה לקור','מחסור כרוני או סביבתי בחמצן'],
+      answer:3,
+      explanation:'2,3-BPG נקשר ל-deoxyhemoglobin ומפחית את זיקתו ל-O2. בהיפוקסיה עלייה ב-2,3-BPG מזיזה את עקומת הדיסוציאציה ימינה ומקלה על שחרור חמצן לרקמות.',
+      officialRef:'Lehninger 8e · Chapter 5 — Protein Function'
+    },
+    rec_2022a_015:{
+      text:'היכן מתחיל הפירוק האנזימטי של triacylglycerols שמקורם במזון?',
+      options:['במערכת העיכול','בכבד','בשריר השלד','ברקמת השומן'],
+      answer:0,
+      explanation:'Dietary triacylglycerols עוברים hydrolysis על ידי lipases במערכת העיכול לפני ספיגת תוצרי הפירוק ב-enterocytes. רק לאחר מכן הם נארזים מחדש ומובלים לרקמות.',
+      officialRef:'Lehninger 8e · Chapter 17 — Fatty Acid Catabolism'
+    },
     rec_2025b_001:{
       text:'איזה מהפוליפפטידים הבאים צפוי להראות את הבליעה החזקה ביותר באורך גל של 280 nm, בהנחה שאורך הפוליפפטידים דומה?',
       options:['פוליפפטיד המכיל טריפטופן','פוליפפטיד המכיל טירוזין אך לא טריפטופן','פוליפפטיד המכיל פנילאלנין בלבד מבין חומצות האמינו הארומטיות','פוליפפטיד ללא חומצות אמינו ארומטיות'],
