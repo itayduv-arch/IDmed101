@@ -908,11 +908,21 @@
     // --- Topic To Book Chapters Dictionary ---
     const topicReferences = {};
 
-    // --- DB Cards (aligned to the official 2026 syllabus; reconstruction-informed priority only) ---
+    // --- Reconstruction-only data policy ---
+    // Every practice item must point back to a reconstruction source.
     let dbFlashcards = [];
-
-    // --- DB Questions (18 Ariel Questions + 120 PDF Questions fully combined) ---
-    const reconstructionArchive=(window.MED101_RECONSTRUCTIONS||[]).filter(q=>q&&q.text);
+    const RECON_YEARS = new Set([2019,2021,2022,2023,2024,2025,2026]);
+    function isStrictReconstruction(q){
+        return !!(q &&
+            typeof q.id==='string' && q.id.startsWith('rec_') &&
+            typeof q.sourceKey==='string' && q.sourceKey &&
+            typeof q.sourceLabel==='string' && q.sourceLabel &&
+            RECON_YEARS.has(Number(q.sourceYear)) &&
+            typeof q.sourceSession==='string' && q.sourceSession &&
+            typeof q.sourceUrl==='string' && /(?:drive|docs)\.google\.com/.test(q.sourceUrl) &&
+            typeof q.text==='string' && q.text.trim());
+    }
+    const reconstructionArchive=(window.MED101_RECONSTRUCTIONS||[]).filter(isStrictReconstruction);
     function deriveReconSubtopic(q){
         const t=((q.text||'')+' '+(q.options||[]).join(' ')).toLowerCase(),s=q.subject||'';
         const has=(...xs)=>xs.some(x=>t.includes(x));
@@ -953,8 +963,10 @@
         }
         return 'שחזור';
     }
-    const dbQuestions=reconstructionArchive.filter(q=>q.verified&&q.complete&&Array.isArray(q.options)&&q.options.length===4&&Number.isInteger(q.answer)&&q.answer>=0&&q.answer<q.options.length).map(q=>({...q,subtopic:q.subtopic||deriveReconSubtopic(q),reference:'📜 שחזור '+q.sourceLabel+' · תשובה מאומתת'}));
-    dbFlashcards=dbQuestions.filter((q,i)=>i%5===0).slice(0,48).map(q=>({id:'fc_'+q.id,subject:q.subject,subtopic:q.subtopic,front:q.text,back:q.options[q.answer],explanation:'כרטיסייה שנבנתה ישירות משאלת שחזור מאומתת.',reference:'📜 שחזור '+q.sourceLabel}));
+    const dbQuestions=reconstructionArchive
+        .filter(q=>q.verified===true&&q.complete===true&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(o=>typeof o==='string'&&o.trim())&&Number.isInteger(q.answer)&&q.answer>=0&&q.answer<q.options.length)
+        .map(q=>({...q,provenance:'reconstruction',subtopic:q.subtopic||deriveReconSubtopic(q),reference:'📜 שחזור מקורי '+q.sourceLabel+' · תשובה מסומנת/מאומתת במקור'}));
+    dbFlashcards=dbQuestions.filter((q,i)=>i%5===0).slice(0,48).map(q=>({id:'fc_'+q.id,subject:q.subject,subtopic:q.subtopic,front:q.text,back:q.options[q.answer],explanation:'כרטיסייה שנבנתה ישירות משאלת שחזור מאומתת, ללא הוספת חומר חיצוני.',reference:'📜 שחזור מקורי '+q.sourceLabel}));
 
     // --- Safe Storage Initialization ---
     let appData = {
@@ -1358,7 +1370,7 @@
 
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
         document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
-        const srcBadge=document.getElementById('q-source');if(srcBadge)srcBadge.innerText='📜 '+(currentQ.sourceLabel||'שחזור');
+        const srcBadge=document.getElementById('q-source');if(srcBadge)srcBadge.innerText='📜 שחזור מקורי · '+(currentQ.sourceLabel||'שחזור');
         document.getElementById('q-text').innerText = currentQ.text;
         
         let optionsHtml = "";
@@ -1498,7 +1510,7 @@
         return chosen;
     }
     function medLessonLabel(subject){
-        return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject==='high-yield'?'נושאים חוזרים 2025–2026':subject;
+        return subject==='מולקולרית'?'ביולוגיה מולקולרית':subject==='daily'?'שיעור יומי':subject==='high-yield'?'נושאים חוזרים בשחזורים':subject;
     }
     window.startMedQuickLesson=function(subject){
         let list=[];
@@ -1525,7 +1537,7 @@
         const s=medQuickSession;if(!s)return;
         if(s.index>=s.list.length){finishMedQuickLesson();return}
         const q=s.list[s.index];
-        document.getElementById('med-quick-progress').innerText=`שאלה ${s.index+1} מתוך ${s.list.length} · ${medLessonLabel(s.subject)}`;
+        document.getElementById('med-quick-progress').innerText=`שאלה ${s.index+1} מתוך ${s.list.length} · ${medLessonLabel(s.subject)} · 📜 ${q.sourceLabel||'שחזור'}`;
         const fill=document.getElementById('med-quick-fill');if(fill)fill.style.width=Math.round((s.index/s.list.length)*100)+'%';
         const card=document.getElementById('med-quick-card');
         if(card){card.classList.remove('quick-question-enter','answer-celebrate');void card.offsetWidth;card.classList.add('quick-question-enter')}
@@ -1664,7 +1676,7 @@
             return;
         }
         let q = simQuestions[currentSimIndex];
-        document.getElementById('sim-progress').innerText = `שאלה ${currentSimIndex + 1} מתוך ${simQuestions.length}`;
+        document.getElementById('sim-progress').innerText = `שאלה ${currentSimIndex + 1} מתוך ${simQuestions.length} · 📜 ${q.sourceLabel||'שחזור'}`;
         document.getElementById('sim-q-text').innerText = q.text;
         let optionsHtml = "";
         q.options.forEach((opt, idx) => {
@@ -1734,7 +1746,7 @@
             return;
         }
         list.innerHTML=weak.map(x=>{
-            const bookRef=topicReferences[x.topic]||"חזור על סיכומי ההרצאות והמצגות";
+            const bookRef=topicReferences[x.topic]||"חזור על שאלות השחזור המסומנות בנושא הזה";
             const severity=x.accuracy<50?'דחיפות גבוהה':x.accuracy<75?'מומלץ לחזק':'במגמת שיפור';
             return `<li class="weakpoint-item"><strong>${x.topic}</strong> — ${x.accuracy}% דיוק (${severity})<span class="book-ref">📖 ${bookRef}</span></li>`;
         }).join('');
@@ -1755,7 +1767,7 @@
         const orb=document.getElementById('hero-streak-orb');
         if(orb)orb.classList.toggle('streak-pulse',(appData.streak||1)>1);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
-        set('recon-home-count',dbQuestions.length+' שאלות מאומתות לציון מתוך '+reconstructionArchive.length+' שאלות שחזור בארכיון.');
+        set('recon-home-count',dbQuestions.length+' שאלות שחזור מאומתות לתרגול מתוך '+reconstructionArchive.length+' פריטי שחזור. פריט ללא תשובה מאומתת נשאר בארכיון בלבד.');
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
         updateMedLessonMeta();
         const weakEl=document.getElementById('home-weak-topics');
