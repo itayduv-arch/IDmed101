@@ -748,7 +748,7 @@
 <script src="./recon_2024c.js?v=20260909-2"></script>
 <script src="./recon_2023.js?v=20260909-2"></script>
 <script src="./recon_2022.js?v=20260909-2"></script>
-<script src="./recon_2021_2019.js?v=20260909-2"></script>
+<script src="./recon_2021_2019.js?v=20260909-2"></script>\n<script src="./question_polish.js?v=20260909-1"></script>
 <script>
     const MED101_SUPABASE_URL = "https://pqxlhfykmnlkmbrjuwhr.supabase.co";
     const MED101_SUPABASE_KEY = "sb_publishable_WkfZvZJgGSLu8AHuAb7E9w_wqWAJ7Y6";
@@ -965,7 +965,9 @@
     }
     const dbQuestions=reconstructionArchive
         .filter(q=>q.verified===true&&q.complete===true&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(o=>typeof o==='string'&&o.trim())&&Number.isInteger(q.answer)&&q.answer>=0&&q.answer<q.options.length)
-        .map(q=>({...q,provenance:'reconstruction',subtopic:q.subtopic||deriveReconSubtopic(q),reference:'📜 שחזור מקורי '+q.sourceLabel+' · תשובה מסומנת/מאומתת במקור'}));
+        .map(q=>({...q,subtopic:q.subtopic||deriveReconSubtopic(q)}))
+        .map(q=>window.MED101_QUESTION_POLISH?.apply ? window.MED101_QUESTION_POLISH.apply(q) : q)
+        .filter(Boolean);
     dbFlashcards=dbQuestions.filter((q,i)=>i%5===0).slice(0,48).map(q=>({id:'fc_'+q.id,subject:q.subject,subtopic:q.subtopic,front:q.text,back:q.options[q.answer],explanation:'כרטיסייה שנבנתה ישירות משאלת שחזור מאומתת, ללא הוספת חומר חיצוני.',reference:'📜 שחזור מקורי '+q.sourceLabel}));
 
     // --- Safe Storage Initialization ---
@@ -1370,7 +1372,7 @@
 
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
         document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
-        const srcBadge=document.getElementById('q-source');if(srcBadge)srcBadge.innerText='📜 שחזור מקורי · '+(currentQ.sourceLabel||'שחזור');
+        const srcBadge=document.getElementById('q-source');if(srcBadge)srcBadge.innerText=(currentQ.styleLabel||'נוסח מעובד על בסיס שחזור')+' · 📜 '+(currentQ.sourceLabel||'שחזור');
         document.getElementById('q-text').innerText = currentQ.text;
         
         let optionsHtml = "";
@@ -1767,7 +1769,7 @@
         const orb=document.getElementById('hero-streak-orb');
         if(orb)orb.classList.toggle('streak-pulse',(appData.streak||1)>1);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
-        set('recon-home-count',dbQuestions.length+' שאלות שחזור מאומתות לתרגול מתוך '+reconstructionArchive.length+' פריטי שחזור. פריט ללא תשובה מאומתת נשאר בארכיון בלבד.');
+        set('recon-home-count',dbQuestions.length+' שאלות בנוסח מבחני לתרגול מתוך '+reconstructionArchive.length+' פריטי שחזור. שאלות עם הערות/חוסר ודאות נשארות בארכיון עד עריכה ידנית.');
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
         updateMedLessonMeta();
         const weakEl=document.getElementById('home-weak-topics');
