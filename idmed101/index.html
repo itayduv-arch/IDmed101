@@ -748,7 +748,7 @@
 <script src="./recon_2024c.js?v=20260909-2"></script>
 <script src="./recon_2023.js?v=20260909-2"></script>
 <script src="./recon_2022.js?v=20260909-2"></script>
-<script src="./recon_2021_2019.js?v=20260909-2"></script>\n<script src="./question_polish.js?v=20260909-1"></script>
+<script src="./recon_2021_2019.js?v=20260909-2"></script>\n<script src="./question_polish.js?v=20260909-1"></script>\n<script src="./question_validation.js?v=20260909-1"></script>
 <script>
     const MED101_SUPABASE_URL = "https://pqxlhfykmnlkmbrjuwhr.supabase.co";
     const MED101_SUPABASE_KEY = "sb_publishable_WkfZvZJgGSLu8AHuAb7E9w_wqWAJ7Y6";
@@ -1769,7 +1769,7 @@
         const orb=document.getElementById('hero-streak-orb');
         if(orb)orb.classList.toggle('streak-pulse',(appData.streak||1)>1);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
-        set('recon-home-count',dbQuestions.length+' שאלות בנוסח מבחני לתרגול מתוך '+reconstructionArchive.length+' פריטי שחזור. שאלות עם הערות/חוסר ודאות נשארות בארכיון עד עריכה ידנית.');
+        set('recon-home-count',dbQuestions.length+' שאלות מאומתות מול חומר המבחן, עם הסבר, מתוך '+reconstructionArchive.length+' פריטי שחזור. שאלות שלא עברו אימות חד-משמעי נשארות בארכיון בלבד.');
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
         updateMedLessonMeta();
         const weakEl=document.getElementById('home-weak-topics');
