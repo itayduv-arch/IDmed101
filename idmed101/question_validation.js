@@ -13,10 +13,103 @@
     'rec_2022a_108',
     'rec_2021b_069',
     'rec_2021b_070',
-    'rec_2021b_086'
+    'rec_2021b_086',
+    'rec_2025b_050',
+    'rec_2023b_110'
   ]);
 
   const corrections={
+    rec_2025b_015:{
+      text:'במסלול תגובות עוקבות, איזה מאפיין מתאים לשלב הקובע את הקצב (rate-determining step)?',
+      options:['זהו בדרך כלל השלב האיטי ביותר ובעל מחסום האנרגיה האפקטיבי הגדול ביותר','זהו תמיד השלב הראשון במסלול','זהו השלב היחיד שבו פועל אנזים','זהו השלב שבו ΔG של התגובה הכוללת שווה לאפס'],
+      answer:0,
+      explanation:'במסלול עוקב, השלב בעל הקצב האיטי ביותר מגביל את קצב הזרימה הכולל. במונחי פרופיל אנרגיה הוא מתאפיין במחסום activation גדול יחסית, ולא בכך שהוא בהכרח ראשון או היחיד שמזורז על ידי אנזים.',
+      officialRef:'Lehninger 8e · Chapter 6 — Enzymes'
+    },
+    rec_2021b_005:{
+      text:'ב-mixed inhibition שבו המעכב נקשר לאנזים החופשי (E) חזק יותר מאשר לקומפלקס ES, מה צפוי לקרות ל-Vmax ול-Km?',
+      options:['Vmax יישאר ללא שינוי ו-Km יעלה','Vmax ירד ו-Km יעלה','Vmax ירד ו-Km לא ישתנה','Vmax יישאר ללא שינוי ו-Km ירד'],
+      answer:1,
+      explanation:'Mixed inhibitor מוריד Vmax בכל מקרה. כאשר יש לו העדפה ל-E על פני ES, הוא מפחית את האפיניות האפקטיבית לסובסטרט ולכן Km עולה. אילו הייתה העדפה ל-ES, Km היה יכול דווקא לרדת.',
+      officialRef:'Lehninger 8e · Chapter 6 — Enzymes'
+    },
+    rec_2021b_020:{
+      text:'איזה וריאנט של ApoE קשור באופן מובהק לעלייה בסיכון למחלת Alzheimer מאוחרת?',
+      options:['ApoE ε2','ApoE ε3','ApoE ε4','אין קשר בין ApoE ל-Alzheimer'],
+      answer:2,
+      explanation:'ApoE ε4 הוא גורם סיכון גנטי מרכזי ל-late-onset Alzheimer disease. הוא אינו קובע לבדו שהמחלה תתפתח, אך מעלה את הסיכון באופן משמעותי.',
+      officialRef:'Lehninger 8e · lipid transport context; clinically established ApoE biology'
+    },
+    rec_2019a_013:{
+      text:'מהו התוכן העיקרי של Protein Data Bank (PDB)?',
+      options:['קטלוג של חלבונים מסחריים','רצפי amino acid בלבד','מדידות ביוכימיות של כל החלבונים הידועים','מבנים תלת-ממדיים של proteins, nucleic acids ו-macromolecular complexes שנקבעו בניסוי'],
+      answer:3,
+      explanation:'PDB הוא מאגר מבני: הוא מכיל coordinates ומידע נלווה על מבנים תלת-ממדיים שנקבעו בשיטות כגון X-ray crystallography, NMR ו-cryo-EM. הוא אינו מאגר של כל רצפי החלבונים או של כל החלבונים הידועים.',
+      officialRef:'Alberts 7e · Chapter 8 — Analyzing Cells, Molecules, and Systems'
+    },
+    rec_2025b_033:{
+      text:'מהו אחד התפקידים המרכזיים של SMC proteins בכרומוזום חיידקי במהלך חלוקת התא?',
+      options:['יצירת spindle מיטוטי','ארגון הכרומוזום וסיוע ב-segregation שלו לתאי הבת','שעתוק rRNA','תרגום חלבונים ממברנליים'],
+      answer:1,
+      explanation:'SMC complexes מארגנים ומדחסים chromosomes ומקדמים segregation תקינה שלהם. בחיידקים אין מיטוזה אאוקריוטית, אך יש צורך בארגון והפרדה של הכרומוזום המשוכפל.',
+      officialRef:'Alberts 7e · Chapter 4 — DNA, Chromosomes, and Genomes'
+    },
+    rec_2025b_040:{
+      text:'כיצד מחולקים ההיסטונים ההוריים לאחר מעבר replication fork?',
+      options:['כל nucleosome נשאר כאוקטמר שלם ועובר לגדיל בת אחד','H3-H4 נשמרים לרוב כ-tetramers, בעוד H2A-H2B יכולים להתפרק ולהתחלף כ-dimers','כל ההיסטונים ההוריים מתפרקים לארבעה dimers שווים','כל histone octamer מתפצל לשני tetramers זהים'],
+      answer:1,
+      explanation:'ב-replication nucleosomes מפורקים זמנית. Parental H3-H4 נשמרים ברובם כ-tetramers ומחולקים בין daughter DNAs, בעוד H2A-H2B dimers דינמיים יותר ומתערבבים עם histones חדשים.',
+      officialRef:'Alberts 7e · Chapter 4 — DNA, Chromosomes, and Genomes'
+    },
+    rec_2023a_035:{
+      text:'איזה חלק בקירוב מכלל ה-RNA בתא אאוקריוטי הוא rRNA?',
+      options:['כ-10%','כ-25%','כ-50%','כ-80%'],
+      answer:3,
+      explanation:'rRNA מהווה את רוב ה-RNA התאי, בקירוב 80%, משום שמספר רב של ribosomes נדרש לתרגום ורכיבי rRNA יציבים יחסית.',
+      officialRef:'Alberts 7e · Chapter 6 — From DNA to Protein'
+    },
+    rec_2023a_043:{
+      text:'מה מודדת שיטת Chromosome Conformation Capture (3C)?',
+      options:['כמות חלבון ששוקעה בנוגדן','קרבה פיזית בין שני אזורי DNA בגרעין','רמת DNA methylation בכל cytosine','מיקום כרומוזום שלם באמצעות FISH בלבד'],
+      answer:1,
+      explanation:'3C מבוססת על crosslinking של אזורי chromatin סמוכים, חיתוך ו-ligation. לאחר מכן מודדים את תדירות ה-ligation כדי להסיק על proximity תלת-ממדי בין loci.',
+      officialRef:'Alberts 7e · Chapter 8 — Analyzing Cells, Molecules, and Systems'
+    },
+    rec_2023a_055:{
+      text:'איזו השפעה צפויה ל-poly(A) tail קצר מאוד על mRNA אאוקריוטי?',
+      options:['להגדיל את יציבות ה-mRNA ואת התרגום','להפחית יציבות ויעילות translation ולקרב את ה-mRNA למסלולי decay','למנוע כל אפשרות ל-decapping','להפוך את ה-mRNA לתבנית ל-DNA replication'],
+      answer:1,
+      explanation:'Deadenylation היא שלב מוקדם מרכזי ב-mRNA decay. Poly(A) tail קצר מפחית את הקישור ל-PABP, פוגע ביעילות translation ומקדם decapping ופירוק exonucleolytic.',
+      officialRef:'Alberts 7e · Chapter 6 — From DNA to Protein'
+    },
+    rec_2023b_073:{
+      text:'מהו KDEL signal בחלבונים מסיסים השוהים ב-ER?',
+      options:['רצף retrieval בקצה C-terminal שמאפשר החזרה מה-Golgi ל-ER','signal peptide בקצה N-terminal שמכוון ל-mitochondria','רצף export מה-ER ל-lysosome','NLS לגרעין'],
+      answer:0,
+      explanation:'KDEL נמצא בקצה C-terminal של soluble ER resident proteins. KDEL receptor ב-Golgi מזהה אותם ומחזיר אותם ל-ER באמצעות retrograde transport, בעיקר COPI.',
+      officialRef:'Alberts 7e · Chapter 13 — Intracellular Membrane Traffic'
+    },
+    rec_2021b_084:{
+      text:'איזה מבנה בתא אפיתל פולארי מתפקד כ-fence שמגביל מעבר של transmembrane proteins בין הממברנה האפיקלית לבזולטרלית?',
+      options:['Tight junction','Gap junction','Adherens junction','Hemidesmosome'],
+      answer:0,
+      explanation:'Tight junctions לא רק אוטמים את המסלול paracellular אלא גם יוצרים diffusion barrier במישור הממברנה, וכך עוזרים לשמור על polarity של apical ו-basolateral domains.',
+      officialRef:'Alberts 7e · Chapter 19 — Cell Junctions, Cell Adhesion, and the ECM'
+    },
+    rec_2023a_095:{
+      text:'איזה שינוי יגדיל בוודאות את המפל הכימי (concentration gradient) של glucose בין שני צדי ממברנה?',
+      options:['היפרפולריזציה בלבד','דה-פולריזציה בלבד','הגדלת הפרש ריכוזי glucose בין שני הצדדים','ירידה בטמפרטורה ללא שינוי בריכוזים'],
+      answer:2,
+      explanation:'Glucose אינו טעון, ולכן electrical potential אינו תורם ישירות ל-driving force שלו. הגדלת הפרש הריכוזים מגדילה ישירות את chemical gradient.',
+      officialRef:'Berne & Levy 8e · membrane transport chapters'
+    },
+    rec_2021b_119:{
+      text:'בנוירון שמבטא T-type Ca2+ channels, כיצד היפרפולריזציה ממושכת יכולה לתרום ל-rebound action potential לאחר שחרור ההיפרפולריזציה?',
+      options:['היא מסירה inactivation מתעלות T-type, ולאחר depolarization חוזר הן יכולות להיפתח ולתרום ל-rebound depolarization','היא פותחת לצמיתות Na+/K+-ATPase','היא מעלה את threshold כך שלא ניתן לירות','היא מפרקת voltage-gated Ca2+ channels'],
+      answer:0,
+      explanation:'T-type Ca2+ channels עוברות deinactivation במתחים שליליים. כאשר הממברנה חוזרת לכיוון depolarization הן יכולות להיפתח transiently וליצור low-threshold Ca2+ spike שמסייע ל-rebound firing.',
+      officialRef:'Berne & Levy 8e · neuronal excitability chapters'
+    },
     rec_2025b_055:{
       text:'מדוע cohesin מחזיק sister chromatids יחד עד תחילת anaphase?',
       options:['כדי לאפשר הפרדה מתוזמנת של שתי הכרומטידות לתאי בת שונים','כדי ששתי הכרומטידות יגיעו לאותו תא בת','כדי לבצע non-homologous end joining','כדי לאפשר מעבר מ-G1 ל-S'],
