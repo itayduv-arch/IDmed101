@@ -1,0 +1,142 @@
+from pathlib import Path
+
+# ---------- Psycho101 ----------
+p = Path('psycho101/index.html')
+s = p.read_text(encoding='utf-8')
+old = 'function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
+new = old.replace('streak:1', 'streak:0')
+assert s.count(old) == 1, f'psycho default state count={s.count(old)}'
+s = s.replace(old, new)
+old_sw = "navigator.serviceWorker.register('./sw.js?v=20260916-23',{updateViaCache:'none'})"
+assert s.count(old_sw) == 1, f'psycho sw registration count={s.count(old_sw)}'
+s = s.replace(old_sw, "navigator.serviceWorker.register('./sw.js?v=20260916-24',{updateViaCache:'none'})")
+p.write_text(s, encoding='utf-8')
+
+sw = Path('psycho101/sw.js')
+x = sw.read_text(encoding='utf-8')
+assert "const CACHE_NAME='idpsycho101-v23';" in x
+sw.write_text(x.replace("const CACHE_NAME='idpsycho101-v23';", "const CACHE_NAME='idpsycho101-v24';"), encoding='utf-8')
+Path('psycho101/version.json').write_text('{"version":"20260916-24"}\n', encoding='utf-8')
+
+# ---------- IDmed101 ----------
+p = Path('idmed101/index.html')
+s = p.read_text(encoding='utf-8')
+
+compact = 'answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""'
+compact_new = 'answered:0,correct:0,xp:0,streak:0,todayAnswered:0,dailyGoal:20,dailyDate:null,dailyResetFixVersion:1,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""'
+assert s.count(compact) >= 1, f'med compact defaults count={s.count(compact)}'
+s = s.replace(compact, compact_new)
+
+spaced = 'answered:0, correct:0, xp:0, streak:1,\n        todayAnswered:0, dailyGoal:20, lastStudyDate:null,\n        simulationHistory:[], lessonStats:{}, displayName:""'
+spaced_new = 'answered:0, correct:0, xp:0, streak:0,\n        todayAnswered:0, dailyGoal:20, dailyDate:null, dailyResetFixVersion:1,\n        dailyLessonStats:{}, dailyTopicStats:{}, lastStudyDate:null,\n        simulationHistory:[], lessonStats:{}, displayName:""'
+assert s.count(spaced) >= 1, f'med spaced defaults count={s.count(spaced)}'
+s = s.replace(spaced, spaced_new)
+
+old = '''function medToday(){ return new Date().toISOString().slice(0,10); }
+    function updateMedStreak(){
+        const today=medToday();
+        if(!appData.lastStudyDate){ appData.lastStudyDate=today; return; }
+        if(appData.lastStudyDate===today) return;
+        const prev=new Date(appData.lastStudyDate+'T12:00:00');
+        const cur=new Date(today+'T12:00:00');
+        const days=Math.round((cur-prev)/MED_DAY);
+        appData.streak=days===1?(appData.streak||1)+1:1;
+        appData.todayAnswered=0;
+        appData.lastStudyDate=today;
+    }'''
+new = '''function medLocalDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+    function medToday(){ return medLocalDateKey(); }
+    function medDayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/MED_DAY)}
+    function medDaysBetween(a,b){if(!a||!b)return null;return medDayNumber(b)-medDayNumber(a)}
+    function ensureMedDailyState(){
+        const today=medToday();let changed=false;
+        if(appData.dailyDate!==today||(appData.dailyResetFixVersion||0)<1){appData.todayAnswered=0;appData.dailyLessonStats={};appData.dailyTopicStats={};appData.dailyDate=today;appData.dailyResetFixVersion=1;changed=true}
+        if(appData.lastStudyDate&&medDaysBetween(appData.lastStudyDate,today)>1&&appData.streak!==0){appData.streak=0;changed=true}
+        if(changed)localStorage.setItem(MED101_STORAGE,JSON.stringify(appData));
+        return changed;
+    }
+    function updateMedStreak(){ ensureMedDailyState(); }
+    function registerMedStudyDay(){
+        ensureMedDailyState();const today=medToday();if(appData.lastStudyDate===today)return;
+        const gap=appData.lastStudyDate?medDaysBetween(appData.lastStudyDate,today):null;
+        appData.streak=gap===1?Math.max(1,appData.streak||0)+1:1;appData.lastStudyDate=today;
+    }'''
+assert s.count(old) == 1, f'med streak block count={s.count(old)}'
+s = s.replace(old, new)
+
+old = """function recordAnswer(item,good,source='practice',userAnswer=null){
+        updateMedStreak();
+        appData.answered=(appData.answered||0)+1;"""
+new = """function recordAnswer(item,good,source='practice',userAnswer=null){
+        ensureMedDailyState();
+        registerMedStudyDay();
+        appData.answered=(appData.answered||0)+1;"""
+assert s.count(old) == 1, f'med record header count={s.count(old)}'
+s = s.replace(old, new)
+
+old = """const t=topicStatMed(item.subtopic);
+        appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
+        if(!good){"""
+new = """const t=topicStatMed(item.subtopic);
+        appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
+        appData.dailyTopicStats=appData.dailyTopicStats||{};const dt=appData.dailyTopicStats[item.subtopic]||{answered:0,correct:0};appData.dailyTopicStats[item.subtopic]={answered:dt.answered+1,correct:dt.correct+(good?1:0)};
+        if(source==='quick'&&medQuickSession){const key=medQuickSession.subject||'daily';appData.dailyLessonStats=appData.dailyLessonStats||{};const ds=appData.dailyLessonStats[key]||{answered:0,correct:0};appData.dailyLessonStats[key]={answered:ds.answered+1,correct:ds.correct+(good?1:0)}}
+        if(!good){"""
+assert s.count(old) == 1, f'med topic update count={s.count(old)}'
+s = s.replace(old, new)
+
+old = '''function updateHomeDashboard(){
+        updateMedStreak();'''
+assert s.count(old) == 1, f'med home update count={s.count(old)}'
+s = s.replace(old, '''function updateHomeDashboard(){
+        ensureMedDailyState();''')
+
+old = """function updateMedLessonMeta(){
+        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){
+            const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];
+            const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
+            if(el)el.innerText=s?.completed?'✓ '+s.bestAccuracy+'%':available+' שאלות';
+        }
+    }"""
+new = """function updateMedLessonMeta(){
+        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){
+            const el=document.getElementById('lesson-meta-'+key),d=appData.dailyLessonStats?.[key];
+            const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
+            if(el)el.innerText=d?.answered?(d.answered>=available?'✓ '+(d.correct||0)+'/'+d.answered:(d.answered||0)+'/'+available+' היום'):available+' שאלות';
+        }
+    }"""
+assert s.count(old) == 1, f'med lesson meta count={s.count(old)}'
+s = s.replace(old, new)
+
+old = """out.streak=Math.max(localState.streak||1,remoteState.streak||1);
+        out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);
+        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;"""
+new = """out.streak=Math.max(localState.streak||0,remoteState.streak||0);
+        const today=medToday(),localDailyOk=localState.dailyDate===today&&(localState.dailyResetFixVersion||0)>=1,remoteDailyOk=remoteState.dailyDate===today&&(remoteState.dailyResetFixVersion||0)>=1;
+        out.dailyDate=today;out.dailyResetFixVersion=1;
+        if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);else if(localDailyOk)out.todayAnswered=localState.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remoteState.todayAnswered||0;else out.todayAnswered=0;
+        const lLessons=localDailyOk?(localState.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remoteState.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
+        const lTopics=localDailyOk?(localState.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remoteState.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
+        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;
+        if(out.lastStudyDate&&medDaysBetween(out.lastStudyDate,today)>1)out.streak=0;"""
+assert s.count(old) == 1, f'med merge daily count={s.count(old)}'
+s = s.replace(old, new)
+
+s = s.replace('appData.streak||1', 'appData.streak||0')
+s = s.replace('id="home-streak">1 🔥', 'id="home-streak">0 🔥')
+s = s.replace('id="hero-streak">🔥 1', 'id="hero-streak">🔥 0')
+
+old = '''window.onload = async () => { 
+        const savedTheme=localStorage.getItem('med101-theme');'''
+new = '''function refreshMedDailyStateOnResume(){if(ensureMedDailyState()){updateHomeDashboard();saveData()}}
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMedDailyStateOnResume()});
+    window.addEventListener('focus',refreshMedDailyStateOnResume);
+    window.addEventListener('pageshow',refreshMedDailyStateOnResume);
+
+    window.onload = async () => { 
+        ensureMedDailyState();
+        const savedTheme=localStorage.getItem('med101-theme');'''
+assert s.count(old) == 1, f'med onload count={s.count(old)}'
+s = s.replace(old, new)
+
+p.write_text(s, encoding='utf-8')
