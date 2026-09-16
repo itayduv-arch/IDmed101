@@ -458,13 +458,13 @@
                 <p>שיעורים קצרים שמורכבים רק משאלות שחזור עם תשובה מאומתת.</p>
                 <button class="hero-action" onclick="startRecommendedStudy()">המשך ללמוד ▶</button>
             </div>
-            <div class="hero-orb" id="hero-streak-orb"><div><strong id="hero-streak">🔥 1</strong><span>רצף ימים</span></div></div>
+            <div class="hero-orb" id="hero-streak-orb"><div><strong id="hero-streak">🔥 0</strong><span>רצף ימים</span></div></div>
         </div>
 
         <div class="friendly-stats">
             <div class="friendly-stat"><strong id="home-xp">0</strong><span>XP</span></div>
             <div class="friendly-stat"><strong id="home-accuracy">0%</strong><span>דיוק</span></div>
-            <div class="friendly-stat"><strong id="home-streak">1 🔥</strong><span>רצף</span></div>
+            <div class="friendly-stat"><strong id="home-streak">0 🔥</strong><span>רצף</span></div>
             <div class="friendly-stat"><strong id="home-due">0</strong><span>לחזרה</span></div>
         </div>
 
@@ -786,7 +786,7 @@
         if(!remoteState || typeof remoteState!=='object') return localState;
         const base={
             cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
-            answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
+            answered:0,correct:0,xp:0,streak:0,todayAnswered:0,dailyGoal:20,dailyDate:null,dailyResetFixVersion:1,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
         };
         const out={...base,...remoteState,...localState};
         out.cards={...(remoteState.cards||{})};
@@ -815,9 +815,14 @@
         out.answered=Math.max(localState.answered||0,remoteState.answered||0);
         out.correct=Math.max(localState.correct||0,remoteState.correct||0);
         out.xp=Math.max(localState.xp||0,remoteState.xp||0);
-        out.streak=Math.max(localState.streak||1,remoteState.streak||1);
-        out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);
+        out.streak=Math.max(localState.streak||0,remoteState.streak||0);
+        const today=medToday(),localDailyOk=localState.dailyDate===today&&(localState.dailyResetFixVersion||0)>=1,remoteDailyOk=remoteState.dailyDate===today&&(remoteState.dailyResetFixVersion||0)>=1;
+        out.dailyDate=today;out.dailyResetFixVersion=1;
+        if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);else if(localDailyOk)out.todayAnswered=localState.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remoteState.todayAnswered||0;else out.todayAnswered=0;
+        const lLessons=localDailyOk?(localState.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remoteState.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
+        const lTopics=localDailyOk?(localState.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remoteState.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
         out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;
+        if(out.lastStudyDate&&medDaysBetween(out.lastStudyDate,today)>1)out.streak=0;
         out.lessonStats={...(remoteState.lessonStats||{})};
         for(const [id,s] of Object.entries(localState.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}
         out.displayName=localState.displayName||remoteState.displayName||"";
@@ -974,8 +979,9 @@
     let appData = {
         cards:{}, questions:{}, status:{}, mistakes:{},
         itemStats:{}, errors:[], topicStats:{},
-        answered:0, correct:0, xp:0, streak:1,
-        todayAnswered:0, dailyGoal:20, lastStudyDate:null,
+        answered:0, correct:0, xp:0, streak:0,
+        todayAnswered:0, dailyGoal:20, dailyDate:null, dailyResetFixVersion:1,
+        dailyLessonStats:{}, dailyTopicStats:{}, lastStudyDate:null,
         simulationHistory:[], lessonStats:{}, displayName:""
     };
 
@@ -1007,17 +1013,22 @@
     const MED_DAY = 24*60*60*1000;
     const MED_REVIEW_INTERVALS = [0, 1, 2, 4, 8, 16, 32];
 
-    function medToday(){ return new Date().toISOString().slice(0,10); }
-    function updateMedStreak(){
-        const today=medToday();
-        if(!appData.lastStudyDate){ appData.lastStudyDate=today; return; }
-        if(appData.lastStudyDate===today) return;
-        const prev=new Date(appData.lastStudyDate+'T12:00:00');
-        const cur=new Date(today+'T12:00:00');
-        const days=Math.round((cur-prev)/MED_DAY);
-        appData.streak=days===1?(appData.streak||1)+1:1;
-        appData.todayAnswered=0;
-        appData.lastStudyDate=today;
+    function medLocalDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+    function medToday(){ return medLocalDateKey(); }
+    function medDayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/MED_DAY)}
+    function medDaysBetween(a,b){if(!a||!b)return null;return medDayNumber(b)-medDayNumber(a)}
+    function ensureMedDailyState(){
+        const today=medToday();let changed=false;
+        if(appData.dailyDate!==today||(appData.dailyResetFixVersion||0)<1){appData.todayAnswered=0;appData.dailyLessonStats={};appData.dailyTopicStats={};appData.dailyDate=today;appData.dailyResetFixVersion=1;changed=true}
+        if(appData.lastStudyDate&&medDaysBetween(appData.lastStudyDate,today)>1&&appData.streak!==0){appData.streak=0;changed=true}
+        if(changed)localStorage.setItem(MED101_STORAGE,JSON.stringify(appData));
+        return changed;
+    }
+    function updateMedStreak(){ ensureMedDailyState(); }
+    function registerMedStudyDay(){
+        ensureMedDailyState();const today=medToday();if(appData.lastStudyDate===today)return;
+        const gap=appData.lastStudyDate?medDaysBetween(appData.lastStudyDate,today):null;
+        appData.streak=gap===1?Math.max(1,appData.streak||0)+1:1;appData.lastStudyDate=today;
     }
     function getItemStat(id){
         return appData.itemStats[id] || {box:0,seen:0,correct:0,lastReviewed:null};
@@ -1040,13 +1051,16 @@
         return appData.topicStats[topic] || {answered:0,correct:0};
     }
     function recordAnswer(item,good,source='practice',userAnswer=null){
-        updateMedStreak();
+        ensureMedDailyState();
+        registerMedStudyDay();
         appData.answered=(appData.answered||0)+1;
         appData.todayAnswered=(appData.todayAnswered||0)+1;
         appData.xp=(appData.xp||0)+(good?10:3);
         if(good) appData.correct=(appData.correct||0)+1;
         const t=topicStatMed(item.subtopic);
         appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
+        appData.dailyTopicStats=appData.dailyTopicStats||{};const dt=appData.dailyTopicStats[item.subtopic]||{answered:0,correct:0};appData.dailyTopicStats[item.subtopic]={answered:dt.answered+1,correct:dt.correct+(good?1:0)};
+        if(source==='quick'&&medQuickSession){const key=medQuickSession.subject||'daily';appData.dailyLessonStats=appData.dailyLessonStats||{};const ds=appData.dailyLessonStats[key]||{answered:0,correct:0};appData.dailyLessonStats[key]={answered:ds.answered+1,correct:ds.correct+(good?1:0)}}
         if(!good){
             appData.mistakes[item.subtopic]=(appData.mistakes[item.subtopic]||0)+1;
             const id=item.id;
@@ -1580,9 +1594,9 @@
     }
     function updateMedLessonMeta(){
         for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){
-            const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];
+            const el=document.getElementById('lesson-meta-'+key),d=appData.dailyLessonStats?.[key];
             const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);
-            if(el)el.innerText=s?.completed?'✓ '+s.bestAccuracy+'%':available+' שאלות';
+            if(el)el.innerText=d?.answered?(d.answered>=available?'✓ '+(d.correct||0)+'/'+d.answered:(d.answered||0)+'/'+available+' היום'):available+' שאלות';
         }
     }
     function medEscapeHtml(s){return String(s??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]))}
@@ -1755,7 +1769,7 @@
     }
 
     function updateHomeDashboard(){
-        updateMedStreak();
+        ensureMedDailyState();
         const due=dueCountMed();
         const acc=accuracyMed();
         const goal=Math.min(100,Math.round((appData.todayAnswered||0)/(appData.dailyGoal||20)*100));
@@ -1763,11 +1777,11 @@
         const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val};
         set('home-due',due);
         set('home-accuracy',acc+'%');
-        set('home-streak',(appData.streak||1)+' 🔥');
+        set('home-streak',(appData.streak||0)+' 🔥');
         set('home-xp',appData.xp||0);
-        set('hero-streak','🔥 '+(appData.streak||1));
+        set('hero-streak','🔥 '+(appData.streak||0));
         const orb=document.getElementById('hero-streak-orb');
-        if(orb)orb.classList.toggle('streak-pulse',(appData.streak||1)>1);
+        if(orb)orb.classList.toggle('streak-pulse',(appData.streak||0)>1);
         set('home-goal-text',`${appData.todayAnswered||0}/${appData.dailyGoal||20}`);
         set('recon-home-count',dbQuestions.length+' שאלות מאומתות מול חומר המבחן, עם הסבר, מתוך '+reconstructionArchive.length+' פריטי שחזור. שאלות שלא עברו אימות חד-משמעי נשארות בארכיון בלבד.');
         const fill=document.getElementById('home-goal-fill');if(fill)fill.style.width=goal+'%';
@@ -1834,7 +1848,7 @@
         if(confirm("לאפס את כל נתוני הלמידה וההתקדמות?")) {
             appData = {
                 cards:{},questions:{},status:{},mistakes:{},itemStats:{},errors:[],topicStats:{},
-                answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
+                answered:0,correct:0,xp:0,streak:0,todayAnswered:0,dailyGoal:20,dailyDate:null,dailyResetFixVersion:1,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""
             };
             saveData(); showSection('home'); alert("הנתונים אופסו!");
         }
@@ -1862,7 +1876,13 @@
         } catch(e) { alert("שגיאה בפענוח."); }
     };
 
+    function refreshMedDailyStateOnResume(){if(ensureMedDailyState()){updateHomeDashboard();saveData()}}
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMedDailyStateOnResume()});
+    window.addEventListener('focus',refreshMedDailyStateOnResume);
+    window.addEventListener('pageshow',refreshMedDailyStateOnResume);
+
     window.onload = async () => { 
+        ensureMedDailyState();
         const savedTheme=localStorage.getItem('med101-theme');
         applyMedTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
         populateFilters();

@@ -4703,7 +4703,7 @@ questions.verbal.push(...buildCampusVerbalBank());
 
 
 
-function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
+function defaultState(){return{version:8,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
@@ -5119,7 +5119,7 @@ function toggleTheme(){
 applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
-if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-23',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-24',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})();
