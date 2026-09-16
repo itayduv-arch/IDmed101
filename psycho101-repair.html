@@ -1,0 +1,12 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-store"><title>תיקון IDpsycho101</title><style>body{font-family:Arial,sans-serif;background:#f5f3ff;color:#201642;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px}.box{background:#fff;max-width:520px;padding:28px;border-radius:24px;text-align:center;box-shadow:0 12px 35px #0001}h1{font-size:24px}p{line-height:1.6;color:#625d70}</style></head><body><div class="box"><h1>מתקן את IDpsycho101</h1><p id="status">מנקה את המצב הישן ומעדכן את היעד היומי…</p></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+(async()=>{
+ const status=document.getElementById('status'),KEY='psycho101-state-v3';
+ const d=new Date(),p=n=>String(n).padStart(2,'0'),today=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+ try{const s=JSON.parse(localStorage.getItem(KEY)||'{}');s.todayAnswered=0;s.dailyDate=today;s.dailyResetFixVersion=4;localStorage.setItem(KEY,JSON.stringify(s));}catch{}
+ try{if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.filter(r=>r.scope.includes('/IDmed101/psycho101/')).map(r=>r.unregister()));}}catch{}
+ try{if('caches'in window){const names=await caches.keys();await Promise.all(names.filter(n=>n.startsWith('idpsycho101-')).map(n=>caches.delete(n)));}}catch{}
+ try{if(window.supabase){const sb=supabase.createClient('https://pqxlhfykmnlkmbrjuwhr.supabase.co','sb_publishable_WkfZvZJgGSLu8AHuAb7E9w_wqWAJ7Y6',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data}=await sb.auth.getUser();const user=data?.user;if(user){const {data:row}=await sb.from('psycho101_progress').select('state').eq('user_id',user.id).maybeSingle();const remote=row?.state||{};remote.todayAnswered=0;remote.dailyDate=today;remote.dailyResetFixVersion=4;await sb.from('psycho101_progress').upsert({user_id:user.id,state:remote,updated_at:new Date().toISOString()},{onConflict:'user_id'});}}}catch{}
+ status.textContent='התיקון הושלם. פותח את האפליקציה מחדש…';
+ location.replace('./psycho101/?v=20260916-22&repair='+Date.now());
+})();
+</script></body></html>
