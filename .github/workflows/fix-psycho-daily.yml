@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Finalize Psycho101 daily state migration
+      - name: Add daily lesson and topic state
         shell: bash
         run: |
           python - <<'PY'
@@ -27,32 +27,44 @@ jobs:
           text=path.read_text(encoding='utf-8')
           original=text
 
-          replacements=[
-            ('dailyResetFixVersion:3','dailyResetFixVersion:4'),
-            ('(state.dailyResetFixVersion||0)<3','(state.dailyResetFixVersion||0)<4'),
-            ('state.dailyResetFixVersion=3','state.dailyResetFixVersion=4'),
-            ('(local.dailyResetFixVersion||0)>=3','(local.dailyResetFixVersion||0)>=4'),
-            ('(remote.dailyResetFixVersion||0)>=3','(remote.dailyResetFixVersion||0)>=4'),
-            ('out.dailyResetFixVersion=3','out.dailyResetFixVersion=4'),
-          ]
-          for old,new in replacements:
-            count=text.count(old)
-            assert count>=1, f'missing expected token: {old}'
-            text=text.replace(old,new)
-
-          old="(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}ensureDailyState();render()})();"
-          new="(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})();"
-          assert text.count(old)==1, f'startup match count={text.count(old)}'
+          old='function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:4,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
+          new='function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
+          assert text.count(old)==1, f'defaultState match count={text.count(old)}'
           text=text.replace(old,new)
 
-          old="if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));"
-          new="if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-22',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}"
-          assert text.count(old)==1, f'service worker registration match count={text.count(old)}'
+          old="function ensureDailyState(){const today=nowDate();let changed=false;if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<4){state.todayAnswered=0;state.dailyDate=today;state.dailyResetFixVersion=4;changed=true}if(state.lastStudyDate){const gap=daysBetween(state.lastStudyDate,today);if(gap>1&&state.streak!==0){state.streak=0;changed=true}}if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return changed}"
+          new="function ensureDailyState(){const today=nowDate();let changed=false;if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<5){state.todayAnswered=0;state.dailyLessonStats={};state.dailyTopicStats={};state.dailyDate=today;state.dailyResetFixVersion=5;changed=true}if(state.lastStudyDate){const gap=daysBetween(state.lastStudyDate,today);if(gap>1&&state.streak!==0){state.streak=0;changed=true}}if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return changed}"
+          assert text.count(old)==1, f'ensureDailyState match count={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.lessonStats?.[id];const shown=s?.completed?`✓ ${s.bestAccuracy}%`:meta;return`<div class=\"lesson-node\" ${tone?`data-tone=\"${tone}\"`:''} onclick=\"startQuickLesson('${id}')\"><div class=\"lesson-icon\">${icon}</div><div class=\"lesson-main\"><h3>${title}</h3><p>${desc}</p></div><div class=\"lesson-meta\">${shown}</div></div>`}"
+          new="function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\\d+/),target=m?Number(m[0]):0;const shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;return`<div class=\"lesson-node\" ${tone?`data-tone=\"${tone}\"`:''} onclick=\"startQuickLesson('${id}')\"><div class=\"lesson-icon\">${icon}</div><div class=\"lesson-main\"><h3>${title}</h3><p>${desc}</p></div><div class=\"lesson-meta\">${shown}</div></div>`}"
+          assert text.count(old)==1, f'quickLessonNode match count={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="const t=topicStat(q.topic);\n  state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};\n  updateWordReview(q,good);"
+          new="const t=topicStat(q.topic);\n  state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};\n  state.dailyTopicStats=state.dailyTopicStats||{};const dt=state.dailyTopicStats[q.topic]||{answered:0,correct:0};state.dailyTopicStats[q.topic]={answered:dt.answered+1,correct:dt.correct+(good?1:0)};\n  if(practice?.kind==='quick'){state.dailyLessonStats=state.dailyLessonStats||{};const id=practice.lessonId||'daily',ds=state.dailyLessonStats[id]||{answered:0,correct:0};state.dailyLessonStats[id]={answered:ds.answered+1,correct:ds.correct+(good?1:0)}}\n  updateWordReview(q,good);"
+          assert text.count(old)==1, f'answer daily stats match count={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="const today=nowDate(),localDailyOk=local.dailyDate===today&&(local.dailyResetFixVersion||0)>=4,remoteDailyOk=remote.dailyDate===today&&(remote.dailyResetFixVersion||0)>=4;out.dailyDate=today;out.dailyResetFixVersion=4;if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);else if(localDailyOk)out.todayAnswered=local.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remote.todayAnswered||0;else out.todayAnswered=0;"
+          new="const today=nowDate(),localDailyOk=local.dailyDate===today&&(local.dailyResetFixVersion||0)>=5,remoteDailyOk=remote.dailyDate===today&&(remote.dailyResetFixVersion||0)>=5;out.dailyDate=today;out.dailyResetFixVersion=5;if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);else if(localDailyOk)out.todayAnswered=local.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remote.todayAnswered||0;else out.todayAnswered=0;const lLessons=localDailyOk?(local.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remote.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}const lTopics=localDailyOk?(local.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remote.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}"
+          assert text.count(old)==1, f'merge daily match count={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="navigator.serviceWorker.register('./sw.js?v=20260916-22',{updateViaCache:'none'})"
+          new="navigator.serviceWorker.register('./sw.js?v=20260916-23',{updateViaCache:'none'})"
+          assert text.count(old)==1, f'sw registration match count={text.count(old)}'
           text=text.replace(old,new)
 
           assert text!=original
           path.write_text(text,encoding='utf-8')
-          Path('psycho101/version.json').write_text('{"version":"20260916-22"}\n',encoding='utf-8')
+
+          sw=Path('psycho101/sw.js')
+          swtext=sw.read_text(encoding='utf-8')
+          assert "const CACHE_NAME='idpsycho101-v22';" in swtext
+          sw.write_text(swtext.replace("const CACHE_NAME='idpsycho101-v22';","const CACHE_NAME='idpsycho101-v23';"),encoding='utf-8')
+          Path('psycho101/version.json').write_text('{"version":"20260916-23"}\n',encoding='utf-8')
           PY
 
       - name: Check inline JavaScript syntax
@@ -83,6 +95,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add psycho101/index.html psycho101/version.json
-          git commit -m 'Finalize Psycho101 daily goal migration'
+          git add psycho101/index.html psycho101/sw.js psycho101/version.json
+          git commit -m 'Reset Psycho101 lesson and topic counters daily'
           git push
