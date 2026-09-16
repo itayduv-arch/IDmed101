@@ -4415,8 +4415,8 @@ const wordBank = [
 ];
 
 </script>
+<script src="./official_quant_expansion.js?v=20260916-25"></script>
 <script>
-
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
 const DAY=24*60*60*1000;
@@ -4548,6 +4548,7 @@ function buildVerbalBank(){
 }
 
 questions.quantitative.push(...buildQuantBank());
+questions.quantitative.push(...(window.PSYCHO101_OFFICIAL_QUANT_BANK||[]));
 questions.verbal.push(...buildVerbalBank());
 
 
@@ -4887,14 +4888,19 @@ function startQuickLesson(id){
       ...shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,1)
     ]).slice(0,10);
   }
+  list=freshFirst(list,list.length);
   practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,rewarded:false};
   lastChoice=null;view='question';render();
 }
-function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(8):questions[type].filter(q=>topic==='all'||q.topic===topic);list=shuffle(list).slice(0,8);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
+const RECENT_QUESTION_KEY='psycho101-recent-question-ids-v1';
+function recentQuestionIds(){try{const a=JSON.parse(localStorage.getItem(RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}}
+function rememberQuestionId(id){if(!id)return;const a=recentQuestionIds().filter(x=>x!==id);a.push(id);try{localStorage.setItem(RECENT_QUESTION_KEY,JSON.stringify(a.slice(-120)))}catch{}}
+function freshFirst(pool,count){const recent=new Set(recentQuestionIds()),fresh=shuffle(pool.filter(q=>!recent.has(q.id))),seen=shuffle(pool.filter(q=>recent.has(q.id)));return [...fresh,...seen].slice(0,count)}
+function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(8):questions[type].filter(q=>topic==='all'||q.topic===topic);list=freshFirst(list,8);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
-function startMixed(){const list=shuffle([...buildWordQuestions(4),...questions.quantitative,...questions.verbal]).slice(0,10);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
+function startMixed(){const list=freshFirst([...buildWordQuestions(4),...questions.quantitative,...questions.verbal],10);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
 function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filter(([,s])=>s.answered>0).sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered))[0];if(!weakest){startMixed();return}const [topic]=weakest;const type=questions.quantitative.some(q=>q.topic===topic)?'quantitative':'verbal';startPractice(type,topic)}
-function startPsychoSimulation(){clearInterval(psychoTimer);const list=shuffle([...questions.quantitative,...questions.verbal]).slice(0,20);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
+function startPsychoSimulation(){clearInterval(psychoTimer);const list=freshFirst([...questions.quantitative,...questions.verbal],20);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
 function psyConfetti(count=14){
@@ -4928,6 +4934,7 @@ function answerQuestion(choice){
   ensureDailyState();
   registerStudyDay();
   const q=practice.list[practice.index];
+  rememberQuestionId(q?.id);
   practice.answeredCurrent=true;lastChoice=choice;
   const good=choice===q.correct;
   state.answered++;state.todayAnswered++;state.xp+=good?10:3;
@@ -5119,7 +5126,7 @@ function toggleTheme(){
 applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
-if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-24',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-25',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})();

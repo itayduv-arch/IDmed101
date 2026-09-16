@@ -6,7 +6,7 @@ window.PSYCHO101_OFFICIAL_QUANT_BANK = [
   {id:'oq003',category:'כמותי',topic:'חזקות ושורשים',difficulty:3,prompt:'מה ערכו של (4^3)^(1/2)?',answers:['4','8','12','16'],correct:1,explanation:'(4^3)^(1/2)=4^(3/2)=(√4)^3=2^3=8.'},
   {id:'oq004',category:'כמותי',topic:'חזקות ושורשים',difficulty:3,prompt:'איזה מהבאים שווה ל־1/25?',answers:['5^-1','5^-2','25^-2','(-5)^-1'],correct:1,explanation:'5^-2=1/5^2=1/25.'},
   {id:'oq005',category:'כמותי',topic:'חזקות ושורשים',difficulty:4,prompt:'אם a>0 ו־a^3=64, מה ערכו של a^(1/2)?',answers:['2','√2','4','8'],correct:0,explanation:'a=4, ולכן √a=2.'},
-  {id:'oq006',category:'כמותי',topic:'חזקות ושורשים',difficulty:4,prompt:'מה גדול יותר?',answers:['2^10','4^5','8^3','שלושתם שווים'],correct:3,explanation:'4^5=(2^2)^5=2^10 וגם 8^3=2^9, לכן 2^10=4^5 גדולים מ־8^3. מבין האפשרויות אין שוויון לשלושתם.'},
+  {id:'oq006',category:'כמותי',topic:'חזקות ושורשים',difficulty:4,prompt:'איזה מהבאים הוא הקטן ביותר?',answers:['2^10','4^5','8^3','16^2'],correct:3,explanation:'2^10=1024, 4^5=1024, 8^3=512 ואילו 16^2=256, ולכן 16^2 הוא הקטן ביותר.'},
   {id:'oq007',category:'כמותי',topic:'חזקות ושורשים',difficulty:4,prompt:'מה ערכו של √48 ÷ √3 ?',answers:['2','4','8','16'],correct:1,explanation:'√48/√3=√16=4.'},
   {id:'oq008',category:'כמותי',topic:'חזקות ושורשים',difficulty:4,prompt:'אם x^2=49 ו־x<0, מה ערכו של x?',answers:['-49','-7','7','49'],correct:1,explanation:'למשוואה x^2=49 יש פתרונות ±7, והנתון x<0 קובע x=-7.'},
 
