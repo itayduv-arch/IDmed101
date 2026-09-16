@@ -1,13 +1,13 @@
 from pathlib import Path
+import re
 
 idx=Path('psycho101/index.html')
 s=idx.read_text(encoding='utf-8')
 
 # Load the new original question bank before the app's main script.
-anchor='<script>\nconst STORAGE_KEY="psycho101-state-v3";'
-insert='<script src="./official_quant_expansion.js?v=20260916-25"></script>\n<script>\nconst STORAGE_KEY="psycho101-state-v3";'
-assert s.count(anchor)==1, f'main script anchor count={s.count(anchor)}'
-s=s.replace(anchor,insert)
+pattern=r'<script>\s*(const STORAGE_KEY="psycho101-state-v3";)'
+assert len(re.findall(pattern,s))==1, f'main script anchor count={len(re.findall(pattern,s))}'
+s=re.sub(pattern,'<script src="./official_quant_expansion.js?v=20260916-25"></script>\n<script>\n\\1',s,count=1)
 
 # Add the expansion to the quantitative pool after the existing generated bank.
 anchor='questions.quantitative.push(...buildQuantBank());\nquestions.verbal.push(...buildVerbalBank());'
@@ -41,7 +41,7 @@ new="  list=freshFirst(list,list.length);\n  practice={list,index:0,answeredCurr
 assert s.count(old)==1
 s=s.replace(old,new)
 
-# Record the actual viewed/answered item into the freshness window.
+# Record the actual answered item into the freshness window.
 old="  const q=practice.list[practice.index];\n  practice.answeredCurrent=true;lastChoice=choice;"
 new="  const q=practice.list[practice.index];\n  rememberQuestionId(q?.id);\n  practice.answeredCurrent=true;lastChoice=choice;"
 assert s.count(old)==1
