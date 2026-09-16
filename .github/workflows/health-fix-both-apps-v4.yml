@@ -1,0 +1,30 @@
+name: Shared app health fixes v4
+
+on:
+  push:
+    paths:
+      - '.github/workflows/health-fix-both-apps-v4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch both apps
+        run: python .github/scripts/health_fix_both_apps.py
+      - name: Validate both apps
+        run: python .github/scripts/validate_health_fix.py
+      - name: Commit verified fixes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add psycho101/index.html psycho101/sw.js psycho101/version.json idmed101/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Harden daily progress and streak logic in both apps'
+          git push
