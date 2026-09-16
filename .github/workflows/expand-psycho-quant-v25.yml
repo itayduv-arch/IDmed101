@@ -56,3 +56,5 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m 'Expand Psycho101 quantitative topics and reduce repetition'
           git push
+
+# retry 2: robust script anchor matching
