@@ -17,72 +17,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Patch Psycho101 daily state logic
+      - name: Finalize Psycho101 daily state migration
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          path = Path('psycho101/index.html')
-          text = path.read_text(encoding='utf-8')
-          original = text
+          path=Path('psycho101/index.html')
+          text=path.read_text(encoding='utf-8')
+          original=text
 
-          old = 'function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
-          new = 'function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:3,lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
-          assert text.count(old) == 1, f'defaultState match count={text.count(old)}'
-          text = text.replace(old, new)
+          replacements=[
+            ('dailyResetFixVersion:3','dailyResetFixVersion:4'),
+            ('(state.dailyResetFixVersion||0)<3','(state.dailyResetFixVersion||0)<4'),
+            ('state.dailyResetFixVersion=3','state.dailyResetFixVersion=4'),
+            ('(local.dailyResetFixVersion||0)>=3','(local.dailyResetFixVersion||0)>=4'),
+            ('(remote.dailyResetFixVersion||0)>=3','(remote.dailyResetFixVersion||0)>=4'),
+            ('out.dailyResetFixVersion=3','out.dailyResetFixVersion=4'),
+          ]
+          for old,new in replacements:
+            count=text.count(old)
+            assert count>=1, f'missing expected token: {old}'
+            text=text.replace(old,new)
 
-          old = '''function nowDate(){return new Date().toISOString().slice(0,10)}
-          function updateStreak(){const today=nowDate();if(!state.lastStudyDate){state.lastStudyDate=today;return}if(state.lastStudyDate===today)return;const prev=new Date(state.lastStudyDate+'T12:00:00'),cur=new Date(today+'T12:00:00'),days=Math.round((cur-prev)/DAY);state.streak=days===1?state.streak+1:1;state.todayAnswered=0;state.lastStudyDate=today}'''
-          new = '''function localDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
-          function nowDate(){return localDateKey()}
-          function dayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/DAY)}
-          function daysBetween(a,b){if(!a||!b)return null;return dayNumber(b)-dayNumber(a)}
-          function ensureDailyState(){const today=nowDate();let changed=false;if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<3){state.todayAnswered=0;state.dailyDate=today;state.dailyResetFixVersion=3;changed=true}if(state.lastStudyDate){const gap=daysBetween(state.lastStudyDate,today);if(gap>1&&state.streak!==0){state.streak=0;changed=true}}if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return changed}
-          function updateStreak(){ensureDailyState()}
-          function registerStudyDay(){ensureDailyState();const today=nowDate();if(state.lastStudyDate===today)return;const gap=state.lastStudyDate?daysBetween(state.lastStudyDate,today):null;if(gap===1)state.streak=Math.max(1,state.streak||0)+1;else state.streak=1;state.lastStudyDate=today}'''
-          assert text.count(old) == 1, f'date/streak match count={text.count(old)}'
-          text = text.replace(old, new)
+          old="(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}ensureDailyState();render()})();"
+          new="(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})();"
+          assert text.count(old)==1, f'startup match count={text.count(old)}'
+          text=text.replace(old,new)
 
-          old = '''function answerQuestion(choice){
-            if(!practice||practice.answeredCurrent)return;
-            const q=practice.list[practice.index];
-            practice.answeredCurrent=true;lastChoice=choice;
-            const good=choice===q.correct;
-            state.answered++;state.todayAnswered++;state.xp+=good?10:3;
-            if(good){state.correct++;practice.sessionCorrect++}
-            updateStreak();'''
-          new = '''function answerQuestion(choice){
-            if(!practice||practice.answeredCurrent)return;
-            ensureDailyState();
-            registerStudyDay();
-            const q=practice.list[practice.index];
-            practice.answeredCurrent=true;lastChoice=choice;
-            const good=choice===q.correct;
-            state.answered++;state.todayAnswered++;state.xp+=good?10:3;
-            if(good){state.correct++;practice.sessionCorrect++}'''
-          assert text.count(old) == 1, f'answerQuestion match count={text.count(old)}'
-          text = text.replace(old, new)
+          old="if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));"
+          new="if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260916-22',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}"
+          assert text.count(old)==1, f'service worker registration match count={text.count(old)}'
+          text=text.replace(old,new)
 
-          old = 'out.streak=Math.max(local.streak||1,remote.streak||1);out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);'
-          new = "out.streak=Math.max(local.streak||0,remote.streak||0);const today=nowDate(),localDailyOk=local.dailyDate===today&&(local.dailyResetFixVersion||0)>=3,remoteDailyOk=remote.dailyDate===today&&(remote.dailyResetFixVersion||0)>=3;out.dailyDate=today;out.dailyResetFixVersion=3;if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);else if(localDailyOk)out.todayAnswered=local.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remote.todayAnswered||0;else out.todayAnswered=0;"
-          assert text.count(old) == 1, f'merge daily match count={text.count(old)}'
-          text = text.replace(old, new)
-
-          old = "out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;out.displayName=local.displayName||remote.displayName||\"\";out.user=local.user;return out}"
-          new = "out.lastStudyDate=[local.lastStudyDate,remote.lastStudyDate].filter(Boolean).sort().pop()||null;if(out.lastStudyDate&&daysBetween(out.lastStudyDate,today)>1)out.streak=0;out.displayName=local.displayName||remote.displayName||\"\";out.user=local.user;return out}"
-          assert text.count(old) == 1, f'merge streak match count={text.count(old)}'
-          text = text.replace(old, new)
-
-          old = "(async()=>{if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}render()})();\nsetInterval(refreshGreeting,60000);"
-          new = "(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}ensureDailyState();render()})();\nfunction refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}\ndocument.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDailyStateOnResume()});\nwindow.addEventListener('focus',refreshDailyStateOnResume);\nwindow.addEventListener('pageshow',refreshDailyStateOnResume);\nsetInterval(()=>{refreshGreeting();refreshDailyStateOnResume()},60000);"
-          assert text.count(old) == 1, f'startup match count={text.count(old)}'
-          text = text.replace(old, new)
-
-          assert text != original
-          path.write_text(text, encoding='utf-8')
-          Path('psycho101/version.json').write_text('{"version":"20260916-21"}\n', encoding='utf-8')
+          assert text!=original
+          path.write_text(text,encoding='utf-8')
+          Path('psycho101/version.json').write_text('{"version":"20260916-22"}\n',encoding='utf-8')
           PY
 
       - name: Check inline JavaScript syntax
@@ -90,17 +60,17 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re, subprocess, tempfile
+          import re, subprocess
           html=Path('psycho101/index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script([^>]*)>([\s\S]*?)</script>',html,re.I)
           checked=0
           for attrs,src in scripts:
-              if 'src=' in attrs.lower() or not src.strip():
-                  continue
-              checked+=1
-              p=Path(f'/tmp/psycho-inline-{checked}.js')
-              p.write_text(src,encoding='utf-8')
-              subprocess.run(['node','--check',str(p)],check=True)
+            if 'src=' in attrs.lower() or not src.strip():
+              continue
+            checked+=1
+            p=Path(f'/tmp/psycho-inline-{checked}.js')
+            p.write_text(src,encoding='utf-8')
+            subprocess.run(['node','--check',str(p)],check=True)
           print(f'Checked {checked} inline scripts')
           PY
 
@@ -114,5 +84,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add psycho101/index.html psycho101/version.json
-          git commit -m 'Fix Psycho101 daily goal and streak state'
+          git commit -m 'Finalize Psycho101 daily goal migration'
           git push
