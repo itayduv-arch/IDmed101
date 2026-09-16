@@ -1,0 +1,157 @@
+name: Shared app health fixes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/health-fix-both-apps.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Psycho101 and IDmed101 state logic
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # ---------- Psycho101 ----------
+          p=Path('psycho101/index.html')
+          text=p.read_text(encoding='utf-8')
+          original=text
+
+          old='function defaultState(){return{version:8,xp:0,streak:1,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
+          new='function defaultState(){return{version:8,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}'
+          assert text.count(old)==1, f'Psycho defaultState match={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="navigator.serviceWorker.register('./sw.js?v=20260916-23',{updateViaCache:'none'})"
+          new="navigator.serviceWorker.register('./sw.js?v=20260916-24',{updateViaCache:'none'})"
+          assert text.count(old)==1, f'Psycho sw registration match={text.count(old)}'
+          text=text.replace(old,new)
+          p.write_text(text,encoding='utf-8')
+
+          sw=Path('psycho101/sw.js')
+          swtext=sw.read_text(encoding='utf-8')
+          assert "const CACHE_NAME='idpsycho101-v23';" in swtext
+          sw.write_text(swtext.replace("const CACHE_NAME='idpsycho101-v23';","const CACHE_NAME='idpsycho101-v24';"),encoding='utf-8')
+          Path('psycho101/version.json').write_text('{"version":"20260916-24"}\n',encoding='utf-8')
+
+          # ---------- IDmed101 ----------
+          p=Path('idmed101/index.html')
+          text=p.read_text(encoding='utf-8')
+          original_med=text
+
+          # Cloud merge base
+          old='answered:0,correct:0,xp:0,streak:1,todayAnswered:0,dailyGoal:20,lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""'
+          new='answered:0,correct:0,xp:0,streak:0,todayAnswered:0,dailyGoal:20,dailyDate:null,dailyResetFixVersion:1,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,simulationHistory:[],lessonStats:{},displayName:""'
+          assert text.count(old)>=1, f'IDmed merge base match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Main appData initialization
+          old='answered:0, correct:0, xp:0, streak:1,\n        todayAnswered:0, dailyGoal:20, lastStudyDate:null,\n        simulationHistory:[], lessonStats:{}, displayName:""'
+          new='answered:0, correct:0, xp:0, streak:0,\n        todayAnswered:0, dailyGoal:20, dailyDate:null, dailyResetFixVersion:1,\n        dailyLessonStats:{}, dailyTopicStats:{}, lastStudyDate:null,\n        simulationHistory:[], lessonStats:{}, displayName:""'
+          assert text.count(old)>=1, f'IDmed appData/reset match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Daily/streak engine: local date, independent daily reset, streak only on study
+          old='''function medToday(){ return new Date().toISOString().slice(0,10); }\n    function updateMedStreak(){\n        const today=medToday();\n        if(!appData.lastStudyDate){ appData.lastStudyDate=today; return; }\n        if(appData.lastStudyDate===today) return;\n        const prev=new Date(appData.lastStudyDate+'T12:00:00');\n        const cur=new Date(today+'T12:00:00');\n        const days=Math.round((cur-prev)/MED_DAY);\n        appData.streak=days===1?(appData.streak||1)+1:1;\n        appData.todayAnswered=0;\n        appData.lastStudyDate=today;\n    }'''
+          new='''function medLocalDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}\n    function medToday(){ return medLocalDateKey(); }\n    function medDayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/MED_DAY)}\n    function medDaysBetween(a,b){if(!a||!b)return null;return medDayNumber(b)-medDayNumber(a)}\n    function ensureMedDailyState(){\n        const today=medToday();let changed=false;\n        if(appData.dailyDate!==today||(appData.dailyResetFixVersion||0)<1){appData.todayAnswered=0;appData.dailyLessonStats={};appData.dailyTopicStats={};appData.dailyDate=today;appData.dailyResetFixVersion=1;changed=true}\n        if(appData.lastStudyDate&&medDaysBetween(appData.lastStudyDate,today)>1&&appData.streak!==0){appData.streak=0;changed=true}\n        if(changed)localStorage.setItem(MED101_STORAGE,JSON.stringify(appData));\n        return changed;\n    }\n    function updateMedStreak(){ ensureMedDailyState(); }\n    function registerMedStudyDay(){\n        ensureMedDailyState();const today=medToday();if(appData.lastStudyDate===today)return;\n        const gap=appData.lastStudyDate?medDaysBetween(appData.lastStudyDate,today):null;\n        appData.streak=gap===1?Math.max(1,appData.streak||0)+1:1;appData.lastStudyDate=today;\n    }'''
+          assert text.count(old)==1, f'IDmed date/streak block match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Answer recording must reset first, then register a real study day
+          old="""function recordAnswer(item,good,source='practice',userAnswer=null){\n        updateMedStreak();\n        appData.answered=(appData.answered||0)+1;"""
+          new="""function recordAnswer(item,good,source='practice',userAnswer=null){\n        ensureMedDailyState();\n        registerMedStudyDay();\n        appData.answered=(appData.answered||0)+1;"""
+          assert text.count(old)==1, f'IDmed recordAnswer header match={text.count(old)}'
+          text=text.replace(old,new)
+
+          old="""const t=topicStatMed(item.subtopic);\n        appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};\n        if(!good){"""
+          new="""const t=topicStatMed(item.subtopic);\n        appData.topicStats[item.subtopic]={answered:t.answered+1,correct:t.correct+(good?1:0)};\n        appData.dailyTopicStats=appData.dailyTopicStats||{};const dt=appData.dailyTopicStats[item.subtopic]||{answered:0,correct:0};appData.dailyTopicStats[item.subtopic]={answered:dt.answered+1,correct:dt.correct+(good?1:0)};\n        if(source==='quick'&&medQuickSession){const key=medQuickSession.subject||'daily';appData.dailyLessonStats=appData.dailyLessonStats||{};const ds=appData.dailyLessonStats[key]||{answered:0,correct:0};appData.dailyLessonStats[key]={answered:ds.answered+1,correct:ds.correct+(good?1:0)}}\n        if(!good){"""
+          assert text.count(old)==1, f'IDmed topic recording match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Dashboard should only ensure date, not create a study day
+          old='''function updateHomeDashboard(){\n        updateMedStreak();'''
+          new='''function updateHomeDashboard(){\n        ensureMedDailyState();'''
+          assert text.count(old)==1, f'IDmed home streak call match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Lesson cards show today's count while cumulative mastery remains in lessonStats
+          old="""function updateMedLessonMeta(){\n        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){\n            const el=document.getElementById('lesson-meta-'+key),s=appData.lessonStats?.[key];\n            const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);\n            if(el)el.innerText=s?.completed?'✓ '+s.bestAccuracy+'%':available+' שאלות';\n        }\n    }"""
+          new="""function updateMedLessonMeta(){\n        for(const key of ['ביוכימיה','מולקולרית','ביולוגיה של התא','פיזיולוגיה','high-yield','daily']){\n            const el=document.getElementById('lesson-meta-'+key),s=appData.dailyLessonStats?.[key];\n            const available=key==='daily'?Math.min(10,dbQuestions.length):key==='high-yield'?Math.min(8,medHighYieldPool().length):Math.min(8,dbQuestions.filter(q=>q.subject===key).length);\n            if(el)el.innerText=s?.answered?(s.answered>=available?'✓ '+(s.correct||0)+'/'+s.answered:(s.answered||0)+'/'+available+' היום'):available+' שאלות';\n        }\n    }"""
+          assert text.count(old)==1, f'IDmed lesson meta match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Day-aware cloud merge: old remote daily counts cannot revive today's counters
+          old="""out.streak=Math.max(localState.streak||1,remoteState.streak||1);\n        out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);\n        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;"""
+          new="""out.streak=Math.max(localState.streak||0,remoteState.streak||0);\n        const today=medToday(),localDailyOk=localState.dailyDate===today&&(localState.dailyResetFixVersion||0)>=1,remoteDailyOk=remoteState.dailyDate===today&&(remoteState.dailyResetFixVersion||0)>=1;\n        out.dailyDate=today;out.dailyResetFixVersion=1;\n        if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);else if(localDailyOk)out.todayAnswered=localState.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remoteState.todayAnswered||0;else out.todayAnswered=0;\n        const lLessons=localDailyOk?(localState.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remoteState.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]=(a.answered||0)>=(b.answered||0)?a:b}\n        const lTopics=localDailyOk?(localState.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remoteState.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]=(a.answered||0)>=(b.answered||0)?a:b}\n        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;\n        if(out.lastStudyDate&&medDaysBetween(out.lastStudyDate,today)>1)out.streak=0;"""
+          assert text.count(old)==1, f'IDmed cloud daily block match={text.count(old)}'
+          text=text.replace(old,new)
+
+          # Never display a zero streak as 1
+          text=text.replace('(appData.streak||1)', '(appData.streak||0)')
+          text=text.replace('id="home-streak">1 🔥', 'id="home-streak">0 🔥')
+
+          # Ensure migration runs before any cloud merge and whenever the app resumes
+          old='''window.onload = async () => { \n        const savedTheme=localStorage.getItem('med101-theme');'''
+          new='''function refreshMedDailyStateOnResume(){if(ensureMedDailyState()){updateHomeDashboard();saveData()}}\n    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMedDailyStateOnResume()});\n    window.addEventListener('focus',refreshMedDailyStateOnResume);\n    window.addEventListener('pageshow',refreshMedDailyStateOnResume);\n\n    window.onload = async () => { \n        ensureMedDailyState();\n        const savedTheme=localStorage.getItem('med101-theme');'''
+          assert text.count(old)==1, f'IDmed onload match={text.count(old)}'
+          text=text.replace(old,new)
+
+          assert text!=original_med
+          p.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Validate state invariants and JavaScript syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          psy=Path('psycho101/index.html').read_text(encoding='utf-8')
+          med=Path('idmed101/index.html').read_text(encoding='utf-8')
+          assert 'dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{}' in psy
+          assert 'streak:0,answered:0' in psy
+          assert "new Date().toISOString().slice(0,10)" not in med
+          assert 'ensureMedDailyState()' in med and 'registerMedStudyDay()' in med
+          assert 'dailyLessonStats' in med and 'dailyTopicStats' in med
+          assert 'out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);' not in med
+          assert 'appData.streak||1' not in med
+
+          for name in ['psycho101/index.html','idmed101/index.html']:
+            html=Path(name).read_text(encoding='utf-8')
+            scripts=re.findall(r'<script([^>]*)>([\s\S]*?)</script>',html,re.I)
+            checked=0
+            for attrs,src in scripts:
+              if 'src=' in attrs.lower() or not src.strip():
+                continue
+              checked+=1
+              f=Path(f'/tmp/{Path(name).parent.name or "root"}-{checked}.js')
+              f.write_text(src,encoding='utf-8')
+              subprocess.run(['node','--check',str(f)],check=True)
+            print(name, 'checked inline scripts:', checked)
+          PY
+
+      - name: Commit fixes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add psycho101/index.html psycho101/sw.js psycho101/version.json idmed101/index.html
+          git commit -m 'Harden daily progress and streak logic in both apps'
+          git push
