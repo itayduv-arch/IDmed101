@@ -1,0 +1,58 @@
+name: Expand Psycho101 quantitative bank v25
+
+on:
+  push:
+    paths:
+      - '.github/workflows/expand-psycho-quant-v25.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply quantitative expansion
+        run: python scripts/expand_psycho_quant_v25.py
+
+      - name: Validate app and question bank
+        shell: bash
+        run: |
+          node --check psycho101/official_quant_expansion.js
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          html=Path('psycho101/index.html').read_text(encoding='utf-8')
+          bank=Path('psycho101/official_quant_expansion.js').read_text(encoding='utf-8')
+          ids=re.findall(r"id:'(oq\d+)'",bank)
+          assert len(ids)>=60, len(ids)
+          assert len(ids)==len(set(ids)), 'duplicate official expansion ids'
+          for topic in ['חזקות ושורשים','עצרת','תכונות מספרים','אי־שוויונות','פירוק לגורמים וכפל מקוצר','שברים ויחסים','מערכת צירים','קומבינטוריקה','הסתברות','ממוצעים','בעיות דרך','בעיות הספק','גאומטריה','אחוזים']:
+              assert topic in bank, topic
+          assert 'freshFirst(pool,count)' in html
+          assert 'rememberQuestionId(q?.id)' in html
+          assert 'official_quant_expansion.js?v=20260916-25' in html
+          scripts=re.findall(r'<script([^>]*)>([\s\S]*?)</script>',html,re.I)
+          n=0
+          for attrs,src in scripts:
+              if 'src=' in attrs.lower() or not src.strip(): continue
+              n+=1
+              f=Path(f'/tmp/psycho-{n}.js'); f.write_text(src,encoding='utf-8')
+              subprocess.run(['node','--check',str(f)],check=True)
+          print('validated inline scripts',n,'and',len(ids),'new quantitative questions')
+          PY
+
+      - name: Commit expansion
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add psycho101/index.html psycho101/official_quant_expansion.js psycho101/sw.js psycho101/version.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Expand Psycho101 quantitative topics and reduce repetition'
+          git push
