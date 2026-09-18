@@ -799,8 +799,19 @@
         out.itemStats={...(remoteState.itemStats||{})};
         for(const id of new Set([...Object.keys(remoteState.itemStats||{}),...Object.keys(localState.itemStats||{})])){
             const a=localState.itemStats?.[id],b=remoteState.itemStats?.[id];
-            if(!a)out.itemStats[id]=b;else if(!b)out.itemStats[id]=a;
-            else out.itemStats[id]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b;
+            const at=Date.parse(a?.lastReviewed||'')||0,bt=Date.parse(b?.lastReviewed||'')||0;
+            const useLocal=!!a&&(!b||at>=bt);
+            if(!a)out.itemStats[id]=b;else if(!b)out.itemStats[id]=a;else out.itemStats[id]=useLocal?a:b;
+            const source=useLocal?localState:remoteState;
+            const chosen=out.itemStats[id];
+            const chosenDue=Number(chosen?.dueAt);
+            if(source.questions&&Object.prototype.hasOwnProperty.call(source.questions,id)){
+                out.questions[id]=Number.isFinite(chosenDue)?chosenDue:Number(source.questions[id]||0);
+            }
+            if(source.cards&&Object.prototype.hasOwnProperty.call(source.cards,id)){
+                out.cards[id]=Number.isFinite(chosenDue)?chosenDue:Number(source.cards[id]||0);
+            }
+            if(source.status&&Object.prototype.hasOwnProperty.call(source.status,id)) out.status[id]=source.status[id];
         }
         out.topicStats={...(remoteState.topicStats||{})};
         for(const [topic,s] of Object.entries(localState.topicStats||{})){
@@ -1041,7 +1052,8 @@
             box,
             seen:(s.seen||0)+1,
             correct:(s.correct||0)+(good?1:0),
-            lastReviewed:new Date().toISOString()
+            lastReviewed:new Date().toISOString(),
+            dueAt
         };
         appData[type][item.id]=dueAt;
         appData.status[item.id]=good?'correct':'wrong';
@@ -1381,7 +1393,7 @@
         document.getElementById('q-done-area').classList.add('hidden');
 
         if (forceReload || !currentQ || !dueQuestions.find(q => q.id === currentQ.id)) {
-            currentQ = medRandomizeQuestion(getRandomItem(dueQuestions));
+            currentQ = medRandomizeQuestion(medWeightedSample(dueQuestions,1)[0]);
         }
 
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
@@ -1486,6 +1498,13 @@
         el.classList.remove('stat-bump');void el.offsetWidth;el.classList.add('stat-bump');
     }
 
+    const MED_RECENT_QUESTION_KEY='med101-recent-question-ids-v1';
+    function medRecentQuestionIds(){
+        try{const a=JSON.parse(localStorage.getItem(MED_RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}
+    }
+    function medSaveRecentQuestionIds(ids){
+        try{localStorage.setItem(MED_RECENT_QUESTION_KEY,JSON.stringify(ids.slice(-160)))}catch(e){}
+    }
     function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
     function medPriorityWeight(q){
         const t=((q.subtopic||'')+' '+(q.text||'')).toLowerCase();
@@ -1515,14 +1534,25 @@
         return Object.assign({},q,{options:pairs.map(function(x){return x.text;}),answer:pairs.findIndex(function(x){return x.correct;})});
     }
     function medWeightedSample(pool,count){
-        const remaining=[...pool],chosen=[];
+        const remaining=[...pool],chosen=[],recentIds=medRecentQuestionIds(),recent=new Set(recentIds),now=Date.now();
         while(remaining.length&&chosen.length<count){
-            const weights=remaining.map(medPriorityWeight);
+            const weights=remaining.map(q=>{
+                let w=medPriorityWeight(q);
+                const s=getItemStat(q.id),seen=s.seen||0,accuracy=seen?(s.correct||0)/seen:1;
+                if(seen===0) w*=4.5;
+                else if(appData.status[q.id]==='wrong') w*=4;
+                else if((appData.questions[q.id]||0)<=now) w*=1.8;
+                if(seen>=2&&accuracy<0.6) w*=1.7;
+                if(recent.has(q.id)) w*=0.12;
+                return Math.max(0.05,w);
+            });
             const total=weights.reduce((a,b)=>a+b,0);
             let r=Math.random()*total,idx=0;
             for(;idx<remaining.length;idx++){r-=weights[idx];if(r<=0)break}
-            chosen.push(remaining.splice(Math.min(idx,remaining.length-1),1)[0]);
+            const pick=remaining.splice(Math.min(idx,remaining.length-1),1)[0];
+            chosen.push(pick);recent.add(pick.id);recentIds.push(pick.id);
         }
+        medSaveRecentQuestionIds([...new Set(recentIds)]);
         return chosen;
     }
     function medLessonLabel(subject){
