@@ -1,5 +1,5 @@
-const CACHE_NAME='idpsycho101-v25';
-const CORE=['./','./index.html','./version.json','./manifest.webmanifest'];
+const CACHE_NAME='idpsycho101-v26';
+const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
