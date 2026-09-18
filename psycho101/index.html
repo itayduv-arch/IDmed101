@@ -4893,9 +4893,21 @@ function startQuickLesson(id){
   lastChoice=null;view='question';render();
 }
 const RECENT_QUESTION_KEY='psycho101-recent-question-ids-v1';
+const QUESTION_PERFORMANCE_KEY='psycho101-question-performance-v1';
 function recentQuestionIds(){try{const a=JSON.parse(localStorage.getItem(RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}}
 function rememberQuestionId(id){if(!id)return;const a=recentQuestionIds().filter(x=>x!==id);a.push(id);try{localStorage.setItem(RECENT_QUESTION_KEY,JSON.stringify(a.slice(-120)))}catch{}}
-function freshFirst(pool,count){const recent=new Set(recentQuestionIds()),fresh=shuffle(pool.filter(q=>!recent.has(q.id))),seen=shuffle(pool.filter(q=>recent.has(q.id)));return [...fresh,...seen].slice(0,count)}
+function questionPerformance(){try{const x=JSON.parse(localStorage.getItem(QUESTION_PERFORMANCE_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch{return {}}}
+function rememberQuestionResult(id,good){if(!id)return;const all=questionPerformance(),s=all[id]||{seen:0,wrong:0,lastAt:0};all[id]={seen:(s.seen||0)+1,wrong:(s.wrong||0)+(good?0:1),lastAt:Date.now()};try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}}
+function freshFirst(pool,count){
+  const recent=new Set(recentQuestionIds()),perf=questionPerformance();
+  const fresh=shuffle(pool.filter(q=>!recent.has(q.id)&&!(perf[q.id]?.seen)));
+  const weak=shuffle(pool.filter(q=>(perf[q.id]?.wrong||0)>0&&!recent.has(q.id))).sort((a,b)=>(perf[b.id]?.wrong||0)-(perf[a.id]?.wrong||0));
+  const rest=shuffle(pool.filter(q=>!recent.has(q.id)&&!fresh.includes(q)&&!weak.includes(q)));
+  const seen=shuffle(pool.filter(q=>recent.has(q.id)));
+  const ordered=[...fresh,...weak,...rest,...seen],unique=[],ids=new Set();
+  for(const q of ordered){if(!q||ids.has(q.id))continue;ids.add(q.id);unique.push(q);if(unique.length>=count)break}
+  return unique;
+}
 function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(8):questions[type].filter(q=>topic==='all'||q.topic===topic);list=freshFirst(list,8);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
 function startMixed(){const list=freshFirst([...buildWordQuestions(4),...questions.quantitative,...questions.verbal],10);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
@@ -4937,6 +4949,7 @@ function answerQuestion(choice){
   rememberQuestionId(q?.id);
   practice.answeredCurrent=true;lastChoice=choice;
   const good=choice===q.correct;
+  rememberQuestionResult(q?.id,good);
   state.answered++;state.todayAnswered++;state.xp+=good?10:3;
   if(good){state.correct++;practice.sessionCorrect++}
   const t=topicStat(q.topic);
