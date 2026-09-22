@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260922-28">
+<link rel="manifest" href="./manifest.webmanifest?v=20260922-29">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260922-28";
+const PSYCHO101_BUILD_VERSION="20260922-29";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4415,8 +4415,9 @@ const wordBank = [
 ];
 
 </script>
-<script src="./official_quant_expansion.js?v=20260922-28"></script>
-<script src="./daily_expansion_20260918.js?v=20260922-28"></script>
+<script src="./official_quant_expansion.js?v=20260922-29"></script>
+<script src="./daily_expansion_20260918.js?v=20260922-29"></script>
+<script src="./advanced_expansion_20260922.js?v=20260922-29"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4451,11 +4452,12 @@ function qItem(id,topic,prompt,correct,distractors,explanation,seed=0){
 }
 function buildQuantBank(){
   const out=[];let id=100;
-  const pct=[10,20,25,30,40];
-  for(let i=0;i<18;i++){
-    const p=pct[i%pct.length],base=100+20*(i%7),sale=base*(100-p)/100;
-    out.push(qItem("qg"+(id++),"אחוזים",`מחיר מוצר הוא ${base} ₪. לאחר הנחה של ${p}%, מה מחירו?`,sale,[sale+10,sale-10,base-p],`משלמים ${100-p}% מהמחיר: ${base} × ${(100-p)/100} = ${sale}.`,i));
-  }
+  const pctSpecs=[[12,250],[27,200],[17,300],[22,250],[37.5,240],[62.5,160],[14,350],[18,250],[32,225],[7.5,400],[12.5,320],[27,300],[42,250],[35,180],[16,375],[24,250],[28,225],[45,260]];
+  pctSpecs.forEach(([p,base],i)=>{
+    const sale=base*(100-p)/100;
+    const d1=Math.round((sale+base*p/200)*100)/100,d2=Math.round((sale-base*p/300)*100)/100,d3=Math.round((base-base*p/200)*100)/100;
+    out.push(qItem("qg"+(id++),"אחוזים",`מחיר מוצר הוא ${base} ₪. לאחר הנחה של ${p}%, מה מחירו?`,sale,[d1,d2,d3],`משלמים ${100-p}% מהמחיר: ${base} × ${(100-p)/100} = ${sale}.`,i));
+  });
   for(let i=0;i<16;i++){
     const a=2+(i%4),b=3+((i*2)%5),k=3+(i%6),left=a*k,right=b*k;
     out.push(qItem("qg"+(id++),"יחסים",`היחס בין A ל־B הוא ${a}:${b}. אם A = ${left}, מה ערכו של B?`,right,[right+b,right-b,left],`כל חלק שווה ${k}, לכן B = ${b}×${k} = ${right}.`,i));
@@ -4703,6 +4705,8 @@ questions.quantitative.push(...buildCampusQuantBank());
 questions.verbal.push(...buildCampusVerbalBank());
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20260918?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20260918?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_ADVANCED_20260922?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_ADVANCED_20260922?.verbal||[]));
 
 
 
@@ -4792,7 +4796,7 @@ function home(){
     <div class="section-heading"><div><h3>המסלול שלך</h3><span>בחר שיעור או פשוט המשך ללמוד</span></div><span>כ־8 שאלות</span></div>
     <div class="lesson-path">
       ${quickLessonNode('warmup','⚡','חימום','כפל, חילוק וחישוב מהיר','8 שאלות','orange')}
-      ${quickLessonNode('percent','%','אחוזים','10%, 20%, 25%, 50% וחישובים קצרים','8 שאלות','blue')}
+      ${quickLessonNode('percent','%','אחוזים מתקדמים','12%, 17%, 27%, 37.5% ושאלות הפוכות','8 שאלות','blue')}
       ${quickLessonNode('fractions','½','שברים ויחסים','חלק מתוך שלם ויחסים פשוטים','8 שאלות','purple')}
       ${quickLessonNode('words','א','מילים','פירושים והשלמה בהקשר','8 שאלות','blue')}
       ${quickLessonNode('analogies','↔','אנלוגיות','לזהות את הקשר בין זוגות','8 שאלות','purple')}
@@ -4853,7 +4857,7 @@ function buildWarmupQuestions(count=8){
   })).slice(0,count);
 }
 function buildPercentQuick(count=8){
-  const specs=[[20,80],[10,150],[25,120],[50,70],[20,150],[25,80],[10,240],[50,130],[20,60],[25,200]];
+  const specs=[[12,250],[27,200],[17,300],[37.5,240],[7.5,400],[12.5,320],[22,250],[35,180],[14,350],[28,225],[32,225],[18,250]];
   return shuffle(specs.slice(0,Math.max(count,8)).map(([p,base],i)=>{
     const ans=base*p/100;
     return quickNumericQuestion(`quick-pct-${p}-${base}`,"אחוזים",`${p}% מ־${base} = ?`,ans,[ans+5,ans*2,base-ans],`${p}% = ${p}/100, ולכן ${base} × ${p/100} = ${ans}.`,i);
@@ -5142,7 +5146,7 @@ function toggleTheme(){
 applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
-if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260922-28',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260922-29',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
