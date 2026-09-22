@@ -1,4 +1,4 @@
-const CACHE_NAME='idpsycho101-v27';
+const CACHE_NAME='idpsycho101-v28';
 const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js'];
 
 self.addEventListener('install',event=>{
@@ -25,7 +25,7 @@ self.addEventListener('fetch',event=>{
           if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put('./index.html',response.clone()));
           return response;
         })
-        .catch(()=>caches.match('./index.html'))
+        .catch(()=>caches.match('./index.html',{ignoreSearch:true}))
     );
     return;
   }
@@ -36,6 +36,6 @@ self.addEventListener('fetch',event=>{
         if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(event.request,response.clone()));
         return response;
       })
-      .catch(()=>caches.match(event.request))
+      .catch(()=>caches.match(event.request,{ignoreSearch:true}))
   );
 });
