@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260922-27">
+<link rel="manifest" href="./manifest.webmanifest?v=20260922-28">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260922-27";
+const PSYCHO101_BUILD_VERSION="20260922-28";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4415,8 +4415,8 @@ const wordBank = [
 ];
 
 </script>
-<script src="./official_quant_expansion.js?v=20260922-27"></script>
-<script src="./daily_expansion_20260918.js?v=20260922-27"></script>
+<script src="./official_quant_expansion.js?v=20260922-28"></script>
+<script src="./daily_expansion_20260918.js?v=20260922-28"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -5142,10 +5142,10 @@ function toggleTheme(){
 applySavedTheme();
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;render()});async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;render()}
-if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260922-27',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){let reloadingForSW=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadingForSW)return;reloadingForSW=true;location.reload()});window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260922-28',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
-(async()=>{ensureDailyState();if(cloudConfigured()){await hydrateCloudUser();if(state.user)await syncNow(true)}const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})();
+(()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDailyStateOnResume()});
 window.addEventListener('focus',refreshDailyStateOnResume);
