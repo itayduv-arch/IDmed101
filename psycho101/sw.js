@@ -1,4 +1,4 @@
-const CACHE_NAME='idpsycho101-v26';
+const CACHE_NAME='idpsycho101-v27';
 const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js'];
 
 self.addEventListener('install',event=>{
