@@ -2,8 +2,12 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>101 Apps</title>\n  <link rel="manifest" href="./manifest.webmanifest?v=20260923-3">\n  <meta name="theme-color" content="#5965e0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>101 Apps</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=20260923-4">
+  <meta name="theme-color" content="#5965e0">
   <style>
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Arial,"Segoe UI",sans-serif;background:#f5f7fb;color:#182033;padding:24px;transition:.25s}
@@ -38,12 +42,13 @@
   <main class="wrap">
     <h1>101 Apps</h1>
     <div class="sub">בחר את האפליקציה שתרצה לפתוח</div>
-    <div class="nudge">גם 5 דקות נחשבות — העיקר להתחיל.</div>\n    <div class="flight-box"><strong>✈️ מצב טיסה</strong><div>הכן מראש את שתי האפליקציות לעבודה ללא אינטרנט.</div><button class="flight-btn" id="flight-btn" onclick="prepareOffline()">הכן לטיסה</button><div class="flight-status" id="flight-status">בודק מוכנות...</div></div>
+    <div class="nudge">גם 5 דקות נחשבות — העיקר להתחיל.</div>
+    <div class="flight-box"><strong>✈️ מצב טיסה</strong><div>הכן מראש את שתי האפליקציות לעבודה ללא אינטרנט.</div><button class="flight-btn" id="flight-btn" onclick="prepareOffline()">הכן לטיסה</button><div class="flight-status" id="flight-status">בודק מוכנות...</div></div>
     <div class="grid">
-      <a href="./idmed101/?v=20260923-2" aria-label="פתיחת מבחן ידע 101">
+      <a href="./idmed101/?v=20260923-3" aria-label="פתיחת מבחן ידע 101">
         <section class="card"><div><div class="icon">🧬</div><h2>מבחן ידע 101</h2><p>כרטיסיות, שאלות, סימולציות ונקודות חיזוק למבחן הידע.</p><span class="micro">שיעורים קצרים · שחזורים מאומתים</span></div><div class="open">התחל תרגול ←</div></section>
       </a>
-      <a href="./psycho101/?v=20260923-30" aria-label="פתיחת פסיכו 101">
+      <a href="./psycho101/?v=20260923-40" aria-label="פתיחת פסיכו 101">
         <section class="card"><div><div class="icon">🧠</div><h2>IDpsycho101</h2><p>תרגול מילים, חשיבה כמותית וחשיבה מילולית לפסיכומטרי.</p><span class="micro">אפשר להתחיל באימון קצר</span></div><div class="open">התחל תרגול ←</div></section>
       </a>
     </div>
@@ -59,7 +64,7 @@
       for(const reg of regs){
         if(reg.scope.includes('/psycho101/')||reg.scope.includes('/idmed101/')){try{await reg.unregister()}catch(e){}}
       }
-      const reg=await navigator.serviceWorker.register('./sw.js?v=20260923-3',{scope:'./',updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=20260923-4',{scope:'./',updateViaCache:'none'});
       await reg.update();
       return navigator.serviceWorker.ready;
     }
