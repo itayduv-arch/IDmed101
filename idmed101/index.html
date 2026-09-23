@@ -1969,7 +1969,7 @@
                 for(const reg of regs){
                     if(reg.scope.includes('/idmed101/')){migrated=true;await reg.unregister();}
                 }
-                const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-3',{scope:'../',updateViaCache:'none'});
+                const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-4',{scope:'../',updateViaCache:'none'});
                 await reg.update();
                 if(migrated&&navigator.onLine&&!sessionStorage.getItem('id101-root-sw-migrated')){
                     sessionStorage.setItem('id101-root-sw-migrated','1');
