@@ -1,7 +1,8 @@
-const CACHE_NAME='id101-flight-v3';
+const CACHE_NAME='id101-flight-v4';
 const CORE=[
   './',
   './index.html',
+  './manifest.webmanifest',
   './psycho101/',
   './psycho101/index.html',
   './psycho101/manifest.webmanifest',
