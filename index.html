@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>101 Apps</title>
+  <title>101 Apps</title>\n  <link rel="manifest" href="./manifest.webmanifest?v=20260923-3">\n  <meta name="theme-color" content="#5965e0">
   <style>
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Arial,"Segoe UI",sans-serif;background:#f5f7fb;color:#182033;padding:24px;transition:.25s}
@@ -59,7 +59,7 @@
       for(const reg of regs){
         if(reg.scope.includes('/psycho101/')||reg.scope.includes('/idmed101/')){try{await reg.unregister()}catch(e){}}
       }
-      const reg=await navigator.serviceWorker.register('./sw.js?v=20260923-2',{scope:'./',updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=20260923-3',{scope:'./',updateViaCache:'none'});
       await reg.update();
       return navigator.serviceWorker.ready;
     }
