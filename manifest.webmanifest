@@ -1,0 +1,12 @@
+{
+  "name":"101 Apps",
+  "short_name":"101 Apps",
+  "description":"IDmed101 and IDpsycho101 offline study launcher",
+  "start_url":"./?source=pwa",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#5965e0",
+  "lang":"he",
+  "dir":"rtl"
+}
