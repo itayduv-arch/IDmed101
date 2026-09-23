@@ -1962,7 +1962,21 @@
         setInterval(setGreeting,60000);
     };
     if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
-        navigator.serviceWorker.register('./sw.js?v=20260922-1',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+        window.addEventListener('load',async()=>{
+            try{
+                const regs=await navigator.serviceWorker.getRegistrations();
+                let migrated=false;
+                for(const reg of regs){
+                    if(reg.scope.includes('/idmed101/')){migrated=true;await reg.unregister();}
+                }
+                const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-3',{scope:'../',updateViaCache:'none'});
+                await reg.update();
+                if(migrated&&navigator.onLine&&!sessionStorage.getItem('id101-root-sw-migrated')){
+                    sessionStorage.setItem('id101-root-sw-migrated','1');
+                    location.reload();
+                }
+            }catch(e){}
+        });
     }
 </script>
 </body>
