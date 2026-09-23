@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260923-30">
+<link rel="manifest" href="./manifest.webmanifest?v=20260923-31">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260923-30";
+const PSYCHO101_BUILD_VERSION="20260923-31";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4415,9 +4415,9 @@ const wordBank = [
 ];
 
 </script>
-<script src="./official_quant_expansion.js?v=20260923-30"></script>
-<script src="./daily_expansion_20260918.js?v=20260923-30"></script>
-<script src="./advanced_expansion_20260922.js?v=20260923-30"></script>
+<script src="./official_quant_expansion.js?v=20260923-31"></script>
+<script src="./daily_expansion_20260918.js?v=20260923-31"></script>
+<script src="./advanced_expansion_20260922.js?v=20260923-31"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -5154,7 +5154,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
       for(const reg of regs){
         if(reg.scope.includes('/psycho101/')){migrated=true;await reg.unregister();}
       }
-      const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-3',{scope:'../',updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-4',{scope:'../',updateViaCache:'none'});
       await reg.update();
       if(migrated&&navigator.onLine&&!sessionStorage.getItem('id101-root-sw-migrated')){
         sessionStorage.setItem('id101-root-sw-migrated','1');
