@@ -852,7 +852,11 @@
         if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(localState.todayAnswered||0,remoteState.todayAnswered||0);else if(localDailyOk)out.todayAnswered=localState.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remoteState.todayAnswered||0;else out.todayAnswered=0;
         const lLessons=localDailyOk?(localState.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remoteState.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
         const lTopics=localDailyOk?(localState.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remoteState.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]=(a.answered||0)>=(b.answered||0)?a:b}
-        out.lastStudyDate=[localState.lastStudyDate,remoteState.lastStudyDate].filter(Boolean).sort().pop()||null;
+        const localLast=localState.lastStudyDate||null,remoteLast=remoteState.lastStudyDate||null;
+        out.lastStudyDate=[localLast,remoteLast].filter(Boolean).sort().pop()||null;
+        if(localLast&&remoteLast){if(localLast>remoteLast)out.streak=localState.streak||0;else if(remoteLast>localLast)out.streak=remoteState.streak||0;else out.streak=Math.max(localState.streak||0,remoteState.streak||0)}
+        else if(localLast)out.streak=localState.streak||0;
+        else if(remoteLast)out.streak=remoteState.streak||0;
         if(out.lastStudyDate&&medDaysBetween(out.lastStudyDate,today)>1)out.streak=0;
         out.lessonStats={...(remoteState.lessonStats||{})};
         for(const [id,s] of Object.entries(localState.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}
@@ -1529,7 +1533,7 @@
     function medSaveRecentQuestionIds(ids){
         try{localStorage.setItem(MED_RECENT_QUESTION_KEY,JSON.stringify(ids.slice(-160)))}catch(e){}
     }
-    function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+    function medShuffle(arr){ const out=[...arr];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=out[i];out[i]=out[j];out[j]=t;}return out; }
     const MED_RECURRING_SUBTOPICS=(()=>{
         const map=new Map();
         dbQuestions.forEach(q=>{
@@ -1955,6 +1959,8 @@
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMedDailyStateOnResume()});
     window.addEventListener('focus',refreshMedDailyStateOnResume);
     window.addEventListener('pageshow',refreshMedDailyStateOnResume);
+    window.addEventListener('online',()=>{hydrateMedCloud().then(()=>{updateHomeDashboard();refreshCloudUI()}).catch(()=>{})});
+    window.addEventListener('offline',()=>{setCloudStatus('מצב לא מקוון — ההתקדמות נשמרת במכשיר',false);updateHomeDashboard()});
 
     window.onload = () => { 
         ensureMedDailyState();
