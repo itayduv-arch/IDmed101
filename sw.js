@@ -1,17 +1,21 @@
-const CACHE_NAME='id101-flight-v4';
-const CORE=[
+const CACHE_NAME='id101-flight-v5';
+const SHELL=[
   './',
   './index.html',
   './manifest.webmanifest',
-  './psycho101/',
   './psycho101/index.html',
   './psycho101/manifest.webmanifest',
   './psycho101/version.json',
+  './idmed101/index.html'
+];
+const CORE=[
+  ...SHELL,
+  './psycho101/',
   './psycho101/official_quant_expansion.js',
   './psycho101/daily_expansion_20260918.js',
   './psycho101/advanced_expansion_20260922.js',
+  './psycho101/daily_expansion_20260930.js',
   './idmed101/',
-  './idmed101/index.html',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
   './idmed101/recon_2025b.js',
@@ -29,19 +33,47 @@ const CORE=[
 async function cacheOne(cache,url){
   try{
     const response=await fetch(url,{cache:'reload'});
-    if(response.ok){await cache.put(url,response.clone());return {url,ok:true};}
+    if(response.ok){
+      await cache.put(url,response.clone());
+      return {url,ok:true};
+    }
     return {url,ok:false,status:response.status};
-  }catch(e){return {url,ok:false,error:String(e)}}
+  }catch(e){
+    return {url,ok:false,error:String(e)};
+  }
 }
-async function prepareAll(){
+
+async function cacheSequential(urls){
   const cache=await caches.open(CACHE_NAME);
-  const results=await Promise.all(CORE.map(url=>cacheOne(cache,url)));
-  return {ok:results.filter(x=>x.ok).length,total:results.length,failed:results.filter(x=>!x.ok).map(x=>x.url)};
+  const results=[];
+  for(const url of urls)results.push(await cacheOne(cache,url));
+  return results;
+}
+
+async function verifyAll(){
+  const cache=await caches.open(CACHE_NAME);
+  const results=[];
+  for(const url of CORE){
+    const hit=await cache.match(url,{ignoreSearch:true});
+    results.push({url,ok:!!hit});
+  }
+  return {
+    ok:results.filter(x=>x.ok).length,
+    total:results.length,
+    failed:results.filter(x=>!x.ok).map(x=>x.url),
+    ready:results.every(x=>x.ok)
+  };
+}
+
+async function prepareAll(){
+  await cacheSequential(CORE);
+  return verifyAll();
 }
 
 self.addEventListener('install',event=>{
-  event.waitUntil(prepareAll().then(()=>self.skipWaiting()));
+  event.waitUntil(cacheSequential(SHELL).then(()=>self.skipWaiting()));
 });
+
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
@@ -49,15 +81,16 @@ self.addEventListener('activate',event=>{
       .then(()=>self.clients.claim())
   );
 });
+
 self.addEventListener('message',event=>{
   if(event.data?.type==='PREPARE_OFFLINE'){
-    event.waitUntil(
-      prepareAll().then(result=>{
-        if(event.ports?.[0])event.ports[0].postMessage(result);
-      })
-    );
+    event.waitUntil(prepareAll().then(result=>event.ports?.[0]?.postMessage(result)));
+  }
+  if(event.data?.type==='VERIFY_OFFLINE'){
+    event.waitUntil(verifyAll().then(result=>event.ports?.[0]?.postMessage(result)));
   }
 });
+
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
@@ -71,8 +104,7 @@ self.addEventListener('fetch',event=>{
         const response=await fetch(event.request,{cache:'no-store'});
         if(response.ok){
           const cache=await caches.open(CACHE_NAME);
-          const path=url.pathname;
-          const key=path.includes('/psycho101/')?'./psycho101/index.html':path.includes('/idmed101/')?'./idmed101/index.html':'./index.html';
+          const key=url.pathname.includes('/psycho101/')?'./psycho101/index.html':url.pathname.includes('/idmed101/')?'./idmed101/index.html':'./index.html';
           await cache.put(key,response.clone());
         }
         return response;
