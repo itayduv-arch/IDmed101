@@ -479,7 +479,7 @@
             <div class="med-lesson-node" data-tone="purple" onclick="startMedQuickLesson('מולקולרית')"><div class="med-lesson-icon">🧬</div><div class="med-lesson-main"><h3>ביולוגיה מולקולרית</h3><p>כרומטין, תרגום, שעתוק, שכפול ושיטות</p></div><div class="med-lesson-meta" id="lesson-meta-מולקולרית">8 שאלות</div></div>
             <div class="med-lesson-node" data-tone="blue" onclick="startMedQuickLesson('ביולוגיה של התא')"><div class="med-lesson-icon">🔬</div><div class="med-lesson-main"><h3>ביולוגיה של התא</h3><p>מיון חלבונים, ממברנות, וזיקולות ואיתות</p></div><div class="med-lesson-meta" id="lesson-meta-ביולוגיה של התא">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('פיזיולוגיה')"><div class="med-lesson-icon">🫀</div><div class="med-lesson-main"><h3>פיזיולוגיה</h3><p>ממברנה, סינפסה, פוטנציאל פעולה ושריר</p></div><div class="med-lesson-meta" id="lesson-meta-פיזיולוגיה">8 שאלות</div></div>
-            <div class="med-lesson-node" data-tone="purple" onclick="startMedQuickLesson('high-yield')"><div class="med-lesson-icon">🔥</div><div class="med-lesson-main"><h3>נושאים חוזרים 2025–2026</h3><p>High-yield לפי החזרתיות בשאלות השחזור המאומתות</p></div><div class="med-lesson-meta" id="lesson-meta-high-yield">8 שאלות</div></div>
+            <div class="med-lesson-node" data-tone="purple" onclick="startMedQuickLesson('high-yield')"><div class="med-lesson-icon">🔥</div><div class="med-lesson-main"><h3>נושאים חוזרים בשחזורים</h3><p>High-yield לפי מספר שנות השחזור שבהן הנושא הופיע, עם עדיפות לחזרה ב־2025–2026</p></div><div class="med-lesson-meta" id="lesson-meta-high-yield">8 שאלות</div></div>
             <div class="med-lesson-node" onclick="startMedQuickLesson('daily')"><div class="med-lesson-icon">⭐</div><div class="med-lesson-main"><h3>שיעור יומי מעורב</h3><p>תרגול מאוזן מכל ארבעת התחומים</p></div><div class="med-lesson-meta" id="lesson-meta-daily">10 שאלות</div></div>
         </div>
 
@@ -1530,24 +1530,44 @@
         try{localStorage.setItem(MED_RECENT_QUESTION_KEY,JSON.stringify(ids.slice(-160)))}catch(e){}
     }
     function medShuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+    const MED_RECURRING_SUBTOPICS=(()=>{
+        const map=new Map();
+        dbQuestions.forEach(q=>{
+            const sub=String(q.subtopic||'').trim();
+            if(!sub||sub==='שחזור'||sub.includes('· שחזור'))return;
+            const key=(q.subject||'')+'|'+sub;
+            if(!map.has(key))map.set(key,new Set());
+            map.get(key).add(Number(q.sourceYear));
+        });
+        return map;
+    })();
+    function medRecurrenceScore(q){
+        const sub=String(q.subtopic||'').trim();
+        if(!sub||sub==='שחזור'||sub.includes('· שחזור'))return 1;
+        return MED_RECURRING_SUBTOPICS.get((q.subject||'')+'|'+sub)?.size||1;
+    }
     function medPriorityWeight(q){
         const t=((q.subtopic||'')+' '+(q.text||'')).toLowerCase();
         const veryHigh=[
-            'גליקוליזה','קינטיקה אנזימטית','גליקוגן','מטבוליזם ליפידים','מבנה חלבונים',
-            'מבנה הכרומטין','תרגום','שעתוק ועיבוד rna','שיטות מחקר והדמיה',
-            'מיון חלבונים','מערכת ההפרשה','תנועת וזיקולות','מבנה הממברנה',
-            'פיזיולוגיית ממברנה','העברה סינפטית','פיזיולוגיית שריר שלד'
+            'גליקוליזה','קינטיקה אנזימטית','גליקוגן','מטבוליזם ליפידים','חלבונים וחומצות אמינו',
+            'כרומטין ואפיגנטיקה','תרגום','שעתוק ו-rna','שיטות מחקר',
+            'מיון חלבונים ואברונים','תנועה וזיקולרית','ממברנה וטרנספורט',
+            'פוטנציאל ממברנה','העברה סינפטית','פיזיולוגיית שריר'
         ];
         const high=[
-            'שכפול dna','מנגנוני תיקון dna','רקומבינציה','איתות תאי','שלד התא',
-            'מחזור התא','צומתי תא','פוטנציאל פעולה','מערכת העצבים','חומצות אמינו'
+            'שכפול dna','תיקון ורקומבינציה','איתות תאי','שלד התא',
+            'מחזור התא ומוות תאי','נוזלי גוף','חומצות אמינו ואוריאה','ביו-אנרגטיקה'
         ];
-        if(veryHigh.some(k=>t.includes(k)))return 4;
-        if(high.some(k=>t.includes(k)))return 3;
-        return 1.5;
+        let base=veryHigh.some(k=>t.includes(k))?4:high.some(k=>t.includes(k))?3:1.5;
+        const repeats=medRecurrenceScore(q);
+        if(repeats>=2)base*=1+(repeats-1)*0.55;
+        const years=MED_RECURRING_SUBTOPICS.get((q.subject||'')+'|'+String(q.subtopic||'').trim());
+        if(years?.has(2025)&&years?.has(2026))base*=1.35;
+        return base;
     }
     function medHighYieldPool(){
-        return dbQuestions.filter(q=>medPriorityWeight(q)>=4);
+        const recurring=dbQuestions.filter(q=>medRecurrenceScore(q)>=2);
+        return recurring.length>=8?recurring:dbQuestions.filter(q=>medPriorityWeight(q)>=3);
     }
     function medRandomizeQuestion(q){
         const pairs=(q.options||[]).map(function(t,i){return {text:t,correct:i===q.answer};});
@@ -1969,7 +1989,7 @@
                 for(const reg of regs){
                     if(reg.scope.includes('/idmed101/')){migrated=true;await reg.unregister();}
                 }
-                const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-4',{scope:'../',updateViaCache:'none'});
+                const reg=await navigator.serviceWorker.register('../sw.js?v=20260930-5',{scope:'../',updateViaCache:'none'});
                 await reg.update();
                 if(migrated&&navigator.onLine&&!sessionStorage.getItem('id101-root-sw-migrated')){
                     sessionStorage.setItem('id101-root-sw-migrated','1');
