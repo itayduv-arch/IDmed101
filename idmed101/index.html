@@ -1573,6 +1573,9 @@
         const recurring=dbQuestions.filter(q=>medRecurrenceScore(q)>=2);
         return recurring.length>=8?recurring:dbQuestions.filter(q=>medPriorityWeight(q)>=3);
     }
+    function medHighYieldUnseenCount(){
+        return medHighYieldPool().filter(q=>(getItemStat(q.id).seen||0)===0).length;
+    }
     function medRandomizeQuestion(q){
         const pairs=(q.options||[]).map(function(t,i){return {text:t,correct:i===q.answer};});
         for(let i=pairs.length-1;i>0;i--){
@@ -1871,7 +1874,8 @@
         if(rec){
             if(weak.length&&weak[0].accuracy<70) rec.textContent=`כדאי להתחיל בשאלות בנושא "${weak[0].topic}" — זה כרגע הנושא החלש ביותר שלך.`;
             else if(due>0) rec.textContent=`יש ${due} פריטים שהגיע זמן החזרה שלהם. עדיף לסגור אותם לפני חומר חדש.`;
-            else rec.textContent='אין חזרות דחופות. מומלץ לעשות סימולציה קצרה כדי לאתר נקודות חדשות לשיפור.';
+            else if(medHighYieldUnseenCount()>0) rec.textContent=`יש ${medHighYieldUnseenCount()} שאלות High Yield מנושאים שחזרו בין שנות שחזור ועדיין לא ראית. זה התרגול המומלץ עכשיו.`;
+            else rec.textContent='אין חזרות דחופות ואין High Yield חדש. מומלץ לעשות סימולציה קצרה כדי לאתר נקודות חדשות לשיפור.';
         }
     }
 
@@ -1884,6 +1888,8 @@
         }else if(dueCountMed()>0){
             showSection('questions');
             loadQuestion(true);
+        }else if(medHighYieldUnseenCount()>0){
+            startMedQuickLesson('high-yield');
         }else{
             showSection('simulation');
         }
