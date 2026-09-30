@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>101 Apps</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=20260923-4">
+  <link rel="manifest" href="./manifest.webmanifest?v=20260930-5">
   <meta name="theme-color" content="#5965e0">
   <style>
     *{box-sizing:border-box}
@@ -45,10 +45,10 @@
     <div class="nudge">גם 5 דקות נחשבות — העיקר להתחיל.</div>
     <div class="flight-box"><strong>✈️ מצב טיסה</strong><div>הכן מראש את שתי האפליקציות לעבודה ללא אינטרנט.</div><button class="flight-btn" id="flight-btn" onclick="prepareOffline()">הכן לטיסה</button><div class="flight-status" id="flight-status">בודק מוכנות...</div></div>
     <div class="grid">
-      <a href="./idmed101/?v=20260923-3" aria-label="פתיחת מבחן ידע 101">
+      <a href="./idmed101/?v=20260930-5" aria-label="פתיחת מבחן ידע 101">
         <section class="card"><div><div class="icon">🧬</div><h2>מבחן ידע 101</h2><p>כרטיסיות, שאלות, סימולציות ונקודות חיזוק למבחן הידע.</p><span class="micro">שיעורים קצרים · שחזורים מאומתים</span></div><div class="open">התחל תרגול ←</div></section>
       </a>
-      <a href="./psycho101/?v=20260923-31" aria-label="פתיחת פסיכו 101">
+      <a href="./psycho101/?v=20260930-32" aria-label="פתיחת פסיכו 101">
         <section class="card"><div><div class="icon">🧠</div><h2>IDpsycho101</h2><p>תרגול מילים, חשיבה כמותית וחשיבה מילולית לפסיכומטרי.</p><span class="micro">אפשר להתחיל באימון קצר</span></div><div class="open">התחל תרגול ←</div></section>
       </a>
     </div>
@@ -64,32 +64,52 @@
       for(const reg of regs){
         if(reg.scope.includes('/psycho101/')||reg.scope.includes('/idmed101/')){try{await reg.unregister()}catch(e){}}
       }
-      const reg=await navigator.serviceWorker.register('./sw.js?v=20260923-4',{scope:'./',updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=20260930-5',{scope:'./',updateViaCache:'none'});
       await reg.update();
       return navigator.serviceWorker.ready;
     }
+    async function askWorker(worker,type,timeoutMs=120000){
+      return new Promise((resolve,reject)=>{
+        const channel=new MessageChannel();
+        const timer=setTimeout(()=>reject(new Error('timeout')),timeoutMs);
+        channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data)};
+        worker.postMessage({type},[channel.port2]);
+      });
+    }
+    async function getReadyWorker(){
+      const reg=await installRootWorker();
+      const worker=reg.active||reg.waiting||reg.installing;
+      if(!worker)throw new Error('Service Worker לא פעיל');
+      return worker;
+    }
+    async function verifyOffline(){
+      const status=document.getElementById('flight-status');
+      try{
+        const worker=await getReadyWorker();
+        const result=await askWorker(worker,'VERIFY_OFFLINE',15000);
+        if(result.ready)status.textContent=`✅ מוכן לטיסה — ${result.ok}/${result.total} קבצים מאומתים במכשיר`;
+        else status.textContent=`נשמרו ${result.ok}/${result.total} קבצים — לחץ "הכן לטיסה" להשלמה`;
+        return result;
+      }catch(e){
+        status.textContent=navigator.onLine?'לחץ "הכן לטיסה" כדי להכין אופליין.':'האופליין עדיין לא אומת במכשיר הזה.';
+        return null;
+      }
+    }
     async function prepareOffline(){
       const status=document.getElementById('flight-status'),btn=document.getElementById('flight-btn');
-      btn.disabled=true;status.textContent='מוריד את שתי האפליקציות וכל מאגרי התרגול...';
+      btn.disabled=true;status.textContent='מוריד ומאמת את שתי האפליקציות וכל מאגרי התרגול...';
       try{
-        const reg=await installRootWorker();
-        const worker=reg.active||reg.waiting||reg.installing;
-        if(!worker)throw new Error('ה־Service Worker עדיין לא פעיל');
-        const result=await new Promise((resolve,reject)=>{
-          const channel=new MessageChannel();
-          const timer=setTimeout(()=>reject(new Error('timeout')),30000);
-          channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data)};
-          worker.postMessage({type:'PREPARE_OFFLINE'},[channel.port2]);
-        });
-        if(result.failed?.length)status.textContent=`הורדו ${result.ok}/${result.total} קבצים. לחץ שוב עם אינטרנט יציב.`;
-        else status.textContent=`✅ מוכן לטיסה — ${result.ok}/${result.total} קבצים נשמרו במכשיר`;
-      }catch(e){status.textContent='לא הצלחנו להשלים הורדה. ודא שיש אינטרנט ולחץ שוב.'}
-      finally{btn.disabled=false}
+        const worker=await getReadyWorker();
+        const result=await askWorker(worker,'PREPARE_OFFLINE',120000);
+        if(result.ready)status.textContent=`✅ מוכן לטיסה — ${result.ok}/${result.total} קבצים מאומתים במכשיר`;
+        else status.textContent=`נשמרו ${result.ok}/${result.total} קבצים. חסרים ${result.failed?.length||0}; לחץ שוב עם אינטרנט יציב.`;
+      }catch(e){
+        status.textContent='לא הצלחנו להשלים את ההורדה. ודא שיש אינטרנט ולחץ שוב.';
+      }finally{
+        btn.disabled=false;
+      }
     }
-    window.addEventListener('load',async()=>{
-      const status=document.getElementById('flight-status');
-      try{await installRootWorker();status.textContent=navigator.onLine?'לחץ "הכן לטיסה" כדי לוודא שכל הקבצים שמורים.':'✅ העמוד הראשי עובד כרגע במצב לא מקוון';}catch(e){status.textContent='לחץ "הכן לטיסה" כשיש חיבור לאינטרנט.'}
-    });
+    window.addEventListener('load',()=>verifyOffline());
   </script>
 </body>
 </html>
