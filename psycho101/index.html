@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#5965e0" />
   <meta name="description" content="IDpsycho101 — תרגול פסיכומטרי מותאם אישית" />
       <title>IDpsycho101 — תרגול פסיכומטרי</title>
-<link rel="manifest" href="./manifest.webmanifest?v=20260923-31">
+<link rel="manifest" href="./manifest.webmanifest?v=20260930-32">
 <meta name="theme-color" content="#5965e0">
   <style>
 
@@ -283,7 +283,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260923-31";
+const PSYCHO101_BUILD_VERSION="20260930-32";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4415,9 +4415,10 @@ const wordBank = [
 ];
 
 </script>
-<script src="./official_quant_expansion.js?v=20260923-31"></script>
-<script src="./daily_expansion_20260918.js?v=20260923-31"></script>
-<script src="./advanced_expansion_20260922.js?v=20260923-31"></script>
+<script src="./official_quant_expansion.js?v=20260930-32"></script>
+<script src="./daily_expansion_20260918.js?v=20260930-32"></script>
+<script src="./advanced_expansion_20260922.js?v=20260930-32"></script>
+<script src="./daily_expansion_20260930.js?v=20260930-32"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4707,6 +4708,8 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20260918?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20260918?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_ADVANCED_20260922?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_ADVANCED_20260922?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_DAILY_20260930?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_DAILY_20260930?.verbal||[]));
 
 
 
@@ -4904,11 +4907,21 @@ const QUESTION_PERFORMANCE_KEY='psycho101-question-performance-v1';
 function recentQuestionIds(){try{const a=JSON.parse(localStorage.getItem(RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}}
 function rememberQuestionId(id){if(!id)return;const a=recentQuestionIds().filter(x=>x!==id);a.push(id);try{localStorage.setItem(RECENT_QUESTION_KEY,JSON.stringify(a.slice(-120)))}catch{}}
 function questionPerformance(){try{const x=JSON.parse(localStorage.getItem(QUESTION_PERFORMANCE_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch{return {}}}
-function rememberQuestionResult(id,good){if(!id)return;const all=questionPerformance(),s=all[id]||{seen:0,wrong:0,lastAt:0};all[id]={seen:(s.seen||0)+1,wrong:(s.wrong||0)+(good?0:1),lastAt:Date.now()};try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}}
+function rememberQuestionResult(id,good){
+  if(!id)return;
+  const all=questionPerformance(),s=all[id]||{seen:0,wrong:0,correctStreak:0,lastAt:0};
+  const wrong=good?Math.max(0,(s.wrong||0)-1):(s.wrong||0)+1;
+  all[id]={seen:(s.seen||0)+1,wrong,correctStreak:good?(s.correctStreak||0)+1:0,lastAt:Date.now()};
+  try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}
+}
 function freshFirst(pool,count){
   const recent=new Set(recentQuestionIds()),perf=questionPerformance();
   const fresh=shuffle(pool.filter(q=>!recent.has(q.id)&&!(perf[q.id]?.seen)));
-  const weak=shuffle(pool.filter(q=>(perf[q.id]?.wrong||0)>0&&!recent.has(q.id))).sort((a,b)=>(perf[b.id]?.wrong||0)-(perf[a.id]?.wrong||0));
+  const weak=shuffle(pool.filter(q=>(perf[q.id]?.wrong||0)>0&&!recent.has(q.id))).sort((a,b)=>{
+    const aw=perf[a.id]?.wrong||0,bw=perf[b.id]?.wrong||0;
+    if(bw!==aw)return bw-aw;
+    return (perf[a.id]?.correctStreak||0)-(perf[b.id]?.correctStreak||0);
+  });
   const rest=shuffle(pool.filter(q=>!recent.has(q.id)&&!fresh.includes(q)&&!weak.includes(q)));
   const seen=shuffle(pool.filter(q=>recent.has(q.id)));
   const ordered=[...fresh,...weak,...rest,...seen],unique=[],ids=new Set();
@@ -5154,7 +5167,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
       for(const reg of regs){
         if(reg.scope.includes('/psycho101/')){migrated=true;await reg.unregister();}
       }
-      const reg=await navigator.serviceWorker.register('../sw.js?v=20260923-4',{scope:'../',updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('../sw.js?v=20260930-5',{scope:'../',updateViaCache:'none'});
       await reg.update();
       if(migrated&&navigator.onLine&&!sessionStorage.getItem('id101-root-sw-migrated')){
         sessionStorage.setItem('id101-root-sw-migrated','1');
