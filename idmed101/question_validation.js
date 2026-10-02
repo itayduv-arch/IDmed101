@@ -503,6 +503,7 @@
     const e=(corrections[q.id]&&corrections[q.id].explanation)||(x.bookReviewed===true&&x.explanation&&!String(x.explanation).includes('הניסוח נוקה')?x.explanation:explain(x));
     const ref=(corrections[q.id]&&corrections[q.id].officialRef)||officialRef(x);
     if(!e||!ref)return null;
+    const sourceReviewed=!!corrections[q.id]||x.bookReviewed===true;
     const recurring=recurringConcept(x);
     const memoryHtml=recurring?'<br><strong>🧠 איך לזכור:</strong> '+recurring.memory:'';
     return {
@@ -511,9 +512,9 @@
       explanation:'<strong>למה זו התשובה?</strong> '+e+memoryHtml,
       officialRef:ref,
       reference:'📜 '+x.sourceLabel+' · 📘 '+ref,
-      styleLabel:'מאומת מול חומר המבחן · נוסח מעובד משחזור',
-      verifiedAgainstOfficial:true,
-      validationVersion:'2026-10-02-quality-v2'
+      styleLabel:sourceReviewed?'שחזור מאומת · נבדק מול מקור לימוד':'תשובה מסומנת בשחזור · נוסח מעובד',
+      verifiedAgainstOfficial:sourceReviewed,
+      validationVersion:'2026-10-02-quality-v3'
     };
   };
 })();
