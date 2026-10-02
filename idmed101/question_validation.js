@@ -475,6 +475,21 @@
     return 'התשובה הנכונה היא „'+correct+'”. היא תואמת את העיקרון המתואר בפרק המקור המצורף; האפשרויות האחרות משנות רכיב מרכזי במנגנון, בכיוון התהליך או במיקום התאי ולכן אינן מתאימות.';
   }
 
+  const recurringConcepts=[
+    {label:'מצב יציב במיכאליס-מנטן',terms:['steady state','מצב יציב','מצב עמיד'],memory:'זכור: steady state = ריכוז ES נשאר בקירוב קבוע, כי קצב היצירה שלו משתווה לקצב הפירוק.'},
+    {label:'עיכוב אנזימטי',terms:['uncompetitive','non-competitive','מעכב תחרותי','מעכב משולב'],memory:'זכור קודם מי נקשר למי: competitive ל-E, uncompetitive ל-ES, ו-mixed יכול לשניהם.'},
+    {label:'אמפיפטיות',terms:['אמפיפט','amphipath'],memory:'Amphi = גם וגם: אזור הידרופילי ואזור הידרופובי באותה מולקולה.'},
+    {label:'Ribosome profiling',terms:['ribosome profiling'],memory:'Ribosome footprints אומרים איפה מתרחש תרגום בפועל - לא רק כמה RNA קיים.'},
+    {label:'תקופה רפרקטורית',terms:['רפרקטור','refractory'],memory:'Absolute = אי אפשר להפעיל שוב; Relative = אפשר, אבל צריך גירוי חזק יותר.'},
+    {label:'מיאלין ומהירות הולכה',terms:['מיאלין','myelin'],memory:'מיאלין מבודד את האקסון ומאפשר הולכה מהירה יותר בין מרווחי רנוויה.'},
+    {label:'כיווץ טטני',terms:['טטנ','tetan'],memory:'תדירות גבוהה משאירה Ca2+ מוגבר בין גירויים - הכוחות מסתכמים.'},
+    {label:'DNA מול RNA polymerase',terms:['דנא פולימראז','dna polymerase','רנא פולימראז','rna polymerase'],memory:'DNA polymerase צריך קצה 3′-OH קיים; RNA polymerase יכול להתחיל de novo.'}
+  ];
+  function recurringConcept(q){
+    const hay=((q.text||'')+' '+(q.options||[]).join(' ')).toLowerCase();
+    return recurringConcepts.find(x=>x.terms.some(t=>hay.includes(t)))||null;
+  }
+
   base.apply=function(q){
     let x=oldApply(q);
     if(!x||exclude.has(q.id))return null;
@@ -483,9 +498,12 @@
     const e=(corrections[q.id]&&corrections[q.id].explanation)||(x.bookReviewed===true&&x.explanation&&!String(x.explanation).includes('הניסוח נוקה')?x.explanation:explain(x));
     const ref=(corrections[q.id]&&corrections[q.id].officialRef)||officialRef(x);
     if(!e||!ref)return null;
+    const recurring=recurringConcept(x);
+    const memoryHtml=recurring?'<br><strong>🧠 איך לזכור:</strong> '+recurring.memory:'';
     return {
       ...x,
-      explanation:'<strong>למה זו התשובה?</strong> '+e,
+      subtopic:recurring?recurring.label:x.subtopic,
+      explanation:'<strong>למה זו התשובה?</strong> '+e+memoryHtml,
       officialRef:ref,
       reference:'📜 '+x.sourceLabel+' · 📘 '+ref,
       styleLabel:'מאומת מול חומר המבחן · נוסח מעובד משחזור',
