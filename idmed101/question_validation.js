@@ -15,7 +15,9 @@
     'rec_2021b_070',
     'rec_2021b_086',
     'rec_2025b_050',
-    'rec_2023b_110'
+    'rec_2023b_110',
+    'rec_2021b_020',
+    'rec_2021b_107'
   ]);
 
   const corrections={
@@ -508,7 +510,7 @@
       reference:'📜 '+x.sourceLabel+' · 📘 '+ref,
       styleLabel:'מאומת מול חומר המבחן · נוסח מעובד משחזור',
       verifiedAgainstOfficial:true,
-      validationVersion:'2026-09-09-v1'
+      validationVersion:'2026-10-02-quality-v2'
     };
   };
 })();
