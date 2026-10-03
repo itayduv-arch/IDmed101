@@ -1,4 +1,4 @@
-const CACHE_NAME='idmed101-flight-v4';
+const CACHE_NAME='idmed101-flight-v5';
 const CORE=[
   './',
   './index.html',
