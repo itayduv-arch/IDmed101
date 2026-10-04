@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v9';
+const CACHE_NAME='id101-flight-v10';
 const SHELL=[
   './',
   './index.html',
@@ -17,6 +17,7 @@ const CORE=[
   './psycho101/daily_expansion_20260930.js',
   './psycho101/daily_expansion_20260930b.js',
   './psycho101/daily_expansion_20261001.js',\n  './psycho101/daily_expansion_20261003.js',
+  './psycho101/daily_expansion_20261004.js',
   './idmed101/',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
