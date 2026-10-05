@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-04",
+  "updated": "2026-10-05",
   "policy": "reconstruction-only; never infer missing distractors or answer keys",
   "reviewed": [
     {
@@ -12,14 +12,30 @@
       "date": "2026-10-04",
       "source": "שחזור ידע מועד א 1.5.2026.pdf",
       "scope": "focused biochemistry/molecular audit",
-      "comparedAgainst": ["recon_2026.js", "recon_2026a.js"],
+      "comparedAgainst": [
+        "recon_2026.js",
+        "recon_2026a.js"
+      ],
       "result": "Key reviewed items already represented in recon_2026a.js; no duplicate questions added. Parsing gaps in recon_2026.js retained as uncertain rather than reconstructed speculatively.",
-      "recurringConceptsObserved": ["Michaelis-Menten steady state", "beta oxidation / peroxisome", "DNA vs RNA polymerase"]
+      "recurringConceptsObserved": [
+        "Michaelis-Menten steady state",
+        "beta oxidation / peroxisome",
+        "DNA vs RNA polymerase"
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "source": "שחזור ידע מועד א 1.5.2026.pdf",
+      "scope": "focused questions 6-7 and molecular questions 31-40",
+      "comparedAgainst": [
+        "recon_2026a.js"
+      ],
+      "result": "Recovered the missing fourth option for question 6 directly from the reconstruction and marked the item complete but unverified; removed leaked question-6 text from question 7. Questions 31-40 were confirmed present; no answer keys were inferred."
     }
   ],
   "next": [
-    "Continue the 2026 reconstruction in a bounded unreviewed section.",
-    "Compare additional sourceKey/session variants before increasing recurring-concept counts.",
-    "Keep answer=null for complete questions without a verified key until an allowed source verifies them."
+    "Continue with an unreviewed bounded section after question 40.",
+    "Cross-check repeated concepts across independent sourceKey/session files before boosting counts.",
+    "Keep answer=null where the reconstruction has no verified key."
   ]
 }
