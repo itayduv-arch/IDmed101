@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-05",
+  "updated": "2026-10-06",
   "policy": "reconstruction-only; never infer missing distractors or answer keys",
   "reviewed": [
     {
@@ -31,11 +31,20 @@
         "recon_2026a.js"
       ],
       "result": "Recovered the missing fourth option for question 6 directly from the reconstruction and marked the item complete but unverified; removed leaked question-6 text from question 7. Questions 31-40 were confirmed present; no answer keys were inferred."
+    },
+    {
+      "date": "2026-10-06",
+      "source": "שחזור ידע מועד א 1.5.2026.pdf",
+      "scope": "focused molecular questions 41-52",
+      "comparedAgainst": [
+        "recon_2026a.js"
+      ],
+      "result": "Questions 41-52 audited against the Drive reconstruction. Restored source-backed missing options in Q44 and Q51 and cleaned parsing artifacts in Q45 and Q52. No answer keys were inferred."
     }
   ],
   "next": [
-    "Continue with an unreviewed bounded section after question 40.",
-    "Cross-check repeated concepts across independent sourceKey/session files before boosting counts.",
+    "Continue with an unreviewed bounded section after question 52.",
+    "Compare repeated concepts across independent sourceKey/session files before increasing recurrence counts.",
     "Keep answer=null where the reconstruction has no verified key."
   ]
 }
