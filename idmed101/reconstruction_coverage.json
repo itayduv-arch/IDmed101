@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-06",
+  "updated": "2026-10-07",
   "policy": "reconstruction-only; never infer missing distractors or answer keys",
   "reviewed": [
     {
@@ -40,10 +40,19 @@
         "recon_2026a.js"
       ],
       "result": "Questions 41-52 audited against the Drive reconstruction. Restored source-backed missing options in Q44 and Q51 and cleaned parsing artifacts in Q45 and Q52. No answer keys were inferred."
+    },
+    {
+      "date": "2026-10-07",
+      "source": "שחזור ידע מועד א 1.5.2026.pdf",
+      "scope": "focused molecular questions 53-60",
+      "comparedAgainst": [
+        "recon_2026a.js"
+      ],
+      "result": "Restored Q58 fourth option from the reconstruction, marked Q58 complete but unverified, and removed leaked Q58 text from Q59 while cleaning the Okazaki-fragment wording. No answer keys were inferred."
     }
   ],
   "next": [
-    "Continue with an unreviewed bounded section after question 52.",
+    "Continue with an unreviewed bounded section after question 60.",
     "Compare repeated concepts across independent sourceKey/session files before increasing recurrence counts.",
     "Keep answer=null where the reconstruction has no verified key."
   ]
