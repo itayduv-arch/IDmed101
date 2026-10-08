@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-07",
+  "updated": "2026-10-08",
   "policy": "reconstruction-only; never infer missing distractors or answer keys",
   "reviewed": [
     {
@@ -49,11 +49,30 @@
         "recon_2026a.js"
       ],
       "result": "Restored Q58 fourth option from the reconstruction, marked Q58 complete but unverified, and removed leaked Q58 text from Q59 while cleaning the Okazaki-fragment wording. No answer keys were inferred."
+    },
+    {
+      "date": "2026-10-08",
+      "source": "שחזור ידע מועד א 1.5.2026.pdf (Google Drive)",
+      "scope": "focused cell-biology questions 61-70",
+      "comparedAgainst": [
+        "recon_2026a.js",
+        "recon_2026b.js",
+        "recon_2025b.js",
+        "recon_2023.js",
+        "recon_2021_2019.js"
+      ],
+      "result": "Source-checked Q61-70. Restored Q64's four options from text misplaced into its stem, restored Q65's fourth option from Q66's leaked text, and cleaned Q61/Q62/Q66/Q67 wording. Q64 and Q65 changed from partial to complete but remain answer=null and verified=false. No new invented medical questions or answer keys.",
+      "recurringConceptsObserved": [
+        "PEX5-mediated peroxisomal matrix import: 2026a Q64 and 2025b Q82 (two independent sourceKeys; unverified, no scoring boost)",
+        "SRP-mediated targeting: related but not identical questions in 2026a Q61, 2026b Q61, 2023b Q72; not counted as the same recurring question"
+      ],
+      "mnemonicAdded": "One explanation + scientifically grounded SRP memory cue for verified 2023b Q72",
+      "notes": "Q69 source itself has an apparent mitosis/meiosis inconsistency; preserved pending corroboration. Q63 has an imprecise option ('או משהו כזה'); retained as uncertain."
     }
   ],
   "next": [
-    "Continue with an unreviewed bounded section after question 60.",
-    "Compare repeated concepts across independent sourceKey/session files before increasing recurrence counts.",
-    "Keep answer=null where the reconstruction has no verified key."
+    "Continue a bounded source-backed review after question 70 of the 2026a reconstruction, or switch to a not-yet-reviewed 2026 institution/session.",
+    "Cross-check candidate PEX5 recurrence and SRP stage specificity before any high-yield boost; do not score unverified questions.",
+    "Audit wider 2019-2026 folder and remaining institutions in a later run."
   ]
 }

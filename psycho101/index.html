@@ -4427,6 +4427,7 @@ const wordBank = [
 <script src="./daily_expansion_20261004.js?v=20261004-36"></script>
 <script src="./daily_expansion_20261005.js?v=20261005-37"></script>
 <script src="./daily_expansion_20261007.js?v=20261007-39"></script>
+<script src="./daily_expansion_20261008.js?v=20261008-40"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4730,6 +4731,8 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20261005?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261005?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20261007?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261007?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_DAILY_20261008?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_DAILY_20261008?.verbal||[]));
 
 
 
@@ -4755,7 +4758,7 @@ function formatMathHtml(input){
 
 function localDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 function nowDate(){return localDateKey()}
-function dayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/DAY)}
+function dayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/DAY)}
 function daysBetween(a,b){if(!a||!b)return null;return dayNumber(b)-dayNumber(a)}
 function ensureDailyState(){const today=nowDate();let changed=false;if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<5){state.todayAnswered=0;state.dailyLessonStats={};state.dailyTopicStats={};state.dailyDate=today;state.dailyResetFixVersion=5;changed=true}if(state.lastStudyDate){const gap=daysBetween(state.lastStudyDate,today);if(gap>1&&state.streak!==0){state.streak=0;changed=true}}if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return changed}
 function updateStreak(){ensureDailyState()}

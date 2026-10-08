@@ -1056,7 +1056,7 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
 
     function medLocalDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
     function medToday(){ return medLocalDateKey(); }
-    function medDayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/MED_DAY)}
+    function medDayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/MED_DAY)}
     function medDaysBetween(a,b){if(!a||!b)return null;return medDayNumber(b)-medDayNumber(a)}
     function ensureMedDailyState(){
         const today=medToday();let changed=false;

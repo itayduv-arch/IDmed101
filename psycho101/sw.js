@@ -1,5 +1,5 @@
-const CACHE_NAME='idpsycho101-v37';
-const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js','./advanced_expansion_20260922.js','./daily_expansion_20260930.js','./daily_expansion_20260930b.js','./daily_expansion_20261001.js','./daily_expansion_20261003.js','./daily_expansion_20261004.js','./daily_expansion_20261005.js','./daily_expansion_20261007.js'];
+const CACHE_NAME='idpsycho101-v38';
+const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js','./advanced_expansion_20260922.js','./daily_expansion_20260930.js','./daily_expansion_20260930b.js','./daily_expansion_20261001.js','./daily_expansion_20261003.js','./daily_expansion_20261004.js','./daily_expansion_20261005.js','./daily_expansion_20261007.js','./daily_expansion_20261008.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
@@ -8,7 +8,7 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k))))
+      .then(keys=>Promise.all(keys.filter(k=>k.startsWith('idpsycho101-v')&&k!==CACHE_NAME).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });

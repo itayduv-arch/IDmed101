@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v13';
+const CACHE_NAME='id101-flight-v14';
 const SHELL=[
   './',
   './index.html',
@@ -21,6 +21,7 @@ const CORE=[
   './psycho101/daily_expansion_20261004.js',
   './psycho101/daily_expansion_20261005.js',
   './psycho101/daily_expansion_20261007.js',
+  './psycho101/daily_expansion_20261008.js',
   './idmed101/',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
@@ -83,7 +84,7 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME&&(k.startsWith('id101-flight-')||k.startsWith('idpsycho101-')||k.startsWith('idmed101-'))).map(k=>caches.delete(k))))
+      .then(keys=>Promise.all(keys.filter(k=>k.startsWith('id101-flight-')&&k!==CACHE_NAME).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });
