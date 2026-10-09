@@ -1,0 +1,1 @@
+2026-10-09 audit of reconstruction 1.5.2026 Q71-80: Q72 is missing options דקורין and אלסטין; Q79 is missing option הידרוליזה/יוביקווינציה. These words have leaked into the neighboring Q73 and Q80 stems. Keep answer=null and verified=false. Q74 contains a source ambiguity about calnexin and glycolipids. Next: Q81-90.
