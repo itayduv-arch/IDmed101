@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v13';
+const CACHE_NAME='id101-flight-v14';
 const SHELL=[
   './',
   './index.html',
