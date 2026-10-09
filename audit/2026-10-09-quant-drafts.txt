@@ -1,0 +1,6 @@
+2026-10-09 original quantitative drafts (NOT LIVE; awaiting code integration)
+1. 27% of A = 18% of B; A+B=750. A=300. Shortcut: A:B=2:3. Trap: answer B=450.
+2. x+y=9, xy=14. x^3+y^3=351. Identity: (x+y)^3-3xy(x+y). Trap: 729.
+3. Five distinct books, 2 history. Arrangements with histories non-adjacent = 5!-2*4!=72. Trap: 48.
+4. Tank 3/5 full; remove 1/4 of water; add 18 L to reach 3/4 full. Capacity 60 L. Trap: subtract 1/4 of tank.
+5. Right triangle legs 9 and 12. Area outside incircle = 54-9π. Radius 3. Trap: 54-3π.
