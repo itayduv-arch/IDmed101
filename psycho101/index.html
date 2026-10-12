@@ -308,6 +308,7 @@ window.PSYCHO101_CONFIG = {
 };
 
 </script>
+<script src="../push-reminders.js?v=20261012-1"></script>
 <script>
 const WORD_BANK_META = {
   "name": "מאגר IDpsycho101",
@@ -5212,12 +5213,51 @@ async function signUpWithPassword(){
     else if(msg)msg.textContent='החשבון נוצר. אשר את המייל ואז התחבר.';
   }catch(e){if(msg)msg.textContent='לא הצלחנו ליצור חשבון: '+(e?.message||'שגיאה לא ידועה')}
 }
+async function enablePsychoPushReminder(){
+  const msg=document.getElementById('psy-push-msg');
+  if(msg)msg.textContent='מפעיל התראות...';
+  try{
+    if(!state.user)throw new Error('צריך להתחבר לחשבון קודם.');
+    const sb=await getSupabase();
+    const time=document.getElementById('psy-push-time')?.value||window.ID101Push?.localTime('psycho101')||'19:00';
+    const result=await window.ID101Push.enable({app:'psycho101',userId:state.user.id,supabase:sb,reminderTime:time});
+    if(msg)msg.textContent='✓ תזכורת פעילה בכל יום ב-'+result.time+'. היא תישלח רק אם היעד היומי עדיין לא הושלם.';
+  }catch(e){
+    if(msg)msg.textContent='לא ניתן להפעיל תזכורות: '+(e?.message||'שגיאה לא ידועה');
+  }
+}
+async function disablePsychoPushReminder(){
+  const msg=document.getElementById('psy-push-msg');
+  try{
+    if(!state.user)throw new Error('צריך להתחבר לחשבון קודם.');
+    const sb=await getSupabase();
+    await window.ID101Push.disable({app:'psycho101',userId:state.user.id,supabase:sb});
+    if(msg)msg.textContent='התזכורת של Psycho101 כבויה.';
+  }catch(e){if(msg)msg.textContent='לא ניתן לכבות תזכורת: '+(e?.message||'שגיאה לא ידועה')}
+}
+async function refreshPsychoPushStatus(){
+  const msg=document.getElementById('psy-push-msg'),input=document.getElementById('psy-push-time');
+  if(!msg||!state.user||!window.ID101Push)return;
+  if(input)input.value=window.ID101Push.localTime('psycho101');
+  try{
+    const sb=await getSupabase();
+    const s=await window.ID101Push.refresh({app:'psycho101',userId:state.user.id,supabase:sb});
+    if(input)input.value=s.time||'19:00';
+    msg.textContent=s.enabled?'✓ תזכורת פעילה בכל יום ב-'+s.time+'.':'התזכורת כרגע כבויה.';
+  }catch(e){msg.textContent='לא הצלחנו לבדוק את מצב התזכורת כרגע.'}
+}
 function accountView(){const configured=cloudConfigured(),logged=!!state.user;return`<div class="app-shell">${topbar()}<div class="section-title">חשבון וסנכרון</div><div class="card">${configured?(logged?`
 <div class="success-note">מחובר כ־${escapeHtml(state.user.email||'משתמש')}.</div>
 <div class="section-title">הכינוי שלך ב-Leaderboard</div>
 <div class="form-group"><label>כינוי ציבורי</label><input id="display-name" maxlength="24" value="${escapeHtml(state.displayName||'')}" placeholder="למשל Itay"></div>
 <button class="secondary-btn" onclick="saveDisplayName()">שמור כינוי</button><div id="display-name-msg" class="small" style="margin-top:8px"></div>
 <div class="actions"><button class="primary-btn" onclick="syncNow()">סנכרן עכשיו</button><button class="secondary-btn" onclick="cloudLogout()">התנתק</button></div>
+<div class="section-title">תזכורת יומית</div>
+<div class="notice" style="margin-bottom:10px">התזכורת תישלח רק אם עדיין לא השלמת את היעד היומי.</div>
+<div class="form-group"><label>שעת תזכורת</label><input id="psy-push-time" type="time" value="${window.ID101Push?.localTime('psycho101')||'19:00'}"></div>
+<div class="actions"><button class="primary-btn" onclick="enablePsychoPushReminder()">🔔 הפעל תזכורת</button><button class="secondary-btn" onclick="disablePsychoPushReminder()">כבה</button></div>
+<div id="psy-push-msg" class="small" style="margin-top:8px">בודק מצב תזכורת...</div>
+<div class="small" style="margin-top:6px">באייפון יש להוסיף את האפליקציה למסך הבית ולפתוח אותה משם לפני הפעלת ההתראות.</div>
 `:`
 <div class="section-title" style="margin-top:0">יש לי חשבון</div>
 <div class="form-group"><label>אימייל</label><input id="login-email" type="email" autocomplete="email" placeholder="name@example.com"></div>
@@ -5287,7 +5327,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account')app.innerHTML=accountView();else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
