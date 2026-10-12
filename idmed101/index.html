@@ -7,6 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>מבחן ידע 101</title>
+    <link rel="manifest" href="./manifest.webmanifest?v=20261012-1">
+    <meta name="theme-color" content="#3498db">
     <style>
         :root {
             --bg-color: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
@@ -728,6 +730,16 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
                 <p id="med-display-name-msg" style="font-size:14px;"></p>
                 <button class="btn btn-sync" onclick="syncNow()">סנכרן עכשיו</button>
                 <button class="btn btn-primary" onclick="cloudLogout()">התנתק</button>
+                <hr style="border:none;border-top:1px solid rgba(127,140,141,.35);margin:18px 0;">
+                <h3>תזכורת יומית</h3>
+                <p style="font-size:14px;">התזכורת תישלח רק אם עדיין לא השלמת את היעד היומי.</p>
+                <div class="sync-grid">
+                    <input id="med-push-time" type="time" value="19:00" aria-label="שעת תזכורת יומית">
+                    <button class="btn btn-sync" onclick="enableMedPushReminder()">🔔 הפעל תזכורת</button>
+                </div>
+                <button class="btn btn-primary" onclick="disableMedPushReminder()">כבה תזכורת</button>
+                <p id="med-push-msg" style="font-size:14px;">בודק מצב תזכורת...</p>
+                <p style="font-size:13px;">באייפון יש להוסיף את האפליקציה למסך הבית ולפתוח אותה משם לפני הפעלת ההתראות.</p>
             </div>
             <p id="cloud-msg" style="font-size:14px;"></p>
             <hr style="border:none;border-top:1px solid rgba(127,140,141,.35);margin:18px 0;">
@@ -752,6 +764,7 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
 <script src="./recon_2021_2019.js?v=20260909-2"></script>
 <script src="./question_polish.js?v=20260909-1"></script>
 <script src="./question_validation.js?v=20261002-3"></script>
+<script src="../push-reminders.js?v=20261012-1"></script>
 <script>
     const MED101_SUPABASE_URL = "https://pqxlhfykmnlkmbrjuwhr.supabase.co";
     const MED101_SUPABASE_KEY = "sb_publishable_WkfZvZJgGSLu8AHuAb7E9w_wqWAJ7Y6";
@@ -787,6 +800,42 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         medSupabase=sdk.createClient(MED101_SUPABASE_URL, MED101_SUPABASE_KEY);
         return medSupabase;
     }
+    async function enableMedPushReminder(){
+        const msg=document.getElementById('med-push-msg');
+        if(msg)msg.textContent='מפעיל התראות...';
+        try{
+            if(!medCloudUser)throw new Error('צריך להתחבר לחשבון קודם.');
+            const sb=await getMedSupabase();
+            if(!sb)throw new Error('אין כרגע חיבור לענן.');
+            const time=document.getElementById('med-push-time')?.value||window.ID101Push?.localTime('idmed101')||'19:00';
+            const result=await window.ID101Push.enable({app:'idmed101',userId:medCloudUser.id,supabase:sb,reminderTime:time});
+            if(msg)msg.textContent='✓ תזכורת פעילה בכל יום ב-'+result.time+'. היא תישלח רק אם היעד היומי עדיין לא הושלם.';
+        }catch(e){
+            if(msg)msg.textContent='לא ניתן להפעיל תזכורות: '+(e?.message||'שגיאה לא ידועה');
+        }
+    }
+    async function disableMedPushReminder(){
+        const msg=document.getElementById('med-push-msg');
+        try{
+            if(!medCloudUser)throw new Error('צריך להתחבר לחשבון קודם.');
+            const sb=await getMedSupabase();
+            if(!sb)throw new Error('אין כרגע חיבור לענן.');
+            await window.ID101Push.disable({app:'idmed101',userId:medCloudUser.id,supabase:sb});
+            if(msg)msg.textContent='התזכורת של IDmed101 כבויה.';
+        }catch(e){if(msg)msg.textContent='לא ניתן לכבות תזכורת: '+(e?.message||'שגיאה לא ידועה')}
+    }
+    async function refreshMedPushStatus(){
+        const msg=document.getElementById('med-push-msg'),input=document.getElementById('med-push-time');
+        if(!msg||!medCloudUser||!window.ID101Push)return;
+        if(input)input.value=window.ID101Push.localTime('idmed101');
+        try{
+            const sb=await getMedSupabase();
+            if(!sb)return;
+            const s=await window.ID101Push.refresh({app:'idmed101',userId:medCloudUser.id,supabase:sb});
+            if(input)input.value=s.time||'19:00';
+            msg.textContent=s.enabled?'✓ תזכורת פעילה בכל יום ב-'+s.time+'.':'התזכורת כרגע כבויה.';
+        }catch(e){msg.textContent='לא הצלחנו לבדוק את מצב התזכורת כרגע.'}
+    }
     function setCloudStatus(text, ok=false){
         const el=document.getElementById('cloud-status');
         if(!el) return;
@@ -803,6 +852,7 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         actions.classList.toggle('hidden',!on);
         setCloudStatus(on ? 'מסונכרן כ־' + (medCloudUser.email||'משתמש') : 'לא מחובר', on);
         const nameInput=document.getElementById('med-display-name');if(nameInput)nameInput.value=appData.displayName||'';
+        if(on)setTimeout(refreshMedPushStatus,0);
     }
     function mergeMedStates(localState, remoteState){
         if(!remoteState || typeof remoteState!=='object') return localState;
