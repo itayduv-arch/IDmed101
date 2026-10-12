@@ -1,8 +1,10 @@
-const CACHE_NAME='id101-flight-v14';
+const CACHE_NAME='id101-flight-v15';
 const SHELL=[
   './',
   './index.html',
   './manifest.webmanifest',
+  './push-reminders.js',
+  './idmed101/manifest.webmanifest',
   './psycho101/index.html',
   './psycho101/manifest.webmanifest',
   './psycho101/version.json',
@@ -136,5 +138,40 @@ self.addEventListener('fetch',event=>{
       const cache=await caches.open(CACHE_NAME);
       return cache.match(event.request,{ignoreSearch:true});
     }
+  })());
+});
+
+
+self.addEventListener('push',event=>{
+  let data={};
+  try{data=event.data?event.data.json():{}}catch(e){
+    try{data={body:event.data?.text?.()||''}}catch{}
+  }
+  const title=data.title||'ID101';
+  const options={
+    body:data.body||'הגיע הזמן לתרגול היומי',
+    tag:'id101-daily-'+(data.app||'app'),
+    renotify:false,
+    data:{url:data.url||'./'}
+  };
+  event.waitUntil(self.registration.showNotification(title,options));
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=event.notification.data?.url||'./';
+  event.waitUntil((async()=>{
+    const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of windows){
+      try{
+        const u=new URL(client.url);
+        const t=new URL(target,self.location.origin);
+        if(u.origin===t.origin && ((t.pathname.includes('/psycho101/')&&u.pathname.includes('/psycho101/'))||(t.pathname.includes('/idmed101/')&&u.pathname.includes('/idmed101/')))){
+          if('navigate' in client)await client.navigate(t.href);
+          return client.focus();
+        }
+      }catch{}
+    }
+    return self.clients.openWindow(target);
   })());
 });
