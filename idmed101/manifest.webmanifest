@@ -1,0 +1,12 @@
+{
+  "name": "מבחן ידע 101",
+  "short_name": "IDmed101",
+  "description": "תרגול למבחן הידע על בסיס שחזורים מאומתים",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#3498db",
+  "lang": "he",
+  "dir": "rtl"
+}
