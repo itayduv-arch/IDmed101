@@ -13,6 +13,19 @@
   ]);
 
   const manual={
+    rec_2025b_002:{
+      explanation:'HSP70 נקשר לאזורים הידרופוביים שנחשפו בחלבון שלא התקפל כראוי, מפחית הצטברות ומסייע לקיפול בעזרת מחזורי ATP. הוא אינו חלבון מבני של הממברנה. 🧠 איך לזכור: Heat Shock Protein = עזרה לחלבונים במצבי עקה.',
+      reconstructionOnly:true
+    },
+    rec_2025b_015:{
+      explanation:'במסלול תגובה רב־שלבי, השלב בעל מחסום השפעול הגבוה ביותר בתנאים הנתונים נוטה להיות האיטי והמגביל את הקצב. אנרגיית השפעול אינה זהה לשינוי האנרגיה החופשית של התגובה. 🧠 איך לזכור: מחסום גבוה = מעבר איטי.',
+      reconstructionOnly:true
+    },
+    rec_2025b_046:{
+      explanation:'DNA polymerase דורש קצה 3′-OH קיים של פריימר כדי להאריך שרשרת; RNA polymerase יכול להתחיל שעתוק ללא פריימר. שניהם מסנתזים בכיוון 5′→3′. 🧠 איך לזכור: DNA צריך התחלה מוכנה; RNA יכול להתחיל לבד.',
+      reconstructionOnly:true
+    },
+
     rec_2023a_004:{
       explanation:'בהנחת steady state של מיכאליס-מנטן, קצב יצירת קומפלקס ES שווה בקירוב לקצב פירוקו ולכן ריכוז ES נשאר בקירוב קבוע בזמן מדידת המהירות ההתחלתית. 🧠 איך לזכור: steady state = ES stays steady. אל תבלבל עם equilibrium - הסובסטרט עדיין הופך לתוצר.',
       reconstructionOnly:true
@@ -335,9 +348,9 @@
         rawText:q.text,
         rawOptions:q.options,
         polished:true,
-        styleLabel:'נוסח מעובד על בסיס שחזור · נבדק מול ספר המבחן',
-        provenance:'reconstruction+book-review',
-        reference:'📜 '+q.sourceLabel+' · 📘 '+o.officialRef
+        styleLabel:o.bookReviewed?'נוסח שחזור · נבדק מול ספר לימוד':'נוסח שחזור מאומת · הסבר לימודי',
+        provenance:o.bookReviewed?'reconstruction+book-review':'reconstruction+explanation',
+        reference:'📜 '+q.sourceLabel+(o.officialRef?' · 📘 '+o.officialRef:'')
       };
     }
     if(unsafe(q))return null;

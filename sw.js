@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v16';
+const CACHE_NAME='id101-flight-v17';
 const SHELL=[
   './',
   './index.html',
@@ -23,6 +23,9 @@ const CORE=[
   './psycho101/daily_expansion_20261004.js',
   './psycho101/daily_expansion_20261005.js',
   './psycho101/daily_expansion_20261007.js',
+  './psycho101/daily_expansion_20261010_quality.js',
+  './psycho101/daily_expansion_20261011.js',
+  './psycho101/daily_expansion_20261013.js',
   './idmed101/',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
@@ -79,7 +82,7 @@ async function prepareAll(){
 }
 
 self.addEventListener('install',event=>{
-  event.waitUntil(cacheSequential(SHELL).then(()=>self.skipWaiting()));
+  event.waitUntil(cacheSequential(CORE).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate',event=>{

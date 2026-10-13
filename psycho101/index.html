@@ -285,7 +285,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260930-33";
+const PSYCHO101_BUILD_VERSION="20261013-42";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4428,6 +4428,9 @@ const wordBank = [
 <script src="./daily_expansion_20261004.js?v=20261004-36"></script>
 <script src="./daily_expansion_20261005.js?v=20261005-37"></script>
 <script src="./daily_expansion_20261007.js?v=20261007-39"></script>
+<script src="./daily_expansion_20261010_quality.js?v=20261013-42"></script>
+<script src="./daily_expansion_20261011.js?v=20261013-42"></script>
+<script src="./daily_expansion_20261013.js?v=20261013-42"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4731,6 +4734,12 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20261005?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261005?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20261007?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261007?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_DAILY_20261010_QUALITY?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_DAILY_20261010_QUALITY?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_DAILY_20261011?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_DAILY_20261011?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_DAILY_20261013?.quantitative||[]));
+questions.verbal.push(...(window.PSYCHO101_DAILY_20261013?.verbal||[]));
 
 
 
@@ -4805,6 +4814,7 @@ function home(){
       <div class="hero-orb ${state.streak>1?'streak-pulse':''}"><div><strong>🔥 ${state.streak}</strong><span>רצף ימים</span></div></div>
     </section>
 
+    <div class="notice" role="note" style="margin:12px 0;font-size:.9rem;line-height:1.6"><strong>עדכון רשמי מדצמבר 2026</strong> · הפסיכומטרי כולל מילולי, כמותי ומטלת כתיבה; אנגלית נבחנת בנפרד באמירנט. הסימולציה כאן היא מיני־תרגול ואינה מדמה בחינה מלאה. <a href="https://www.nite.org.il/news/notice-081026/" target="_blank" rel="noopener noreferrer">מידע רשמי ממאל״ו</a>.</div>
     <div class="friendly-stats">
       <div class="friendly-stat"><strong>${state.xp}</strong><span>XP</span></div>
       <div class="friendly-stat"><strong>${percent(state.correct,state.answered)}%</strong><span>דיוק</span></div>
@@ -4968,7 +4978,7 @@ function startQuickLesson(id){
   else if(id==='percent') list=buildPercentQuick(10);
   else if(id==='fractions') list=buildFractionQuick(8);
   else if(id==='words') list=buildWordQuestions(8);
-  else if(id==='analogies') list=shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,8);
+  else if(id==='analogies') list=freshFirst(questions.verbal.filter(q=>q.topic==='אנלוגיות'),8);
   else if(id==='logic') list=shuffle(questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic))).slice(0,8);
   else{
     list=shuffle([
@@ -4976,7 +4986,7 @@ function startQuickLesson(id){
       ...buildPercentQuick(5),
       ...buildFractionQuick(1),
       ...buildWordQuestions(2),
-      ...shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,1)
+      ...freshFirst(questions.verbal.filter(q=>q.topic==='אנלוגיות'),1)
     ]).slice(0,10);
   }
   list=freshFirst(list,list.length);

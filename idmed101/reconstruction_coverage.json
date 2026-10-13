@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-07",
+  "updated": "2026-10-13",
   "policy": "reconstruction-only; never infer missing distractors or answer keys",
   "reviewed": [
     {
@@ -49,11 +49,25 @@
         "recon_2026a.js"
       ],
       "result": "Restored Q58 fourth option from the reconstruction, marked Q58 complete but unverified, and removed leaked Q58 text from Q59 while cleaning the Okazaki-fragment wording. No answer keys were inferred."
+    },
+    {
+      "date": "2026-10-13",
+      "source": "שחזור ידע מועד א 1.5.2026.pdf · תל אביב",
+      "scope": "focused cell-biology questions 61-70",
+      "comparedAgainst": [
+        "recon_2026a.js"
+      ],
+      "result": "Q64 restored all four source-backed options and repaired question wording; Q65 restored fourth option; Q66 removed leaked option from preceding question and repaired punctuation. All remain answer=null and verified=false. Q61-63 and Q67-70 checked; no keys inferred.",
+      "recurringConceptsObserved": [
+        "PEX5 peroxisomal import",
+        "SRP targeting",
+        "ER unfolded protein response"
+      ]
     }
   ],
   "next": [
-    "Continue with an unreviewed bounded section after question 60.",
-    "Compare repeated concepts across independent sourceKey/session files before increasing recurrence counts.",
-    "Keep answer=null where the reconstruction has no verified key."
+    "Continue bounded review with questions 71-80 of the same Tel Aviv 2026 A reconstruction.",
+    "Compare the next independent 2026 Ariel / Reichman sourceKey for concept-level repeats.",
+    "Keep answer=null without a source-backed key."
   ]
 }

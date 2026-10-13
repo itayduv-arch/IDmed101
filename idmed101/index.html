@@ -1328,13 +1328,15 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         addOpts(qSubj, 'q-subj-filter');  addOpts(qSub, 'q-sub-filter');
     }
 
+    const medForceAll={cards:false,questions:false};
     function getDueItems(dbArray, trackingDict, subjFilterId, subFilterId) {
         const now = Date.now();
         let subj = document.getElementById(subjFilterId)?.value || 'all';
         let sub = document.getElementById(subFilterId)?.value || 'all';
         
         return dbArray.filter(item => { 
-            let due = (trackingDict[item.id] || 0) <= now;
+            const forceAll=subjFilterId==='fc-subj-filter'?medForceAll.cards:medForceAll.questions;
+            let due = forceAll || (trackingDict[item.id] || 0) <= now;
             let matchSubj = subj === 'all' || item.subject === subj;
             let matchSub = sub === 'all' || item.subtopic === sub;
             return due && matchSubj && matchSub;
@@ -1346,28 +1348,10 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         return array[Math.floor(Math.random() * array.length)];
     }
 
-    window.forceReview = function(type) {
-        if(type === 'cards') {
-            let subj = document.getElementById('fc-subj-filter').value;
-            let sub = document.getElementById('fc-sub-filter').value;
-            dbFlashcards.forEach(c => {
-                if((subj === 'all' || c.subject === subj) && (sub === 'all' || c.subtopic === sub)) {
-                    appData.cards[c.id] = 0;
-                }
-            });
-            saveData();
-            loadFlashcard(true);
-        } else {
-            let subj = document.getElementById('q-subj-filter').value;
-            let sub = document.getElementById('q-sub-filter').value;
-            dbQuestions.forEach(q => {
-                if((subj === 'all' || q.subject === subj) && (sub === 'all' || q.subtopic === sub)) {
-                    appData.questions[q.id] = 0;
-                }
-            });
-            saveData();
-            loadQuestion(true);
-        }
+    // Override the due-date filter only for this session; never erase spaced-review schedules.
+    window.forceReview=function(type){
+        if(type==='cards'){medForceAll.cards=true;loadFlashcard(true);}
+        else if(type==='questions'){medForceAll.questions=true;loadQuestion(true);}
     };
 
     function updateStatusLists(dataType, dbArray, prefix) {
@@ -1478,7 +1462,7 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
 
         document.getElementById('q-subject').innerText = "תחום: " + currentQ.subject;
         document.getElementById('q-subtopic').innerText = "נושא: " + currentQ.subtopic;
-        const srcBadge=document.getElementById('q-source');if(srcBadge)srcBadge.innerText=(currentQ.styleLabel||'נוסח מעובד על בסיס שחזור')+' · 📜 '+(currentQ.sourceLabel||'שחזור');
+        const srcBadge=document.getElementById('q-source');if(srcBadge){const repeat=medRecurrenceScore(currentQ);srcBadge.innerText=(currentQ.styleLabel||'נוסח מעובד על בסיס שחזור')+' · 📜 '+(currentQ.sourceLabel||'שחזור')+(repeat>=2?' · 🔁 חזר ב־'+repeat+' מקורות':'');}
         document.getElementById('q-text').innerText = currentQ.text;
         
         let optionsHtml = "";
@@ -1583,24 +1567,40 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         try{const a=JSON.parse(localStorage.getItem(MED_RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}
     }
     function medSaveRecentQuestionIds(ids){
-        try{localStorage.setItem(MED_RECENT_QUESTION_KEY,JSON.stringify(ids.slice(-160)))}catch(e){}
+        try{const seen=new Set(),ordered=[];for(let i=ids.length-1;i>=0;i--){if(!seen.has(ids[i])){seen.add(ids[i]);ordered.unshift(ids[i]);}}localStorage.setItem(MED_RECENT_QUESTION_KEY,JSON.stringify(ordered.slice(-160)))}catch(e){}
     }
     function medShuffle(arr){ const out=[...arr];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=out[i];out[i]=out[j];out[j]=t;}return out; }
-    const MED_RECURRING_SUBTOPICS=(()=>{
-        const map=new Map();
-        dbQuestions.forEach(q=>{
-            const sub=String(q.subtopic||'').trim();
-            if(!sub||sub==='שחזור'||sub.includes('· שחזור'))return;
-            const key=(q.subject||'')+'|'+sub;
-            if(!map.has(key))map.set(key,new Set());
-            map.get(key).add(Number(q.sourceYear));
+    // Count repeat appearances of a specific question/idea across independent sourceKeys,
+    // never treat an entire broad subtopic as one recurring concept.
+    function medConceptKey(q){
+        const t=String(q.text||'').toLowerCase().replace(/[־–—]/g,'-');
+        if(/steady\s*state|מצב\s*יציב|סטדי\s*סטייט/.test(t))return 'enzyme-steady-state';
+        if(/פרוקסיז|peroxi/.test(t)&&/חמצון|oxid/.test(t))return 'peroxisome-beta-oxidation';
+        if(/מיאלין|myelin/.test(t)&&/הולכה|conduc|מהירות/.test(t))return 'myelin-conduction';
+        if(/רפרקטור|refract/.test(t))return 'refractory-period';
+        if(/טטנוס|tetanus/.test(t)&&/שריר|muscle|כיווץ/.test(t))return 'muscle-tetanus';
+        if(/ribosome\s*profil|פרופיל\s*ריבוזומ/.test(t))return 'ribosome-profiling';
+        if(/אמפיפט|amphipat/.test(t))return 'amphipathic';
+        if(/טוניות|tonicity/.test(t)&&/אוסמ|osm/.test(t))return 'tonicity-osmolarity';
+        if(/polymerase|פולימראז|פולימרז/.test(t)&&/rna|רנ[א״']/.test(t)&&/dna|דנ[א״']/.test(t))return 'dna-vs-rna-polymerase';
+        if(/מעכב|עיכוב|inhibit/.test(t)&&/תחרות|competit/.test(t))return 'competitive-enzyme-inhibition';
+        const stop=new Set(['איזה','איזו','מהו','מהי','כיצד','מהבאים','הבאים','נכון','לגבי','הבאה','הבאות','מתוך','כאשר','במהלך','בתהליך','מתרחש','היא','הוא','של','בין','לאחר','האם','יהיה','תהיה','מתי','יותר']);
+        const tokens=[...new Set((t.match(/[a-z]{4,}|[א-ת]{4,}/g)||[]).filter(x=>!stop.has(x)))].sort();
+        return tokens.length>=5?'exact-lex:'+String(q.subject||'')+':'+tokens.slice(0,7).join('|'):null;
+    }
+    const MED_RECURRING_CONCEPTS=(()=>{
+        const groups=new Map();
+        reconstructionArchive.forEach(q=>{
+            if(!q.sourceKey||!q.text||q.complete!==true)return;
+            const key=medConceptKey(q);if(!key)return;
+            if(!groups.has(key))groups.set(key,new Set());
+            groups.get(key).add(String(q.sourceKey));
         });
-        return map;
+        return groups;
     })();
     function medRecurrenceScore(q){
-        const sub=String(q.subtopic||'').trim();
-        if(!sub||sub==='שחזור'||sub.includes('· שחזור'))return 1;
-        return MED_RECURRING_SUBTOPICS.get((q.subject||'')+'|'+sub)?.size||1;
+        const key=medConceptKey(q);
+        return key?(MED_RECURRING_CONCEPTS.get(key)?.size||1):1;
     }
     function medPriorityWeight(q){
         const t=((q.subtopic||'')+' '+(q.text||'')).toLowerCase();
@@ -1617,8 +1617,6 @@ button:focus-visible,.tab:focus-visible,.med-quick-option:focus-visible{outline:
         let base=veryHigh.some(k=>t.includes(k))?4:high.some(k=>t.includes(k))?3:1.5;
         const repeats=medRecurrenceScore(q);
         if(repeats>=2)base*=1+(repeats-1)*0.55;
-        const years=MED_RECURRING_SUBTOPICS.get((q.subject||'')+'|'+String(q.subtopic||'').trim());
-        if(years?.has(2025)&&years?.has(2026))base*=1.35;
         return base;
     }
     function medHighYieldPool(){
