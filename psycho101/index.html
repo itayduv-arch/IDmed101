@@ -285,7 +285,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20260930-33";
+const PSYCHO101_BUILD_VERSION="20261014-43";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4428,6 +4428,7 @@ const wordBank = [
 <script src="./daily_expansion_20261004.js?v=20261004-36"></script>
 <script src="./daily_expansion_20261005.js?v=20261005-37"></script>
 <script src="./daily_expansion_20261007.js?v=20261007-39"></script>
+<script src="./powers_expansion_20261014.js?v=20261014-43"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4731,6 +4732,7 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20261005?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261005?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20261007?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261007?.verbal||[]));
+questions.quantitative.push(...(window.PSYCHO101_POWERS_20261014?.quantitative||[]));
 
 
 
@@ -4842,6 +4844,7 @@ function practiceMenu(){return`<div class="app-shell">${topbar()}
     ${quickLessonNode('warmup','⚡','חשבון מהיר','כפל, חילוק, חיבור וחיסור','8')}
     ${quickLessonNode('percent','%','אחוזים','ללמוד אחוזים דרך חלוקה וכפל: 25%=÷4, 12.5%=÷8 ועוד','10')}
     ${quickLessonNode('fractions','½','שברים ויחסים','חצי, רבע, יחס 2:3 ועוד','8')}
+    ${quickLessonNode('powers','xⁿ','חזקות ושורשים','חוקי חזקות, שורשים, ומעריכים שליליים ושבריים','8')}
     ${quickLessonNode('words','א','מילים','פירוש ומילה בהקשר','8')}
     ${quickLessonNode('analogies','↔','אנלוגיות','קשרים קצרים בין מילים','8')}
     ${quickLessonNode('logic','◉','היגיון קצר','מה מתחייב? מה מחזק?','8')}
@@ -4967,6 +4970,7 @@ function startQuickLesson(id){
   if(id==='warmup') list=buildWarmupQuestions(8);
   else if(id==='percent') list=buildPercentQuick(10);
   else if(id==='fractions') list=buildFractionQuick(8);
+  else if(id==='powers') list=questions.quantitative.filter(q=>q.topic==='חזקות ושורשים');
   else if(id==='words') list=buildWordQuestions(8);
   else if(id==='analogies') list=shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,8);
   else if(id==='logic') list=shuffle(questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic))).slice(0,8);
