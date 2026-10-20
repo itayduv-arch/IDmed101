@@ -4836,7 +4836,7 @@ function home(){
     ${nav('home')}
   </div>`
 }
-function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
+function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startQuickLesson('${id}')}"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
 function topicOptions(type){return [...new Set(questions[type].map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
 function practiceMenu(){return`<div class="app-shell">${topbar()}
   <div class="section-title">שיעורים קצרים</div>
@@ -4930,6 +4930,7 @@ function buildPercentQuick(count=10){
         i
       );
       q.percentTip=percentMemoryTip(s.p)+" בשאלה הפוכה מבצעים את הפעולות בכיוון ההפוך.";
+      q.difficulty=3;
       return q;
     }
     const ans=s.base*s.p/100;
@@ -4947,6 +4948,7 @@ function buildPercentQuick(count=10){
       i
     );
     q.percentTip=percentMemoryTip(s.p);
+    q.difficulty=2;
     return q;
   })).slice(0,count);
 }
@@ -4959,10 +4961,10 @@ function buildFractionQuick(count=8){
   return shuffle(specs.slice(0,Math.max(count,8)).map((s,i)=>{
     if(s[0]==="frac"){
       const den=s[1],whole=s[2],ans=whole/den;
-      return quickNumericQuestion(`quick-frac-${den}-${whole}`,"שברים ויחסים",`כמה זה 1/${den} מתוך ${whole}?`,ans,[ans+den,Math.max(1,ans-den),whole-den],`מחלקים את ${whole} ב־${den}: התוצאה היא ${ans}.`,i);
+      return {...quickNumericQuestion(`quick-frac-${den}-${whole}`,"שברים ויחסים",`כמה זה 1/${den} מתוך ${whole}?`,ans,[ans+den,Math.max(1,ans-den),whole-den],`מחלקים את ${whole} ב־${den}: התוצאה היא ${ans}.`,i),difficulty:2};
     }
     const a=s[1],b=s[2],left=s[3],k=left/a,ans=b*k;
-    return quickNumericQuestion(`quick-ratio-${a}-${b}-${left}`,"שברים ויחסים",`היחס בין A ל־B הוא ${a}:${b}. אם A = ${left}, כמה B?`,ans,[ans+b,Math.max(1,ans-b),left],`כל חלק שווה ${k}, לכן B = ${b} × ${k} = ${ans}.`,i);
+    return {...quickNumericQuestion(`quick-ratio-${a}-${b}-${left}`,"שברים ויחסים",`היחס בין A ל־B הוא ${a}:${b}. אם A = ${left}, כמה B?`,ans,[ans+b,Math.max(1,ans-b),left],`כל חלק שווה ${k}, לכן B = ${b} × ${k} = ${ans}.`,i),difficulty:2};
   })).slice(0,count);
 }
 
@@ -5065,8 +5067,8 @@ function startQuickLesson(id){
     practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,warmupStart:20-list.length,rewarded:false};
     lastChoice=null;view='question';render();return;
   }
-  if(id==='percent') list=buildPercentQuick(24);
-  else if(id==='fractions') list=buildFractionQuick(24);
+  if(id==='percent') list=[...questions.quantitative.filter(q=>q.topic==='אחוזים'),...buildPercentQuick(24)];
+  else if(id==='fractions') list=[...questions.quantitative.filter(q=>/שברים|יחסים/.test(q.topic)),...buildFractionQuick(24)];
   else if(id==='powers') list=questions.quantitative.filter(q=>q.topic==='חזקות ושורשים');
   else if(id==='words') list=buildWordQuestions(18);
   else if(id==='analogies') list=questions.verbal.filter(q=>q.topic==='אנלוגיות');
@@ -5137,6 +5139,7 @@ function psyHaptic(good){
 function answerQuestion(choice){
   if(!practice||practice.answeredCurrent)return;
   ensureDailyState();
+  if(practice.lessonId==='warmup'&&state.dailyWarmup?.date!==nowDate()){startQuickLesson('warmup');return}
   registerStudyDay();
   const q=practice.list[practice.index];
   rememberQuestionId(q?.id);
