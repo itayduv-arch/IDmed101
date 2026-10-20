@@ -5058,12 +5058,48 @@ function warmupComplete(){
   return `<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center"><div class="finish-emoji">🏆</div><h2>החימום היומי הושלם!</h2><p>ענית על 20 שאלות: 10 כמותיות ו־10 מילוליות.</p><div class="psy-score-ring" style="--score:${percent(correct,20)}%"><strong>${percent(correct,20)}%</strong></div><p class="small">${correct} תשובות נכונות · מקצה מותאם חדש ייפתח ביום המקומי הבא.</p><button class="primary-btn" onclick="go('practice-menu')">להמשך תרגול מותאם</button><button class="secondary-btn" onclick="go('progress')">לניתוח ההתקדמות שלי</button></div>${nav('practice')}</div>`;
 }
 
+// Remap answer positions per practice session. Never modify the canonical question bank.
+// Analogy distractor metadata must follow the answer text, not the old option index.
+function preparePracticeChoices(list,stableSalt=null){
+  const selected=Array.isArray(list)?list:[];
+  const salt=stableSalt??(nowDate()+'|'+Math.random());
+  const targeted=new Map();
+  const counter=[0,0,0,0];
+  function distribute(items,counts){
+    for(const q of items){
+      if(!Array.isArray(q.answers)||q.answers.length!==4||!Number.isInteger(q.correct)||q.correct<0||q.correct>3)continue;
+      const min=Math.min(...counts),available=[0,1,2,3].filter(i=>counts[i]===min);
+      const target=available[Math.floor(adaptiveHash(salt+'|position|'+q.id)*available.length)];
+      targeted.set(q.id,target);
+      counts[target]++;
+    }
+  }
+  const analogies=selected.filter(q=>q.topic==='אנלוגיות');
+  distribute(analogies,counter);
+  distribute(selected.filter(q=>q.topic!=='אנלוגיות'),counter);
+  return selected.map(q=>{
+    const position=targeted.get(q.id);
+    if(position===undefined)return q;
+    const oldIndices=[0,1,2,3].filter(i=>i!==q.correct)
+      .sort((a,b)=>adaptiveHash(salt+'|choice|'+q.id+'|'+a)-adaptiveHash(salt+'|choice|'+q.id+'|'+b));
+    oldIndices.splice(position,0,q.correct);
+    const reordered={...q,answers:oldIndices.map(i=>q.answers[i]),correct:position};
+    for(const prop of ['optionRelations','relationDifference','distractorRelations','optionExplanations','answerExplanations']){
+      if(Array.isArray(q[prop])&&q[prop].length===q.answers.length){
+        reordered[prop]=oldIndices.map(i=>q[prop][i]);
+      }
+    }
+    return reordered;
+  });
+}
+
 function startQuickLesson(id){
   let list=[];
   if(id==='warmup'){
     const plan=dailyWarmupPlan(),bank=new Map([...questions.quantitative,...questions.verbal].map(q=>[q.id,q]));
     list=plan.ids.filter(qid=>!Object.prototype.hasOwnProperty.call(plan.answers||{},qid)).map(qid=>bank.get(qid)).filter(Boolean);
     if(!list.length){practice=null;view='warmup-complete';render();return}
+    list=preparePracticeChoices(list,'warmup|'+plan.date);
     practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,warmupStart:20-list.length,rewarded:false};
     lastChoice=null;view='question';render();return;
   }
@@ -5076,6 +5112,7 @@ function startQuickLesson(id){
   else if(id==='warmup-legacy') list=buildWarmupQuestions(12);
   else list=[...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')];
   list=adaptivePick(list,id==='percent'?10:id==='daily'?10:8,id==='daily'?'mixed':'focused');
+  list=preparePracticeChoices(list);
   practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,rewarded:false};
   lastChoice=null;view='question';render();
 }
@@ -5103,11 +5140,11 @@ function rememberQuestionResult(id,good){
   try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}
 }
 function freshFirst(pool,count){return adaptivePick(pool,count,'practice')}
-function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(16):questions[type].filter(q=>topic==='all'||q.topic===topic);list=adaptivePick(list,8,topic==='all'?'practice':'focused');practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
+function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(16):questions[type].filter(q=>topic==='all'||q.topic===topic);list=preparePracticeChoices(adaptivePick(list,8,topic==='all'?'practice':'focused'));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
-function startMixed(){const list=shuffle([...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')]);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
+function startMixed(){const list=preparePracticeChoices(shuffle([...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
 function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filter(([,s])=>(s.answered||0)>=3).sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered))[0];if(!weakest){startMixed();return}const [topic]=weakest;const type=questions.quantitative.some(q=>q.topic===topic)?'quantitative':'verbal';startPractice(type,topic)}
-function startPsychoSimulation(){clearInterval(psychoTimer);const list=shuffle([...adaptivePick(questions.quantitative,10,'simulation-quant'),...adaptivePick(questions.verbal,10,'simulation-verbal')]);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
+function startPsychoSimulation(){clearInterval(psychoTimer);const list=preparePracticeChoices(shuffle([...adaptivePick(questions.quantitative,10,'simulation-quant'),...adaptivePick(questions.verbal,10,'simulation-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
 function psyConfetti(count=14){
