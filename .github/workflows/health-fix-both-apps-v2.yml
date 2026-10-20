@@ -63,6 +63,10 @@ jobs:
         shell: bash
         run: node psycho101/tests/adaptive_warmup.cjs
 
+      - name: Regression test analogy answer shuffling
+        shell: bash
+        run: node psycho101/tests/answer_shuffle.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
