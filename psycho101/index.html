@@ -5081,12 +5081,23 @@ const RECENT_QUESTION_KEY='psycho101-recent-question-ids-v1';
 const QUESTION_PERFORMANCE_KEY='psycho101-question-performance-v1';
 function recentQuestionIds(){try{const a=JSON.parse(localStorage.getItem(RECENT_QUESTION_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return []}}
 function rememberQuestionId(id){if(!id)return;const a=recentQuestionIds().filter(x=>x!==id);a.push(id);try{localStorage.setItem(RECENT_QUESTION_KEY,JSON.stringify(a.slice(-120)))}catch{}}
-function questionPerformance(){try{const x=JSON.parse(localStorage.getItem(QUESTION_PERFORMANCE_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch{return {}}}
+function questionPerformance(){
+  let legacy={};
+  try{const x=JSON.parse(localStorage.getItem(QUESTION_PERFORMANCE_KEY)||'{}');if(x&&typeof x==='object')legacy=x}catch{}
+  const merged={...legacy};
+  for(const [id,s] of Object.entries(state.questionPerformance||{})){
+    if(!merged[id]||(s.lastAt||0)>=(merged[id].lastAt||0))merged[id]=s;
+  }
+  return merged;
+}
 function rememberQuestionResult(id,good){
   if(!id)return;
   const all=questionPerformance(),s=all[id]||{seen:0,wrong:0,correctStreak:0,lastAt:0};
   const wrong=good?Math.max(0,(s.wrong||0)-1):(s.wrong||0)+1;
-  all[id]={seen:(s.seen||0)+1,wrong,correctStreak:good?(s.correctStreak||0)+1:0,lastAt:Date.now()};
+  const streak=good?(s.correctStreak||0)+1:0;
+  const delay=good?[0,1,2,4,8,16,32][Math.min(6,streak)]*DAY:10*60*1000;
+  all[id]={seen:(s.seen||0)+1,wrong,correctStreak:streak,lastAt:Date.now(),dueAt:Date.now()+delay};
+  state.questionPerformance=all; // included in cloud profile
   try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}
 }
 function freshFirst(pool,count){return adaptivePick(pool,count,'practice')}
@@ -5132,6 +5143,16 @@ function answerQuestion(choice){
   practice.answeredCurrent=true;lastChoice=choice;
   const good=choice===q.correct;
   rememberQuestionResult(q?.id,good);
+  recordAdaptiveAnswer(q,good);
+  if(practice.lessonId==='warmup'&&state.dailyWarmup?.date===nowDate()){
+    state.dailyWarmup.answers=state.dailyWarmup.answers||{};
+    state.dailyWarmup.answers[q.id]=good;
+    if(warmupAnsweredCount(state.dailyWarmup)===20&&!state.dailyWarmup.bonusClaimed){
+      state.dailyWarmup.bonusClaimed=true;
+      state.xp+=20;
+      practice.warmupBonus=20;
+    }
+  }
   state.answered++;state.todayAnswered++;state.xp+=good?10:3;
   if(good){state.correct++;practice.sessionCorrect++}
   const t=topicStat(q.topic);
@@ -5189,26 +5210,30 @@ function finishPractice(){
     state.simulationHistory=state.simulationHistory.slice(-20);
   }
   let bonus=0;
-  if(practice?.kind==='quick'&&!practice.rewarded){
+  if(practice?.kind==='quick'&&!practice.rewarded&&practice.lessonId!=='warmup'){
     const id=practice.lessonId||'daily',acc=percent(practice.sessionCorrect,practice.list.length),s=state.lessonStats?.[id]||{completed:0,bestAccuracy:0};
     state.lessonStats=state.lessonStats||{};
     state.lessonStats[id]={completed:(s.completed||0)+1,bestAccuracy:Math.max(s.bestAccuracy||0,acc)};
     state.xp+=20;practice.rewarded=true;bonus=20;
   }
-  practice.finishBonus=bonus;
+  practice.finishBonus=bonus+(practice.warmupBonus||0);
   saveLocal();view='summary';render();
   if(!practice?.timed){psyConfetti(38);psyHaptic(true);if(bonus)psyXpFloat(bonus)}
 }
 function summary(){
   const sim=practice?.timed;
-  const accuracy=percent(practice?.sessionCorrect||0,practice?.list.length||0);
+  const warm=practice?.lessonId==='warmup'&&state.dailyWarmup?.date===nowDate();
+  const warmCorrect=warm?Object.entries(state.dailyWarmup.answers||{}).filter(([id,good])=>state.dailyWarmup.ids.includes(id)&&good).length:0;
+  const summaryCount=warm?20:(practice?.list.length||0);
+  const summaryCorrect=warm?warmCorrect:(practice?.sessionCorrect||0);
+  const accuracy=percent(summaryCorrect,summaryCount);
   return`<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center">
     <div class="finish-emoji">${sim?'🏁':accuracy>=80?'🏆':'🎉'}</div>
     <h2>${sim?'הסימולציה הושלמה':'השיעור הושלם!'}</h2>
     <div class="psy-score-ring" style="--score:${accuracy}%"><strong>${accuracy}%</strong></div>
-    <p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':`ענית נכון על ${practice?.sessionCorrect||0} מתוך ${practice?.list.length||0}${practice?.finishBonus?' · קיבלת בונוס '+practice.finishBonus+' XP':''}`}</p>
+    <p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':`ענית נכון על ${summaryCorrect} מתוך ${summaryCount}${practice?.finishBonus?' · קיבלת בונוס '+practice.finishBonus+' XP':''}`}</p>
     <div class="friendly-stats" style="margin:20px 0">
-      <div class="friendly-stat"><strong>${practice?.sessionCorrect||0}</strong><span>נכונות</span></div>
+      <div class="friendly-stat"><strong>${summaryCorrect}</strong><span>נכונות</span></div>
       <div class="friendly-stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div>
       <div class="friendly-stat"><strong>${accuracy}%</strong><span>דיוק</span></div>
       <div class="friendly-stat"><strong>${state.xp}</strong><span>XP כולל</span></div>
@@ -5408,7 +5433,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
