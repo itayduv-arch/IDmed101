@@ -59,6 +59,10 @@ jobs:
               print(f'{page}: checked {checked} inline script block(s)')
           PY
 
+      - name: Regression test adaptive daily warmup
+        shell: bash
+        run: node psycho101/tests/adaptive_warmup.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
