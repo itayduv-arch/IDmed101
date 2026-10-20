@@ -285,7 +285,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261014-43";
+const PSYCHO101_BUILD_VERSION="20261020-44";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4737,7 +4737,7 @@ questions.quantitative.push(...(window.PSYCHO101_POWERS_20261014?.quantitative||
 
 
 
-function defaultState(){return{version:8,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
+function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
@@ -4769,8 +4769,8 @@ function masteryPct(stat){return Math.round((Math.min(5,stat.box)/5)*100)}
 function dueCount(){const n=Date.now();return wordBank.filter(w=>{const s=getWordStat(w.word);return s.seen>0&&s.dueAt<=n}).length}
 function unseenCount(){return wordBank.filter(w=>getWordStat(w.word).seen===0).length}
 function masteredCount(){return wordBank.filter(w=>getWordStat(w.word).box>=4).length}
-function selectWords(count=15){const n=Date.now();const scored=wordBank.map(w=>{const s=getWordStat(w.word);let score=0;if(s.seen===0)score=650;else if(s.dueAt<=n)score=1100+(5-s.box)*80;else score=200+(5-s.box)*55;score+=Math.random()*50;return{w,score}}).sort((a,b)=>b.score-a.score);return scored.slice(0,Math.min(count,scored.length)).map(x=>x.w)}
-function makeWordQuestion(entry,index){const sameLevel=wordBank.filter(w=>w.word!==entry.word&&Math.abs((w.level||2)-(entry.level||2))<=1);const pool=sameLevel.length>=3?sameLevel:wordBank.filter(w=>w.word!==entry.word);const distractors=shuffle(pool).slice(0,3);const useContext=index%2===1;const options=shuffle([entry,...distractors]);const official=entry.official?'<span class="official-mark">✓</span>':'';const syn=(entry.synonyms||[]).map(escapeHtml).join(' · ');const extra=`<div class="learning-extra"><strong>מילים קרובות</strong> ${syn||'—'}<br><strong>רמה</strong> ${entry.level||2}/4 ${entry.official?' · ✓ נצפתה בחומר מאל״ו שנבדק':''}</div>`;if(useContext){return{id:`w-${entry.word}-context`,word:entry.word,category:"מילים",topic:"אוצר מילים בהקשר",prompt:`איזו מילה משלימה את המשפט בצורה הטובה ביותר?<br><br>“${entry.sentence.replace('[[word]]','_____')}”`,answers:options.map(o=>o.word),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}return{id:`w-${entry.word}-definition`,word:entry.word,category:"מילים",topic:"פירושי מילים",prompt:`מה פירוש המילה „${entry.word}”? ${official}`,answers:options.map(o=>o.definition),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}
+function selectWords(count=15){const n=Date.now(),target=adaptiveLevel({category:'מילים',topic:'אוצר מילים בהקשר'});const scored=wordBank.map(w=>{const s=getWordStat(w.word);let score=0;if(s.seen===0)score=650;else if(s.dueAt<=n)score=1100+(5-s.box)*80;else score=200+(5-s.box)*55;score-=Math.abs((w.level||2)-target)*110;score+=Math.random()*50;return{w,score}}).sort((a,b)=>b.score-a.score);return scored.slice(0,Math.min(count,scored.length)).map(x=>x.w)}
+function makeWordQuestion(entry,index){const sameLevel=wordBank.filter(w=>w.word!==entry.word&&Math.abs((w.level||2)-(entry.level||2))<=1);const pool=sameLevel.length>=3?sameLevel:wordBank.filter(w=>w.word!==entry.word);const distractors=shuffle(pool).slice(0,3);const useContext=index%2===1;const options=shuffle([entry,...distractors]);const official=entry.official?'<span class="official-mark">✓</span>':'';const syn=(entry.synonyms||[]).map(escapeHtml).join(' · ');const extra=`<div class="learning-extra"><strong>מילים קרובות</strong> ${syn||'—'}<br><strong>רמה</strong> ${entry.level||2}/4 ${entry.official?' · ✓ נצפתה בחומר מאל״ו שנבדק':''}</div>`;if(useContext){return{id:`w-${entry.word}-context`,word:entry.word,category:"מילים",topic:"אוצר מילים בהקשר",difficulty:entry.level||2,prompt:`איזו מילה משלימה את המשפט בצורה הטובה ביותר?<br><br>“${entry.sentence.replace('[[word]]','_____')}”`,answers:options.map(o=>o.word),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}return{id:`w-${entry.word}-definition`,word:entry.word,category:"מילים",topic:"פירושי מילים",difficulty:entry.level||2,prompt:`מה פירוש המילה „${entry.word}”? ${official}`,answers:options.map(o=>o.definition),correct:options.findIndex(o=>o.word===entry.word),explanation:`<strong>${entry.word}</strong> — ${entry.definition}.${extra}`}}
 function buildWordQuestions(count=15){return selectWords(count).map(makeWordQuestion)}
 
 function nav(active){return`<nav class="bottom-nav" style="grid-template-columns:repeat(6,1fr)"><button class="nav-btn ${active==='home'?'active':''}" onclick="go('home')"><b>⌂</b>בית</button><button class="nav-btn ${active==='practice'?'active':''}" onclick="go('practice-menu')"><b>✎</b>תרגול</button><button class="nav-btn ${active==='words'?'active':''}" onclick="go('words-dashboard')"><b>א</b>מילים</button><button class="nav-btn ${active==='leaderboard'?'active':''}" onclick="go('leaderboard')"><b>🏆</b>דירוג</button><button class="nav-btn ${active==='errors'?'active':''}" onclick="go('errors')"><b>!</b>טעויות</button><button class="nav-btn ${active==='progress'?'active':''}" onclick="go('progress')"><b>↗</b>התקדמות</button></nav>`}
@@ -4802,7 +4802,7 @@ function home(){
         <div class="hero-eyebrow">IDpsycho101 · כמה דקות ביום</div>
         <h1 id="dynamic-greeting">${getTimeGreeting()}</h1>
         <p>שיעורים קצרים, פשוטים ומדורגים. ממשיכים קצת בכל יום ובונים מהירות וביטחון.</p>
-        <button class="hero-action" onclick="startQuickLesson('daily')">המשך ללמוד ▶</button>
+        <button class="hero-action" onclick="startQuickLesson('warmup')">לחימום היומי של 20 שאלות ▶</button>
       </div>
       <div class="hero-orb ${state.streak>1?'streak-pulse':''}"><div><strong>🔥 ${state.streak}</strong><span>רצף ימים</span></div></div>
     </section>
@@ -4819,9 +4819,9 @@ function home(){
       <div class="duo-progress"><div style="width:${goal}%"></div></div>
     </div>
 
-    <div class="section-heading"><div><h3>המסלול שלך</h3><span>בחר שיעור או פשוט המשך ללמוד</span></div><span>כ־8 שאלות</span></div>
+    <div class="section-heading"><div><h3>המסלול שלך</h3><span>השאלות נבחרות לפי הצלחה, רמת קושי וטעויות קודמות</span></div><span>תרגול אישי</span></div>
     <div class="lesson-path">
-      ${quickLessonNode('warmup','⚡','חימום','כפל, חילוק וחישוב מהיר','8 שאלות','orange')}
+      ${quickLessonNode('warmup','⚡','חימום יומי אישי','10 כמותי · 10 מילולי · מתחדש כל יום','20 שאלות','orange')}
       ${quickLessonNode('percent','%','אחוזים חכמים','קיצורי שברים, חילוק וכפל + שאלות הפוכות','10 שאלות','blue')}
       ${quickLessonNode('fractions','½','שברים ויחסים','חלק מתוך שלם ויחסים פשוטים','8 שאלות','purple')}
       ${quickLessonNode('words','א','מילים','פירושים והשלמה בהקשר','8 שאלות','blue')}
@@ -4836,12 +4836,12 @@ function home(){
     ${nav('home')}
   </div>`
 }
-function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;const shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
+function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
 function topicOptions(type){return [...new Set(questions[type].map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
 function practiceMenu(){return`<div class="app-shell">${topbar()}
   <div class="section-title">שיעורים קצרים</div>
   <div class="lesson-path">
-    ${quickLessonNode('warmup','⚡','חשבון מהיר','כפל, חילוק, חיבור וחיסור','8')}
+    ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות: 10 כמותי ו־10 מילולי · לפי הרמה שלך','20')}
     ${quickLessonNode('percent','%','אחוזים','ללמוד אחוזים דרך חלוקה וכפל: 25%=÷4, 12.5%=÷8 ועוד','10')}
     ${quickLessonNode('fractions','½','שברים ויחסים','חצי, רבע, יחס 2:3 ועוד','8')}
     ${quickLessonNode('powers','xⁿ','חזקות ושורשים','חוקי חזקות, שורשים, ומעריכים שליליים ושבריים','8')}
@@ -4965,25 +4965,115 @@ function buildFractionQuick(count=8){
     return quickNumericQuestion(`quick-ratio-${a}-${b}-${left}`,"שברים ויחסים",`היחס בין A ל־B הוא ${a}:${b}. אם A = ${left}, כמה B?`,ans,[ans+b,Math.max(1,ans-b),left],`כל חלק שווה ${k}, לכן B = ${b} × ${k} = ${ans}.`,i);
   })).slice(0,count);
 }
+
+// Personal adaptive engine (2026-10-20). All data stays additive; no accumulated progress reset.
+function adaptiveKey(q){return (q?.category||'כללי')+'|'+(q?.topic||'כללי')}
+function adaptiveClamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function adaptiveLevel(q){
+  const saved=state.skillRatings?.[adaptiveKey(q)]?.level;
+  if(Number.isFinite(saved))return adaptiveClamp(saved,1,5);
+  const prior=state.topicStats?.[q?.topic];
+  if((prior?.answered||0)>=5){
+    const smoothed=((prior.correct||0)+2)/((prior.answered||0)+4);
+    return adaptiveClamp(2+2*smoothed,1.5,4.5);
+  }
+  return 3;
+}
+function recordAdaptiveAnswer(q,good){
+  if(!q)return;
+  const key=adaptiveKey(q);
+  state.skillRatings=state.skillRatings||{};
+  const old=state.skillRatings[key]||{level:adaptiveLevel(q),answered:0,correct:0};
+  const level=adaptiveClamp(Number(old.level)||3,1,5);
+  const difficulty=adaptiveClamp(Number(q.difficulty)||3,1,5);
+  const expected=1/(1+Math.exp((difficulty-level)*0.95));
+  const updated=adaptiveClamp(level+0.55*((good?1:0)-expected),1,5);
+  state.skillRatings[key]={level:Math.round(updated*100)/100,answered:(old.answered||0)+1,correct:(old.correct||0)+(good?1:0),lastAt:Date.now()};
+}
+function adaptiveHash(value){
+  let h=2166136261;
+  for(const ch of String(value)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}
+  return (h>>>0)/4294967296;
+}
+function adaptivePick(pool,count,context='practice',excluded=new Set(),existingTopics={}){
+  const history=questionPerformance(),recents=new Set(recentQuestionIds());
+  const selected=[],selectedIds=new Set(excluded),topicCounts={...existingTopics},now=Date.now(),today=nowDate();
+  const valid=(pool||[]).filter(q=>q&&q.id&&Array.isArray(q.answers)&&q.answers.length>=4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.answers.length);
+  const breadth=(context==='focused')?0:(context==='warmup'?1.35:0.48);
+  while(selected.length<count){
+    let best=null,bestScore=-Infinity;
+    for(const q of valid){
+      if(selectedIds.has(q.id))continue;
+      const h=history[q.id]||{},seen=h.seen||0,age=now-(h.lastAt||0),difficulty=adaptiveClamp(Number(q.difficulty)||3,1,5);
+      const personalLevel=adaptiveLevel(q);
+      let score=5.5-1.8*Math.abs(difficulty-personalLevel);
+      if(!seen)score+=1.3;
+      if(recents.has(q.id))score-=3.0;
+      if(seen&&age<8*60*60*1000)score-=4.0;
+      else if(seen&&age<24*60*60*1000)score-=2.2;
+      if((h.wrong||0)>0&&age>=10*60*1000&&(!h.dueAt||h.dueAt<=now))score+=2.3+Math.min(1.5,(h.wrong||0)*0.25);
+      if(h.dueAt&&h.dueAt>now)score-=2.2;
+      score-=(topicCounts[q.topic]||0)*breadth;
+      score+=adaptiveHash(today+'|'+context+'|'+q.id)*1.15;
+      if(score>bestScore){bestScore=score;best=q}
+    }
+    if(!best)break;
+    selected.push(best);selectedIds.add(best.id);topicCounts[best.topic]=(topicCounts[best.topic]||0)+1;
+  }
+  return selected;
+}
+function warmupAnsweredCount(plan){return plan?.date===nowDate()&&Array.isArray(plan.ids)?plan.ids.filter(id=>Object.prototype.hasOwnProperty.call(plan.answers||{},id)).length:0}
+function makeWarmupPlan(){
+  const seen=new Set(),topics={},quant=[],verbal=[];
+  function take(target,pool,n){
+    for(const q of adaptivePick(pool,n,'warmup',seen,topics)){
+      target.push(q);seen.add(q.id);topics[q.topic]=(topics[q.topic]||0)+1;
+    }
+  }
+  const q=questions.quantitative,v=questions.verbal;
+  take(quant,q.filter(x=>x.topic==='חזקות ושורשים'),2);
+  take(quant,q.filter(x=>x.topic==='אחוזים'),2);
+  take(quant,q.filter(x=>/שברים|יחסים/.test(x.topic)),2);
+  take(quant,q.filter(x=>x.topic!=='חשבון מהיר'),10-quant.length);
+  if(quant.length<10)take(quant,q,10-quant.length);
+  take(verbal,v.filter(x=>x.topic==='אנלוגיות'),4);
+  take(verbal,v.filter(x=>/אוצר מילים בהקשר|השלמת משפטים|מילים בהקשר/.test(x.topic)),2);
+  take(verbal,v.filter(x=>x.topic!=='אנלוגיות'&&!/אוצר מילים בהקשר|פירושי מילים/.test(x.topic)),10-verbal.length);
+  if(verbal.length<10)take(verbal,v,10-verbal.length);
+  // Alternate question types, while keeping exactly 10 of each in a complete bank.
+  const ids=[];for(let i=0;i<10;i++){if(quant[i])ids.push(quant[i].id);if(verbal[i])ids.push(verbal[i].id)}
+  return {date:nowDate(),ids,answers:{},bonusClaimed:false};
+}
+function dailyWarmupPlan(){
+  const today=nowDate(),old=state.dailyWarmup,bank=new Set([...questions.quantitative,...questions.verbal].map(q=>q.id));
+  if(old?.date===today&&old.ids?.length===20&&old.ids.every(id=>bank.has(id)))return old;
+  state.dailyWarmup=makeWarmupPlan();
+  saveLocal();
+  return state.dailyWarmup;
+}
+function warmupComplete(){
+  const p=state.dailyWarmup,correct=Object.entries(p?.answers||{}).filter(([id,ok])=>p.ids?.includes(id)&&ok).length;
+  return `<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center"><div class="finish-emoji">🏆</div><h2>החימום היומי הושלם!</h2><p>ענית על 20 שאלות: 10 כמותיות ו־10 מילוליות.</p><div class="psy-score-ring" style="--score:${percent(correct,20)}%"><strong>${percent(correct,20)}%</strong></div><p class="small">${correct} תשובות נכונות · מקצה מותאם חדש ייפתח ביום המקומי הבא.</p><button class="primary-btn" onclick="go('practice-menu')">להמשך תרגול מותאם</button><button class="secondary-btn" onclick="go('progress')">לניתוח ההתקדמות שלי</button></div>${nav('practice')}</div>`;
+}
+
 function startQuickLesson(id){
   let list=[];
-  if(id==='warmup') list=buildWarmupQuestions(8);
-  else if(id==='percent') list=buildPercentQuick(10);
-  else if(id==='fractions') list=buildFractionQuick(8);
-  else if(id==='powers') list=questions.quantitative.filter(q=>q.topic==='חזקות ושורשים');
-  else if(id==='words') list=buildWordQuestions(8);
-  else if(id==='analogies') list=shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,8);
-  else if(id==='logic') list=shuffle(questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic))).slice(0,8);
-  else{
-    list=shuffle([
-      ...buildWarmupQuestions(2),
-      ...buildPercentQuick(5),
-      ...buildFractionQuick(1),
-      ...buildWordQuestions(2),
-      ...shuffle(questions.verbal.filter(q=>q.topic==='אנלוגיות')).slice(0,1)
-    ]).slice(0,10);
+  if(id==='warmup'){
+    const plan=dailyWarmupPlan(),bank=new Map([...questions.quantitative,...questions.verbal].map(q=>[q.id,q]));
+    list=plan.ids.filter(qid=>!Object.prototype.hasOwnProperty.call(plan.answers||{},qid)).map(qid=>bank.get(qid)).filter(Boolean);
+    if(!list.length){practice=null;view='warmup-complete';render();return}
+    practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,warmupStart:20-list.length,rewarded:false};
+    lastChoice=null;view='question';render();return;
   }
-  list=freshFirst(list,list.length);
+  if(id==='percent') list=buildPercentQuick(24);
+  else if(id==='fractions') list=buildFractionQuick(24);
+  else if(id==='powers') list=questions.quantitative.filter(q=>q.topic==='חזקות ושורשים');
+  else if(id==='words') list=buildWordQuestions(18);
+  else if(id==='analogies') list=questions.verbal.filter(q=>q.topic==='אנלוגיות');
+  else if(id==='logic') list=questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic));
+  else if(id==='warmup-legacy') list=buildWarmupQuestions(12);
+  else list=[...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')];
+  list=adaptivePick(list,id==='percent'?10:id==='daily'?10:8,id==='daily'?'mixed':'focused');
   practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,rewarded:false};
   lastChoice=null;view='question';render();
 }
@@ -4999,25 +5089,12 @@ function rememberQuestionResult(id,good){
   all[id]={seen:(s.seen||0)+1,wrong,correctStreak:good?(s.correctStreak||0)+1:0,lastAt:Date.now()};
   try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}
 }
-function freshFirst(pool,count){
-  const recent=new Set(recentQuestionIds()),perf=questionPerformance();
-  const fresh=shuffle(pool.filter(q=>!recent.has(q.id)&&!(perf[q.id]?.seen)));
-  const weak=shuffle(pool.filter(q=>(perf[q.id]?.wrong||0)>0&&!recent.has(q.id))).sort((a,b)=>{
-    const aw=perf[a.id]?.wrong||0,bw=perf[b.id]?.wrong||0;
-    if(bw!==aw)return bw-aw;
-    return (perf[a.id]?.correctStreak||0)-(perf[b.id]?.correctStreak||0);
-  });
-  const rest=shuffle(pool.filter(q=>!recent.has(q.id)&&!fresh.includes(q)&&!weak.includes(q)));
-  const seen=shuffle(pool.filter(q=>recent.has(q.id)));
-  const ordered=[...fresh,...weak,...rest,...seen],unique=[],ids=new Set();
-  for(const q of ordered){if(!q||ids.has(q.id))continue;ids.add(q.id);unique.push(q);if(unique.length>=count)break}
-  return unique;
-}
-function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(8):questions[type].filter(q=>topic==='all'||q.topic===topic);list=freshFirst(list,8);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
+function freshFirst(pool,count){return adaptivePick(pool,count,'practice')}
+function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(16):questions[type].filter(q=>topic==='all'||q.topic===topic);list=adaptivePick(list,8,topic==='all'?'practice':'focused');practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
-function startMixed(){const list=shuffle([...freshFirst(questions.quantitative,4),...freshFirst(questions.verbal,4),...freshFirst(buildWordQuestions(8),2)]);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
+function startMixed(){const list=shuffle([...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')]);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
 function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filter(([,s])=>(s.answered||0)>=3).sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered))[0];if(!weakest){startMixed();return}const [topic]=weakest;const type=questions.quantitative.some(q=>q.topic===topic)?'quantitative':'verbal';startPractice(type,topic)}
-function startPsychoSimulation(){clearInterval(psychoTimer);const list=freshFirst([...questions.quantitative,...questions.verbal],20);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
+function startPsychoSimulation(){clearInterval(psychoTimer);const list=shuffle([...adaptivePick(questions.quantitative,10,'simulation-quant'),...adaptivePick(questions.verbal,10,'simulation-verbal')]);practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
 function psyConfetti(count=14){
