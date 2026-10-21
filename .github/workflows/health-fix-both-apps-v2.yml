@@ -67,6 +67,10 @@ jobs:
         shell: bash
         run: node psycho101/tests/answer_shuffle.cjs
 
+      - name: Audit question authenticity and intuitive math shortcuts
+        shell: bash
+        run: node psycho101/tests/quality_and_tips.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
