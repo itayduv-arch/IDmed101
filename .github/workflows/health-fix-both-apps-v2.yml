@@ -71,6 +71,10 @@ jobs:
         shell: bash
         run: node psycho101/tests/quality_and_tips.cjs
 
+      - name: Check Hebrew and math bidi rendering across the live question bank
+        shell: bash
+        run: node psycho101/tests/rtl_math_rendering.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
