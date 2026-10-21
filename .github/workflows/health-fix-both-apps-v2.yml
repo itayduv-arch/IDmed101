@@ -79,6 +79,10 @@ jobs:
         shell: bash
         run: node psycho101/tests/full_quant_review.cjs
 
+      - name: Check twenty-minute quantitative training and post-session review
+        shell: bash
+        run: node psycho101/tests/timed_quant_flow.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
