@@ -5457,6 +5457,7 @@ function finishPractice(){
   saveLocal();view='summary';render();
   if(!practice?.timed){psyConfetti(38);psyHaptic(true);if(bonus)psyXpFloat(bonus)}
 }
+function openTimedReview(){if(!practice||practice.kind!=='quant-timed')return;view='timed-review';render()}
 function timedReview(){
   const records=practice?.results||[],bank=new Map((practice?.list||[]).map(q=>[q.id,q]));
   const content=records.map((r,i)=>{
@@ -5485,6 +5486,7 @@ function summary(){
       <div class="friendly-stat"><strong>${accuracy}%</strong><span>דיוק</span></div>
       <div class="friendly-stat"><strong>${state.xp}</strong><span>XP כולל</span></div>
     </div>
+    ${quantTimed?'<button class="primary-btn" onclick="openTimedReview()">תחקור שאלות ודרכי פתרון מהירות</button>':''}
     <button class="primary-btn" onclick="go('home')">חזרה למסלול</button>
   </div>${nav('')}</div>`
 }
