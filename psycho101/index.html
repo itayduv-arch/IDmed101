@@ -4826,7 +4826,7 @@ function home(){
       ${quickLessonNode('fractions','½','שברים ויחסים','חלק מתוך שלם ויחסים פשוטים','8 שאלות','purple')}
       ${quickLessonNode('words','א','מילים','פירושים והשלמה בהקשר','8 שאלות','blue')}
       ${quickLessonNode('analogies','↔','אנלוגיות','לזהות את הקשר בין זוגות','8 שאלות','purple')}
-      ${quickLessonNode('daily','⭐','שיעור יומי מעורב','קצת מכל דבר, לפי מה שכדאי לך','10 שאלות','')}
+      ${quickLessonNode('daily','⭐','שיעור יומי מעורב','שאלות חשיבה פסיכומטרית לפי הרמה שלך','10 שאלות','')}
     </div>
 
     <div class="friendly-card">
@@ -4837,11 +4837,12 @@ function home(){
   </div>`
 }
 function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startQuickLesson('${id}')}"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
-function topicOptions(type){return [...new Set(questions[type].map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+function topicOptions(type){return [...new Set(auditedExamPool(type).map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
 function practiceMenu(){return`<div class="app-shell">${topbar()}
   <div class="section-title">שיעורים קצרים</div>
   <div class="lesson-path">
-    ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות: 10 כמותי ו־10 מילולי · לפי הרמה שלך','20')}
+    ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות ברמת הבחינה: 10 כמותי ו־10 מילולי','20')}
+    ${quickLessonNode('fundamentals','🔧','חיזוק יסודות','חישוב, נוסחאות והבנת מילים — תרגול הכנה ולא שאלות בחינה','8')}
     ${quickLessonNode('percent','%','אחוזים','ללמוד אחוזים דרך חלוקה וכפל: 25%=÷4, 12.5%=÷8 ועוד','10')}
     ${quickLessonNode('fractions','½','שברים ויחסים','חצי, רבע, יחס 2:3 ועוד','8')}
     ${quickLessonNode('powers','xⁿ','חזקות ושורשים','חוקי חזקות, שורשים, ומעריכים שליליים ושבריים','8')}
@@ -5033,6 +5034,24 @@ function buildFractionQuick(count=8){
 }
 
 // Personal adaptive engine (2026-10-20). All data stays additive; no accumulated progress reset.
+// Quality boundary: foundational drills build fluency but should not masquerade
+// as realistic psychometric multiple-choice items. Existing progress is retained.
+function isExamQuestion(q){
+  if(!q||!q.id||!Array.isArray(q.answers)||q.answers.length!==4||!Number.isInteger(q.correct))return false;
+  if(q.practiceTier==='foundation')return false;
+  if(q.category==='מילים'||q.topic==='פירושי מילים'||q.topic==='חשבון מהיר')return false;
+  if(/^(?:qg|vg|cq)\d+$/.test(q.id))return false; // older one-step generated templates
+  if(/^[qv]\d+$/.test(q.id))return false; // original starter drills
+  if(/^quick-(?:mul|div|add|sub|pct|frac|ratio)-/.test(q.id))return false;
+  return true;
+}
+function auditedExamPool(type,topic='all'){
+  return (questions[type]||[]).filter(q=>isExamQuestion(q)&&(topic==='all'||q.topic===topic));
+}
+function foundationPool(){
+  return [...questions.quantitative,...questions.verbal].filter(q=>!isExamQuestion(q)&&q.topic!=='פירושי מילים');
+}
+
 function adaptiveKey(q){return (q?.category||'כללי')+'|'+(q?.topic||'כללי')}
 function adaptiveClamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function adaptiveLevel(q){
@@ -5096,7 +5115,7 @@ function makeWarmupPlan(){
       target.push(q);seen.add(q.id);topics[q.topic]=(topics[q.topic]||0)+1;
     }
   }
-  const q=questions.quantitative,v=questions.verbal;
+  const q=auditedExamPool('quantitative'),v=auditedExamPool('verbal');
   take(quant,q.filter(x=>x.topic==='חזקות ושורשים'),2);
   take(quant,q.filter(x=>x.topic==='אחוזים'),2);
   take(quant,q.filter(x=>/שברים|יחסים/.test(x.topic)),2);
@@ -5167,14 +5186,14 @@ function startQuickLesson(id){
     practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,warmupStart:20-list.length,rewarded:false};
     lastChoice=null;view='question';render();return;
   }
-  if(id==='percent') list=[...questions.quantitative.filter(q=>q.topic==='אחוזים'),...buildPercentQuick(24)];
-  else if(id==='fractions') list=[...questions.quantitative.filter(q=>/שברים|יחסים/.test(q.topic)),...buildFractionQuick(24)];
-  else if(id==='powers') list=questions.quantitative.filter(q=>q.topic==='חזקות ושורשים');
+  if(id==='percent') list=auditedExamPool('quantitative').filter(q=>q.topic==='אחוזים');
+  else if(id==='fractions') list=auditedExamPool('quantitative').filter(q=>/שברים|יחסים/.test(q.topic));
+  else if(id==='powers') list=auditedExamPool('quantitative').filter(q=>q.topic==='חזקות ושורשים');
   else if(id==='words') list=buildWordQuestions(18);
-  else if(id==='analogies') list=questions.verbal.filter(q=>q.topic==='אנלוגיות');
-  else if(id==='logic') list=questions.verbal.filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic));
-  else if(id==='warmup-legacy') list=buildWarmupQuestions(12);
-  else list=[...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')];
+  else if(id==='analogies') list=auditedExamPool('verbal').filter(q=>q.topic==='אנלוגיות');
+  else if(id==='logic') list=auditedExamPool('verbal').filter(q=>['היגיון','הסקה','חיזוק והחלשה','חשיבה מדעית'].includes(q.topic));
+  else if(id==='fundamentals') list=[...foundationPool(),...buildWarmupQuestions(12),...buildPercentQuick(24),...buildFractionQuick(10)];
+  else list=[...adaptivePick(auditedExamPool('quantitative'),5,'mixed-quant'),...adaptivePick(auditedExamPool('verbal'),5,'mixed-verbal')];
   list=adaptivePick(list,id==='percent'?10:id==='daily'?10:8,id==='daily'?'mixed':'focused');
   list=preparePracticeChoices(list);
   practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,rewarded:false};
@@ -5204,11 +5223,11 @@ function rememberQuestionResult(id,good){
   try{localStorage.setItem(QUESTION_PERFORMANCE_KEY,JSON.stringify(all))}catch{}
 }
 function freshFirst(pool,count){return adaptivePick(pool,count,'practice')}
-function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(16):questions[type].filter(q=>topic==='all'||q.topic===topic);list=preparePracticeChoices(adaptivePick(list,8,topic==='all'?'practice':'focused'));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
+function startPractice(type,topic='all'){let list=type==='words'?buildWordQuestions(16):auditedExamPool(type,topic);list=preparePracticeChoices(adaptivePick(list,8,topic==='all'?'practice':'focused'));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:type};lastChoice=null;view='question';render()}
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
-function startMixed(){const list=preparePracticeChoices(shuffle([...adaptivePick(questions.quantitative,5,'mixed-quant'),...adaptivePick(questions.verbal,5,'mixed-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
+function startMixed(){const list=preparePracticeChoices(shuffle([...adaptivePick(auditedExamPool('quantitative'),5,'mixed-quant'),...adaptivePick(auditedExamPool('verbal'),5,'mixed-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
 function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filter(([,s])=>(s.answered||0)>=3).sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered))[0];if(!weakest){startMixed();return}const [topic]=weakest;const type=questions.quantitative.some(q=>q.topic===topic)?'quantitative':'verbal';startPractice(type,topic)}
-function startPsychoSimulation(){clearInterval(psychoTimer);const list=preparePracticeChoices(shuffle([...adaptivePick(questions.quantitative,10,'simulation-quant'),...adaptivePick(questions.verbal,10,'simulation-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
+function startPsychoSimulation(){clearInterval(psychoTimer);const list=preparePracticeChoices(shuffle([...adaptivePick(auditedExamPool('quantitative'),10,'simulation-quant'),...adaptivePick(auditedExamPool('verbal'),10,'simulation-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
 function psyConfetti(count=14){
