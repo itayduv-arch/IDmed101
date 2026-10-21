@@ -18,11 +18,17 @@ for(const [prompt,expected] of [
  ['מה ערכו של (3+4)/7?','(3+4)/7'],
  ['נתון x² + 3x + 2 = 0.','x² + 3x + 2 = 0'],
  ['36 ÷ 25 = ?', '36 ÷ 25'],
+ ['2^5 · 2^3 ÷ 2^4', '2^5 · 2^3 ÷ 2^4'],
+ ['3^x = 27·9', '3^x = 27·9'],
+ ['(−3)^2 − (−3^2)', '(−3)^2 − (−3^2)'],
+ ['(4^3)^(1/2)', '(4^3)^(1/2)'],
 ]){
  const out=formatMathHtml(prompt);
  assert(out.includes('class="math-ltr" dir="ltr"'),prompt+': math island missing');
  assert(out.includes(expected),prompt+': formula changed');
 }
+const caret=formatMathHtml('2^5 · 2^3 ÷ 2^4');
+assert(caret.includes('<span class="math-ltr" dir="ltr">2^5 · 2^3 ÷ 2^4</span>'),'ASCII caret powers need one LTR island');
 const already='<span class="math-ltr" dir="ltr">2<sup>a</sup> · 3<sup>b</sup></span>';
 assert.equal(formatMathHtml(already),already,'Already isolated math must not be reprocessed');
 const htmlPrompt='נתון '+already+'.<br><br>כמה מחלקים חיוביים של 72?';
