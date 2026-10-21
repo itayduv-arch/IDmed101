@@ -15,7 +15,7 @@ assert(loaded>=12,'All active bank scripts should load');
 const qStart=html.indexOf('const questions={'),qEnd=html.indexOf('function defaultState()',qStart);
 assert(qStart>=0&&qEnd>qStart,'Find live application question assembly');
 const questions=new Function('window',html.slice(qStart,qEnd)+'\nreturn questions;')(window);
-const qualityStart=html.indexOf('function isExamQuestion(');
+const qualityStart=html.indexOf('const SIMPLE_FOUNDATION_IDS=');
 const qualityEnd=html.indexOf('function startQuickLesson(id){',qualityStart);
 const testState={skillRatings:{},questionPerformance:{},topicStats:{},dailyWarmup:null};
 const api=new Function('state','questions','nowDate','saveLocal','questionPerformance','recentQuestionIds','DAY',
