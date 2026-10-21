@@ -4833,7 +4833,7 @@ function home(){
       ${quickLessonNode('warmup','⚡','חימום יומי אישי','10 כמותי · 10 מילולי · מתחדש כל יום','20 שאלות','orange')}
       ${quickLessonNode('percent','%','אחוזים חכמים','קיצורי שברים, חילוק וכפל + שאלות הפוכות','10 שאלות','blue')}
       ${quickLessonNode('fractions','½','שברים ויחסים','חלק מתוך שלם ויחסים פשוטים','8 שאלות','purple')}
-      ${quickLessonNode('words','א','מילים','פירושים והשלמה בהקשר','8 שאלות','blue')}
+      ${quickLessonNode('words','א','העשרת מילים','תרגול לשוני משלים, לא הדמיית שאלות הבחינה','8 שאלות','blue')}
       ${quickLessonNode('analogies','↔','אנלוגיות','לזהות את הקשר בין זוגות','8 שאלות','purple')}
       ${quickLessonNode('daily','⭐','שיעור יומי מעורב','שאלות חשיבה פסיכומטרית לפי הרמה שלך','10 שאלות','')}
     </div>
@@ -4855,7 +4855,7 @@ function practiceMenu(){return`<div class="app-shell">${topbar()}
     ${quickLessonNode('percent','%','אחוזים','ללמוד אחוזים דרך חלוקה וכפל: 25%=÷4, 12.5%=÷8 ועוד','10')}
     ${quickLessonNode('fractions','½','שברים ויחסים','חצי, רבע, יחס 2:3 ועוד','8')}
     ${quickLessonNode('powers','xⁿ','חזקות ושורשים','חוקי חזקות, שורשים, ומעריכים שליליים ושבריים','8')}
-    ${quickLessonNode('words','א','מילים','פירוש ומילה בהקשר','8')}
+    ${quickLessonNode('words','א','העשרת אוצר מילים','למידת מילים בהקשר וגם הגדרות — הכנה משלימה','8')}
     ${quickLessonNode('analogies','↔','אנלוגיות','קשרים קצרים בין מילים','8')}
     ${quickLessonNode('logic','◉','היגיון קצר','מה מתחייב? מה מחזק?','8')}
     ${quickLessonNode('daily','★','מעורב','10 שאלות מכל הסוגים','10')}
@@ -5139,8 +5139,11 @@ function makeWarmupPlan(){
   return {date:nowDate(),ids,answers:{},bonusClaimed:false};
 }
 function dailyWarmupPlan(){
-  const today=nowDate(),old=state.dailyWarmup,bank=new Set([...questions.quantitative,...questions.verbal].map(q=>q.id));
-  if(old?.date===today&&old.ids?.length===20&&old.ids.every(id=>bank.has(id)))return old;
+  const today=nowDate(),old=state.dailyWarmup,all=[...questions.quantitative,...questions.verbal],bank=new Map(all.map(q=>[q.id,q]));
+  if(old?.date===today&&old.ids?.length===20&&old.ids.every(id=>bank.has(id))){
+    // Keep an in-progress plan, but migrate untouched legacy plans out of foundational drills.
+    if(warmupAnsweredCount(old)>0||old.ids.every(id=>isExamQuestion(bank.get(id))))return old;
+  }
   state.dailyWarmup=makeWarmupPlan();
   saveLocal();
   return state.dailyWarmup;
