@@ -4894,6 +4894,10 @@ function practiceMenu(){return`<div class="app-shell">${topbar()}
     ${quickLessonNode('logic','◉','היגיון קצר','מה מתחייב? מה מחזק?','8')}
     ${quickLessonNode('daily','★','מעורב','10 שאלות מכל הסוגים','10')}
   </div>
+  <div class="section-title">אימון מהירות כמותי</div>
+  <div class="card"><strong>⏱ 20 שאלות כמותיות ב־20 דקות</strong>
+  <p class="small">אימון נגד השעון, ללא הצגת פתרון אחרי כל לחיצה. בסיום תקבל תחקור עם הדרך הקצרה, טעות נפוצה והסבר. זהו אימון הכנה ואינו פרק רשמי של מאל״ו.</p>
+  <button class="primary-btn" onclick="startTimedQuant()">התחל אימון כמותי על זמן</button></div>
   <div class="section-title">תרגול ממוקד</div>
   <div class="card">
     <p class="small">רוצה לעבוד דווקא על נושא מסוים? אפשר לבחור כאן. רוב הזמן עדיף פשוט ללחוץ על “המשך ללמוד”.</p>
@@ -5284,6 +5288,20 @@ function startPractice(type,topic='all'){let list=type==='words'?buildWordQuesti
 function startFocused(type,selectId){const topic=document.getElementById(selectId)?.value||'all';startPractice(type,topic)}
 function startMixed(){const list=preparePracticeChoices(shuffle([...adaptivePick(auditedExamPool('quantitative'),5,'mixed-quant'),...adaptivePick(auditedExamPool('verbal'),5,'mixed-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'mixed'};lastChoice=null;view='question';render()}
 function startWeakestTopic(){const weakest=Object.entries(state.topicStats).filter(([,s])=>(s.answered||0)>=3).sort((a,b)=>percent(a[1].correct,a[1].answered)-percent(b[1].correct,b[1].answered))[0];if(!weakest){startMixed();return}const [topic]=weakest;const type=questions.quantitative.some(q=>q.topic===topic)?'quantitative':'verbal';startPractice(type,topic)}
+function startTimedQuant(){
+  clearInterval(psychoTimer);
+  const list=preparePracticeChoices(adaptivePick(auditedExamPool('quantitative'),20,'quant-timed'));
+  if(list.length!==20){alert('אין מספיק שאלות כמותיות תקינות לאימון.');return}
+  practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'quant-timed',results:[]};
+  lastChoice=null;view='question';
+  psychoTimer=setInterval(()=>{
+    if(!practice?.timed)return;
+    practice.timeLeft--;
+    if(practice.timeLeft<=0){finishPractice();return}
+    const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft);
+  },1000);
+  render();
+}
 function startPsychoSimulation(){clearInterval(psychoTimer);const list=preparePracticeChoices(shuffle([...adaptivePick(auditedExamPool('quantitative'),10,'simulation-quant'),...adaptivePick(auditedExamPool('verbal'),10,'simulation-verbal')]));practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:true,timeLeft:20*60,kind:'simulation'};lastChoice=null;view='question';psychoTimer=setInterval(()=>{if(!practice?.timed)return;practice.timeLeft--;if(practice.timeLeft<=0){finishPractice();return}const el=document.getElementById('psycho-timer');if(el)el.textContent=formatPsychoTime(practice.timeLeft)},1000);render()}
 function formatPsychoTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${s<10?'0':''}${s}`}
 function updateWordReview(q,good){if(!q.word)return;const s=getWordStat(q.word),box=good?Math.min(5,(s.box||0)+1):0;let dueAt;if(good)dueAt=Date.now()+REVIEW_INTERVALS[box]*DAY;else dueAt=Date.now()+10*60*1000;state.wordStats[q.word]={box,seen:(s.seen||0)+1,correct:(s.correct||0)+(good?1:0),dueAt,lastReviewed:new Date().toISOString()}}
@@ -5346,6 +5364,10 @@ function answerQuestion(choice){
     else state.errors.push({id:q.id,word:q.word||null,category:q.category,topic:q.topic,prompt:q.prompt.replace(/<[^>]*>/g,''),correctText:q.answers[q.correct],explanation:q.explanation.replace(/<[^>]*>/g,''),count:1,lastAt:new Date().toISOString()})
   }
   saveLocal();
+  if(practice?.kind==='quant-timed'){
+    practice.results.push({id:q.id,good,answer:q.answers[choice],correctAnswer:q.answers[q.correct]});
+    nextQuestion();return;
+  }
   renderQuestion();
   psyXpFloat(good?10:3);psyHaptic(good);if(good)psyConfetti(9);
 }
@@ -5435,8 +5457,18 @@ function finishPractice(){
   saveLocal();view='summary';render();
   if(!practice?.timed){psyConfetti(38);psyHaptic(true);if(bonus)psyXpFloat(bonus)}
 }
+function timedReview(){
+  const records=practice?.results||[],bank=new Map((practice?.list||[]).map(q=>[q.id,q]));
+  const content=records.map((r,i)=>{
+    const q=bank.get(r.id);if(!q)return '';
+    const steps=Array.isArray(q.fastSteps)?q.fastSteps.map((step,j)=>'<div class="fast-step"><span class="step-count">'+(j+1)+'</span><span>'+formatMathHtml(escapeHtml(step))+'</span></div>').join(''):'';
+    return '<div class="card" style="margin:10px 0"><strong>שאלה '+(i+1)+' · '+(r.good?'✓ נכון':'✗ טעות')+'</strong><p>'+formatMathHtml(q.prompt)+'</p><div class="small">בחרת: '+formatMathHtml(escapeHtml(r.answer))+' · נכון: '+formatMathHtml(escapeHtml(r.correctAnswer))+'</div><p>'+formatMathHtml(q.explanation)+'</p>'+(q.strategy?'<strong>⚡ מה לזהות</strong><p>'+formatMathHtml(escapeHtml(q.strategy))+'</p>':'')+steps+(q.trap?'<div class="small">מלכודת: '+formatMathHtml(escapeHtml(q.trap))+'</div>':'')+'</div>';
+  }).join('');
+  return '<div class="app-shell">'+topbar()+'<h2>תחקור אימון כמותי</h2><p>חזור במיוחד על שאלות שבהן הפתרון המהיר לא היה ברור לך. הזמן לא ממשיך להימדד במסך הזה.</p>'+content+'<button class="primary-btn" onclick="go(\'practice-menu\')">חזרה לתרגול</button>'+nav('practice')+'</div>';
+}
 function summary(){
   const sim=practice?.timed;
+  const quantTimed=practice?.kind==='quant-timed';
   const warm=practice?.lessonId==='warmup'&&state.dailyWarmup?.date===nowDate();
   const warmCorrect=warm?Object.entries(state.dailyWarmup.answers||{}).filter(([id,good])=>state.dailyWarmup.ids.includes(id)&&good).length:0;
   const summaryCount=warm?20:(practice?.list.length||0);
@@ -5444,9 +5476,9 @@ function summary(){
   const accuracy=percent(summaryCorrect,summaryCount);
   return`<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center">
     <div class="finish-emoji">${sim?'🏁':accuracy>=80?'🏆':'🎉'}</div>
-    <h2>${sim?'הסימולציה הושלמה':'השיעור הושלם!'}</h2>
+    <h2>${quantTimed?'האימון הכמותי הסתיים':sim?'הסימולציה הושלמה':'השיעור הושלם!'}</h2>
     <div class="psy-score-ring" style="--score:${accuracy}%"><strong>${accuracy}%</strong></div>
-    <p class="small">${sim?'התוצאה נשמרה במסך ההתקדמות.':`ענית נכון על ${summaryCorrect} מתוך ${summaryCount}${practice?.finishBonus?' · קיבלת בונוס '+practice.finishBonus+' XP':''}`}</p>
+    <p class="small">${sim?(quantTimed?'התוצאה נשמרה. כדאי לעבור עכשיו על הפתרונות הקצרים.':'התוצאה נשמרה במסך ההתקדמות.'):`ענית נכון על ${summaryCorrect} מתוך ${summaryCount}${practice?.finishBonus?' · קיבלת בונוס '+practice.finishBonus+' XP':''}`}</p>
     <div class="friendly-stats" style="margin:20px 0">
       <div class="friendly-stat"><strong>${summaryCorrect}</strong><span>נכונות</span></div>
       <div class="friendly-stat"><strong>${practice?.list.length||0}</strong><span>שאלות</span></div>
@@ -5664,7 +5696,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
