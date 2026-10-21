@@ -4887,21 +4887,89 @@ function percentFraction(p){
   const map={"2.5":[1,40],"5":[1,20],"6.25":[1,16],"7.5":[3,40],"10":[1,10],"12":[3,25],"12.5":[1,8],"15":[3,20],"20":[1,5],"25":[1,4],"30":[3,10],"37.5":[3,8],"40":[2,5],"50":[1,2],"60":[3,5],"75":[3,4],"80":[4,5]};
   return map[String(p)]||null;
 }
+// Plain-language mental arithmetic: each step includes the numeric result.
+// Original teaching notes informed by official NITE/CampusIL arithmetic topics.
+function mentalNumber(v){const n=Number(v);return Number.isFinite(n)?String(Math.round(n*1000000)/1000000):String(v)}
+function mentalDivide(n,d){
+  n=Number(n);d=Number(d);
+  if(!Number.isFinite(n)||!Number.isFinite(d)||d===0)return '';
+  const result=mentalNumber(n/d);
+  if(d===25)return `${mentalNumber(n)} ÷ 25: נכפיל ב־4 ונחלק ב־100. ${mentalNumber(n)} × 4 = ${mentalNumber(n*4)}; ${mentalNumber(n*4)} ÷ 100 = ${result}.`;
+  if(d===8)return `${mentalNumber(n)} ÷ 8: חוצים שלוש פעמים: ${mentalNumber(n/2)} → ${mentalNumber(n/4)} → ${result}.`;
+  if(d===16)return `${mentalNumber(n)} ÷ 16: חוצים ארבע פעמים: ${mentalNumber(n/2)} → ${mentalNumber(n/4)} → ${mentalNumber(n/8)} → ${result}.`;
+  if(d===4)return `${mentalNumber(n)} ÷ 4: חצי הוא ${mentalNumber(n/2)}, וחצי ממנו ${result}.`;
+  if(d===20)return `${mentalNumber(n)} ÷ 20: קודם מחלקים ב־10 (${mentalNumber(n/10)}), ואז ב־2 (${result}).`;
+  if(d===40)return `${mentalNumber(n)} ÷ 40: עשירית היא ${mentalNumber(n/10)}, ורבע ממנה הוא ${result}.`;
+  return `${mentalNumber(n)} ÷ ${mentalNumber(d)} = ${result}.`;
+}
 function percentMemoryTip(p){
-  const f=percentFraction(p);
-  if(!f)return `${p}% = ${p}/100. כשאין שבר נוח, אפשר לכפול ב־${p} ואז לחלק ב־100.`;
-  const [n,d]=f;
-  if(n===1)return `${p}% = 1/${d} → כדי למצוא ${p}% ממספר פשוט מחלקים ב־${d}.`;
-  return `${p}% = ${n}/${d} → מחלקים ב־${d} ואז כופלים ב־${n}. עדיף לחלק קודם כדי לשמור על מספרים קטנים.`;
+  const map={
+    '2.5':'2.5% הם רבע מ־10%.', '5':'5% הם חצי מ־10%.',
+    '6.25':'6.25% הם חצי מ־12.5% או רבע מ־25%.',
+    '7.5':'7.5% הם 5% ועוד 2.5%, או 10% פחות 2.5%.',
+    '10':'10% הם עשירית: מזיזים את הנקודה מקום אחד שמאלה.',
+    '12':'12% הם 10% ועוד 2% (חמישית מעשירית).',
+    '12.5':'12.5% הם שמינית: חצי של רבע.',
+    '15':'15% הם 10% ועוד 5%.',
+    '17':'17% הם 10% ועוד 5% ועוד 2%.',
+    '20':'20% הם חמישית, או פעמיים 10%.',
+    '25':'25% הם רבע: חוצים פעמיים.',
+    '27':'27% הם 25% ועוד 2%.',
+    '37.5':'37.5% הם רבע ועוד שמינית.',
+    '40':'40% הם פעמיים 20%.',
+    '50':'50% הם חצי.',
+    '62.5':'62.5% הם חצי ועוד שמינית.',
+    '75':'75% הם חצי ועוד רבע.',
+    '80':'80% הם השלם פחות חמישית.'
+  };
+  return map[String(p)]||`${p}% = ${p}/100 מהשלם. קודם כדאי לאתר 10%, 5% או רבע נוח.`;
+}
+function intuitivePercentSteps(p,base){
+  const v=Number(base),percent=Number(p);
+  if(!Number.isFinite(v)||!Number.isFinite(percent))return '';
+  const ten=v/10,five=v/20,two=v/50,quarter=v/4,eighth=v/8,one=v/100;
+  const lines={
+    '2.5':`10% הם ${mentalNumber(ten)}; רבע מהם הוא ${mentalNumber(ten/4)}.`,
+    '5':`10% הם ${mentalNumber(ten)}; החצי שלהם הוא ${mentalNumber(five)}.`,
+    '6.25':`25% הם ${mentalNumber(quarter)}; רבע מהם הוא ${mentalNumber(v/16)}.`,
+    '7.5':`10% הם ${mentalNumber(ten)}; 2.5% הם ${mentalNumber(ten/4)}; לכן מחסרים ומקבלים ${mentalNumber(ten-ten/4)}.`,
+    '10':`10% הם ${mentalNumber(ten)}.`,
+    '12':`10% הם ${mentalNumber(ten)}; 2% הם ${mentalNumber(two)}; יחד ${mentalNumber(ten+two)}.`,
+    '12.5':`25% הם ${mentalNumber(quarter)}; חצי מהם הוא ${mentalNumber(eighth)}.`,
+    '15':`10% הם ${mentalNumber(ten)}; 5% הם ${mentalNumber(five)}; יחד ${mentalNumber(ten+five)}.`,
+    '17':`10% הם ${mentalNumber(ten)}; 5% הם ${mentalNumber(five)}; 2% הם ${mentalNumber(two)}; יחד ${mentalNumber(ten+five+two)}.`,
+    '20':`10% הם ${mentalNumber(ten)}; פעמיים 10% הם ${mentalNumber(ten*2)}.`,
+    '25':`חצי מ־${mentalNumber(v)} הוא ${mentalNumber(v/2)}; עוד חצי הוא ${mentalNumber(quarter)}.`,
+    '27':`25% הם ${mentalNumber(quarter)}; 2% הם ${mentalNumber(two)}; יחד ${mentalNumber(quarter+two)}.`,
+    '37.5':`25% הם ${mentalNumber(quarter)}; 12.5% הם ${mentalNumber(eighth)}; יחד ${mentalNumber(quarter+eighth)}.`,
+    '40':`20% הם ${mentalNumber(v/5)}; כפול 2 הם ${mentalNumber(v*2/5)}.`,
+    '50':`מחצית מ־${mentalNumber(v)} היא ${mentalNumber(v/2)}.`,
+    '62.5':`50% הם ${mentalNumber(v/2)}; 12.5% הם ${mentalNumber(eighth)}; יחד ${mentalNumber(v*5/8)}.`,
+    '75':`50% הם ${mentalNumber(v/2)}; 25% הם ${mentalNumber(quarter)}; יחד ${mentalNumber(v*3/4)}.`,
+    '80':`20% הם ${mentalNumber(v/5)}; השלם פחות 20% הוא ${mentalNumber(v*4/5)}.`
+  };
+  const actual=mentalNumber(v*percent/100);
+  return (lines[String(p)]||`${mentalNumber(v)} × ${p}/100 = ${actual}.`)+` לכן ${p}% מ־${mentalNumber(v)} הם ${actual}.`;
+}
+function intuitiveReversePercentSteps(p,given){
+  const f=percentFraction(p),v=Number(given);
+  if(!f||!Number.isFinite(v))return '';
+  const [n,d]=f,one=v/n,total=one*d;
+  return `הכמות ${mentalNumber(v)} היא ${n} מתוך ${d} חלקים שווים. ${n} חלקים = ${mentalNumber(v)}, לכן חלק אחד = ${mentalNumber(one)}; השלם הוא ${d} חלקים: ${mentalNumber(one)} × ${d} = ${mentalNumber(total)}. בדיקה: ${p}% מ־${mentalNumber(total)} הם ${mentalNumber(v)}.`;
 }
 function percentTipForQuestion(q){
   if(!q||q.topic!=='אחוזים')return '';
-  if(q.percentTip)return q.percentTip;
-  const m=String(q.prompt||'').match(/(\d+(?:\.\d+)?)%/);
-  if(!m)return '';
-  const p=Number(m[1]);
-  return percentFraction(p)?percentMemoryTip(p):'';
+  if(q.intuitiveTip)return q.intuitiveTip;
+  const prompt=String(q.prompt||''),pct=prompt.match(/(\d+(?:\.\d+)?)%/);
+  if(!pct)return q.percentTip||'';
+  const p=Number(pct[1]);
+  const reverse=prompt.match(/(?:%\s*ממספר(?:\s+מסוים)?\s+הם\s+)(\d+(?:\.\d+)?)/);
+  if(reverse)return intuitiveReversePercentSteps(p,Number(reverse[1]));
+  const direct=prompt.match(/%\s*מ[־\-\s]*(\d+(?:\.\d+)?)/);
+  if(direct)return intuitivePercentSteps(p,Number(direct[1]));
+  return q.percentTip||percentMemoryTip(p);
 }
+
 function buildPercentQuick(count=10){
   const specs=[
     {p:50,base:86},{p:25,base:240},{p:20,base:175},{p:10,base:370},
@@ -4924,20 +4992,16 @@ function buildPercentQuick(count=10){
         `${s.p}% ממספר מסוים הם ${s.given}. מהו המספר?`,
         ans,
         [ans+40,Math.max(1,ans-40),s.given*d],
-        n===1
-          ? `${s.p}% = 1/${d}. אם 1/${d} מהמספר הוא ${s.given}, מחזירים לשלם בעזרת כפל: ${s.given} × ${d} = ${ans}.`
-          : `${s.p}% = ${n}/${d}. אם ${n}/${d} מהמספר הם ${s.given}, קודם מוצאים 1/${d}: ${s.given} ÷ ${n} = ${s.given/n}. אחר כך כופלים ב־${d}: ${s.given/n} × ${d} = ${ans}.`,
+        intuitiveReversePercentSteps(s.p,s.given),
         i
       );
-      q.percentTip=percentMemoryTip(s.p)+" בשאלה הפוכה מבצעים את הפעולות בכיוון ההפוך.";
+      q.intuitiveTip=intuitiveReversePercentSteps(s.p,s.given);
       q.difficulty=3;
       return q;
     }
     const ans=s.base*s.p/100;
     const [n,d]=f;
-    const explanation=n===1
-      ? `${s.p}% = 1/${d}, ולכן אין צורך לעבוד עם מספר עשרוני: ${s.base} ÷ ${d} = ${ans}.`
-      : `${s.p}% = ${n}/${d}. לכן ${s.base} ÷ ${d} = ${s.base/d}, ואז ${s.base/d} × ${n} = ${ans}.`;
+    const explanation=intuitivePercentSteps(s.p,s.base);
     const q=quickNumericQuestion(
       `quick-pct-${s.p}-${s.base}`,
       "אחוזים",
@@ -4947,7 +5011,7 @@ function buildPercentQuick(count=10){
       explanation,
       i
     );
-    q.percentTip=percentMemoryTip(s.p);
+    q.intuitiveTip=intuitivePercentSteps(s.p,s.base);
     q.difficulty=2;
     return q;
   })).slice(0,count);
