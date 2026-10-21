@@ -5046,7 +5046,7 @@ function buildFractionQuick(count=8){
 // Quality boundary: foundational drills build fluency but should not masquerade
 // as realistic psychometric multiple-choice items. Existing progress is retained.
 function isExamQuestion(q){
-  if(!q||!q.id||!Array.isArray(q.answers)||q.answers.length!==4||!Number.isInteger(q.correct))return false;
+  if(!q||!q.id||!q.prompt||!q.explanation||!Array.isArray(q.answers)||q.answers.length!==4||new Set(q.answers.map(String)).size!==4||!Number.isInteger(q.correct)||q.correct<0||q.correct>=4)return false;
   if(q.practiceTier==='foundation')return false;
   if(q.category==='מילים'||q.topic==='פירושי מילים'||q.topic==='חשבון מהיר')return false;
   if(/^(?:qg|vg|cq)\d+$/.test(q.id))return false; // older one-step generated templates
