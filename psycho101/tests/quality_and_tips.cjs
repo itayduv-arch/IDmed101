@@ -19,7 +19,7 @@ const qualityStart=html.indexOf('function isExamQuestion(');
 const qualityEnd=html.indexOf('function startQuickLesson(id){',qualityStart);
 const testState={skillRatings:{},questionPerformance:{},topicStats:{},dailyWarmup:null};
 const api=new Function('state','questions','nowDate','saveLocal','questionPerformance','recentQuestionIds','DAY',
-  html.slice(qualityStart,qualityEnd)+'\nreturn {isExamQuestion,auditedExamPool,dailyWarmupPlan,makeWarmupPlan,mentalDivide};');
+  html.slice(qualityStart,qualityEnd)+'\nreturn {isExamQuestion,auditedExamPool,dailyWarmupPlan,makeWarmupPlan};');
 let activeDate='2026-10-21',saves=0;
 const engine=api(testState,questions,()=>activeDate,()=>saves++,()=>testState.questionPerformance,()=>[],86400000);
 const quant=engine.auditedExamPool('quantitative'),verbal=engine.auditedExamPool('verbal');
