@@ -4758,7 +4758,9 @@ function formatMathHtml(input){
   // A mathematical expression must be one LTR island, including <sup> exponents.
   // Splitting on every HTML tag would separate the base and exponent in RTL text.
   const glyphs="⁰¹²³⁴⁵⁶⁷⁸⁹⁻";
-  const term="(?:[([]?[+−-]?[√]?[A-Za-z0-9"+glyphs+"]+(?:\\.[0-9]+)?%?(?:<sup>[^<>]*</sup>)?[)\\]]?)";
+  const atom="[A-Za-z0-9"+glyphs+"]+(?:\\.[0-9]+)?%?";
+  const power="(?:\\^(?:\\([^()]+\\)|[+−-]?[A-Za-z0-9"+glyphs+"]+)|<sup>[^<>]*</sup>)";
+  const term="(?:[([]?[+−-]?[√]?"+atom+power+"?[)\\]]?"+power+"?)";
   const operator=String.raw`(?:\s*(?:[·×÷*/+=<>:−,])\s*)`;
   const formula=new RegExp(term+"(?:"+operator+term+")*","g");
   const number=/(?:\d+(?:\.\d+)?%?)(?:\s*(?:×|÷|\+|−|-|\/|:|=|<|>)\s*(?:\d+(?:\.\d+)?%?)?)+|\d+(?:\.\d+)?%?/g;
@@ -4774,7 +4776,7 @@ function formatMathHtml(input){
     if(mathDepth)return chunk;
     const tokens=[];
     let output=chunk.replace(formula,part=>{
-      if(!part.includes("<sup>")&&!/[·×÷*/+=<>:−,]/.test(part))return part;
+      if(!part.includes("<sup>")&&!/[·×÷*/+=<>:−,^]/.test(part))return part;
       const marker=String.fromCharCode(0xE000+tokens.length);
       tokens.push('<span class="math-ltr" dir="ltr">'+part+'</span>');
       return marker;
