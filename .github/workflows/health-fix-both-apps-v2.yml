@@ -75,6 +75,10 @@ jobs:
         shell: bash
         run: node psycho101/tests/rtl_math_rendering.cjs
 
+      - name: Audit all quantitative formulas, answer keys and worked shortcuts
+        shell: bash
+        run: node psycho101/tests/full_quant_review.cjs
+
       - name: Validate JSON files
         shell: bash
         run: |
