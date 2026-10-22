@@ -34,11 +34,11 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup> + 2<sup>6</sup></span>?",
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>12</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>36</sup></span>"
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>36</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>"
       ],
-      "correct": 1,
+      "correct": 3,
       "explanation": "<span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup> + 2<sup>6</sup> = 2 · 2<sup>6</sup> = 2<sup>7</sup></span>.",
       "strategy": "פעמיים אותה חזקה של 2? המעריך גדל ב־1.",
       "fastSteps": [
@@ -57,12 +57,12 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "difficulty": 3,
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">2<sup>5</sup> + 2<sup>5</sup> + 2<sup>5</sup> + 2<sup>5</sup></span>?",
       "answers": [
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>20</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>9</sup></span>"
       ],
-      "correct": 2,
+      "correct": 0,
       "explanation": "ארבעה איברים זהים הם <span class=\"math-ltr\" dir=\"ltr\">4 · 2<sup>5</sup> = 2<sup>2</sup> · 2<sup>5</sup> = 2<sup>7</sup></span>.",
       "strategy": "ארבע הופעות של חזקה זהה של 2 מוסיפות 2 למעריך, מפני ש־4 הוא 2 בריבוע.",
       "fastSteps": [
@@ -82,11 +82,11 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">3<sup>4</sup> + 3<sup>4</sup> + 3<sup>4</sup></span>?",
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">3<sup>12</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">3<sup>5</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">3<sup>6</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">3<sup>5</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">3<sup>4</sup></span>"
       ],
-      "correct": 1,
+      "correct": 2,
       "explanation": "שלוש הופעות של אותו איבר: <span class=\"math-ltr\" dir=\"ltr\">3 · 3<sup>4</sup> = 3<sup>5</sup></span>.",
       "strategy": "כשמספר האיברים שווה לבסיס החזקה, אפשר להוסיף 1 למעריך.",
       "fastSteps": [
@@ -105,12 +105,12 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "difficulty": 4,
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">3<sup>5</sup> + 3<sup>5</sup></span>?",
       "answers": [
+        "<span class=\"math-ltr\" dir=\"ltr\">2 · 3<sup>5</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">3<sup>6</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">6<sup>5</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2 · 3<sup>5</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">3<sup>10</sup></span>"
       ],
-      "correct": 2,
+      "correct": 0,
       "explanation": "שני איברים זהים נותנים <span class=\"math-ltr\" dir=\"ltr\">2 · 3<sup>5</sup></span>, ולא <span class=\"math-ltr\" dir=\"ltr\">3<sup>6</sup></span>. הכפל ב־2 אינו כפל ב־3.",
       "strategy": "הוצא גורם משותף. הגדלת המעריך ב־1 נכונה רק כשהכפלת באותו בסיס.",
       "fastSteps": [
@@ -131,10 +131,10 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>15</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>9</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>7</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>8</sup></span>"
+        "<span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>8</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>7</sup></span>"
       ],
-      "correct": 2,
+      "correct": 3,
       "explanation": "מוציאים את החזקה הקטנה: <span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup>(1+2)=3 · 2<sup>7</sup></span>.",
       "strategy": "בחזקות סמוכות הוצא את החזקה הקטנה: החזקה הגדולה היא פי 2 ממנה.",
       "fastSteps": [
@@ -153,12 +153,12 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "difficulty": 3,
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup> + 2<sup>6</sup> + 2<sup>7</sup></span>?",
       "answers": [
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>8</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>9</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>8</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>19</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>"
       ],
-      "correct": 0,
+      "correct": 1,
       "explanation": "שתי החזקות הראשונות הן <span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>; כעת <span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup>+2<sup>7</sup>=2<sup>8</sup></span>.",
       "strategy": "צור זוג מחזקות זהות, ואז חבר שוב שתי חזקות זהות.",
       "fastSteps": [
@@ -177,12 +177,12 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "difficulty": 4,
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">4<sup>3</sup> + 4<sup>3</sup></span>?",
       "answers": [
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>7</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">4<sup>6</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">8<sup>3</sup></span>"
       ],
-      "correct": 1,
+      "correct": 0,
       "explanation": "כותבים את בסיס 4 כחזקה של 2: <span class=\"math-ltr\" dir=\"ltr\">4<sup>3</sup>=2<sup>6</sup></span>. לכן הסכום הוא <span class=\"math-ltr\" dir=\"ltr\">2 · 2<sup>6</sup>=2<sup>7</sup></span>.",
       "strategy": "המר בסיס שהוא חזקה של 2 לפני החיבור.",
       "fastSteps": [
@@ -226,11 +226,11 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">5<sup>3</sup> + 5<sup>3</sup> + 5<sup>3</sup> + 5<sup>3</sup> + 5<sup>3</sup></span>?",
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">5<sup>15</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">5<sup>4</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">25<sup>3</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">5<sup>4</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">5<sup>5</sup></span>"
       ],
-      "correct": 1,
+      "correct": 2,
       "explanation": "יש חמישה איברים זהים: <span class=\"math-ltr\" dir=\"ltr\">5 · 5<sup>3</sup> = 5<sup>4</sup></span>.",
       "strategy": "חמישה איברים של 5 בחזקה הם כפל ב־5: מוסיפים 1 למעריך.",
       "fastSteps": [
@@ -250,11 +250,11 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">2<sup>8</sup> + 2<sup>8</sup> + 2<sup>8</sup></span>?",
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>9</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>11</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>8</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>11</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>24</sup></span>"
       ],
-      "correct": 2,
+      "correct": 1,
       "explanation": "שלושה עותקים של <span class=\"math-ltr\" dir=\"ltr\">2<sup>8</sup></span> נותנים <span class=\"math-ltr\" dir=\"ltr\">3 · 2<sup>8</sup></span>. 3 אינו חזקה שלמה של 2.",
       "strategy": "ספור את מספר האיברים. רק מספר עותקים שהוא חזקה של הבסיס הופך לתוספת שלמה למעריך.",
       "fastSteps": [
@@ -274,11 +274,11 @@ window.PSYCHO101_POWERS_SUM_20261022 = {
       "prompt": "למה שווה הביטוי <span class=\"math-ltr\" dir=\"ltr\">(2<sup>6</sup> + 2<sup>6</sup>)<sup>2</sup></span>?",
       "answers": [
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>12</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>14</sup></span>",
         "<span class=\"math-ltr\" dir=\"ltr\">2<sup>8</sup></span>",
-        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>26</sup></span>"
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>26</sup></span>",
+        "<span class=\"math-ltr\" dir=\"ltr\">2<sup>14</sup></span>"
       ],
-      "correct": 1,
+      "correct": 3,
       "explanation": "תחילה <span class=\"math-ltr\" dir=\"ltr\">2<sup>6</sup>+2<sup>6</sup>=2<sup>7</sup></span>. אחר כך <span class=\"math-ltr\" dir=\"ltr\">(2<sup>7</sup>)<sup>2</sup>=2<sup>14</sup></span>.",
       "strategy": "השלם קודם את החיבור בסוגריים, ואז השתמש בכלל חזקה של חזקה.",
       "fastSteps": [
