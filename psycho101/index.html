@@ -4433,6 +4433,7 @@ const wordBank = [
 <script src="./daily_expansion_20261013.js?v=20261021-46"></script>
 <script src="./powers_expansion_20261014.js?v=20261014-43"></script>
 <script src="./timed_shortcuts_20261021.js?v=20261021-49"></script>
+<script src="./powers_sum_20261022.js?v=20261022-50"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
@@ -4744,6 +4745,7 @@ questions.verbal.push(...(window.PSYCHO101_DAILY_20261011?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20261013?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261013?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_POWERS_20261014?.quantitative||[]));
+questions.quantitative.push(...(window.PSYCHO101_POWERS_SUM_20261022?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_TIMED_SHORTCUTS_20261021?.quantitative||[]));
 for(const q of questions.quantitative){
   const annotated=window.PSYCHO101_SHORT_METHODS_20261021?.[q.id];
