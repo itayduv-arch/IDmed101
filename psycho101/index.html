@@ -4787,7 +4787,7 @@ function formatMathHtml(input){
   return chunks.map(chunk=>{
     const opening=chunk.match(/^<(span|div)\b/i);
     if(opening){
-      const ownMath=/(?:\bdir\s*=\s*(?:"ltr"|'ltr'|ltr)\b|\bmath-ltr\b)/i.test(chunk);
+      const ownMath=/(?:\bdir\s*=\s*(?:"ltr"|'ltr'|ltr)(?=\s|>)|\bmath-ltr\b)/i.test(chunk);
       containers.push({tag:opening[1].toLowerCase(),math:ownMath||(containers.length>0&&containers[containers.length-1].math)});
       return chunk;
     }
