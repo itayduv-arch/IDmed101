@@ -27,7 +27,7 @@ for(const [i,q] of bank.entries()){
   assert(q.strategy&&q.trap&&q.explanation&&q.provenance,q.id+': missing educational metadata');
   correctDistribution[q.correct]++;
   for(const f of [q.prompt,q.explanation,...q.answers]){
-    assert.equal((f.match(/<span\\b/g)||[]).length,(f.match(/<\\/span>/g)||[]).length,q.id+': unbalanced nested math spans');
+    assert.equal((f.match(/<span/g)||[]).length,(f.match(/<[/]span>/g)||[]).length,q.id+': unbalanced nested math spans');
   }
   if(i<fixtures.length){
     const [percent,numer,denom,answer]=fixtures[i];
@@ -60,6 +60,6 @@ const {formatMathHtml}=new Function(html.slice(first,last)+'\nreturn {formatMath
 for(const q of bank){
   const f=formatMathHtml(q.prompt);
   assert(f.includes('math-ltr'),q.id+': lost LTR isolation');
-  assert.equal((f.match(/<span\\b/g)||[]).length,(f.match(/<\\/span>/g)||[]).length,q.id+': formatter unbalanced tags');
+  assert.equal((f.match(/<span/g)||[]).length,(f.match(/<[/]span>/g)||[]).length,q.id+': formatter unbalanced tags');
 }
 console.log('PASS 12 fraction-percent questions: maths, four answers, short methods, RTL spans, app wiring, offline cache.');
