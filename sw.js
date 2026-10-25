@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v23';
+const CACHE_NAME='id101-flight-v24';
 const SHELL=[
   './',
   './index.html',
@@ -29,6 +29,8 @@ const CORE=[
   './psycho101/powers_expansion_20261014.js',
   './psycho101/timed_shortcuts_20261021.js',
   './psycho101/short_method_annotations_20261021.js',
+  './psycho101/powers_sum_20261022.js',
+  './psycho101/percent_fractions_20261025.js',
   './idmed101/',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
