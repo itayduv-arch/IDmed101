@@ -291,7 +291,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261026-54";
+const PSYCHO101_BUILD_VERSION="20261030-56";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4456,6 +4456,7 @@ const wordBank = [
 <script src="./percent_fractions_20261025.js?v=20261025-52"></script>
 <script src="./probability_conditioned_20261026.js?v=20261026-54"></script>
 <script src="./algebra_comparisons_20261028.js?v=20261028-55"></script>
+<script src="./verbal_quality_20261030.js?v=20261030-56"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
@@ -4766,6 +4767,7 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20261011?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261011?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_DAILY_20261013?.quantitative||[]));
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261013?.verbal||[]));
+questions.verbal.push(...(window.PSYCHO101_VERBAL_20261030?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_POWERS_20261014?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_POWERS_SUM_20261022?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_PERCENT_FRACTIONS_20261025?.quantitative||[]));
@@ -5477,7 +5479,13 @@ function quantitativeStrategyTip(q){
   return bits.length?'<div class="strategy-tip">'+bits.join('<hr class="tip-divider">')+'</div>':'';
 }
 
-function renderQuestion(){const q=practice.list[practice.index],done=practice.answeredCurrent,progress=Math.round((practice.lessonId==='warmup'?(practice.warmupStart||0)+practice.index+1:practice.index+1)/(practice.lessonId==='warmup'?20:practice.list.length)*100);const answers=q.answers.map((a,i)=>{let cls='answer';if(done&&i===q.correct)cls+=' correct';if(done&&i===lastChoice&&i!==q.correct)cls+=' wrong';return`<button class="${cls}" ${done?'disabled':''} onclick="answerQuestion(${i})">${formatMathHtml(a)}</button>`}).join('');let feedback='';if(done){const good=lastChoice===q.correct;const pctTip=percentTipForQuestion(q);const percentTip=pctTip?`<div class="percent-tip"><strong>💡 קיצור דרך שכדאי לזכור</strong><br>${formatMathHtml(pctTip)}</div>`:'';const strategyTip=verbalStrategyTip(q)+quantitativeStrategyTip(q);const analogyTip=analogyMistakeTip(q,lastChoice);feedback=`<div class="feedback ${good?'good':'bad'}"><strong>${good?'✓ נכון! מעולה':'✗ כמעט — הנה ההסבר'}</strong><div class="explanation">${formatMathHtml(q.explanation)}</div>${analogyTip}${percentTip}${strategyTip}</div><div style="margin-top:12px"><button class="primary-btn" onclick="nextQuestion()">${practice.index===practice.list.length-1?'סיום האימון':'לשאלה הבאה'}</button></div>`}const timer=practice.timed?`<span id="psycho-timer" class="pill">⏱ ${formatPsychoTime(practice.timeLeft)}</span>`:'';document.getElementById('app').innerHTML=`<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">${q.category} · ${q.topic}${q.difficulty?` · קושי ${q.difficulty}/5`:``}</span>${timer}</div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${progress}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${practice.lessonId==='warmup'?(practice.warmupStart||0)+practice.index+1:practice.index+1} מתוך ${practice.lessonId==='warmup'?20:practice.list.length}</div><div class="question">${formatMathHtml(q.prompt)}</div><div class="answers">${answers}</div>${feedback}</div></div>`}
+function answerSpecificFeedback(q){
+  if(!Array.isArray(q?.answerExplanations)||q.answerExplanations.length!==4)return '';
+  return '<div class="learning-extra"><strong>ניתוח כל האפשרויות</strong>'+
+    q.answers.map((answer,i)=>'<div style="margin-top:6px"><b>'+escapeHtml(answer)+'</b> — '+escapeHtml(q.answerExplanations[i])+'</div>').join('')+
+    '</div>';
+}
+function renderQuestion(){const q=practice.list[practice.index],done=practice.answeredCurrent,progress=Math.round((practice.lessonId==='warmup'?(practice.warmupStart||0)+practice.index+1:practice.index+1)/(practice.lessonId==='warmup'?20:practice.list.length)*100);const answers=q.answers.map((a,i)=>{let cls='answer';if(done&&i===q.correct)cls+=' correct';if(done&&i===lastChoice&&i!==q.correct)cls+=' wrong';return`<button class="${cls}" ${done?'disabled':''} onclick="answerQuestion(${i})">${formatMathHtml(a)}</button>`}).join('');let feedback='';if(done){const good=lastChoice===q.correct;const pctTip=percentTipForQuestion(q);const percentTip=pctTip?`<div class="percent-tip"><strong>💡 קיצור דרך שכדאי לזכור</strong><br>${formatMathHtml(pctTip)}</div>`:'';const strategyTip=verbalStrategyTip(q)+quantitativeStrategyTip(q);const analogyTip=analogyMistakeTip(q,lastChoice);feedback=`<div class="feedback ${good?'good':'bad'}"><strong>${good?'✓ נכון! מעולה':'✗ כמעט — הנה ההסבר'}</strong><div class="explanation">${formatMathHtml(q.explanation)}</div>${answerSpecificFeedback(q)}${analogyTip}${percentTip}${strategyTip}</div><div style="margin-top:12px"><button class="primary-btn" onclick="nextQuestion()">${practice.index===practice.list.length-1?'סיום האימון':'לשאלה הבאה'}</button></div>`}const timer=practice.timed?`<span id="psycho-timer" class="pill">⏱ ${formatPsychoTime(practice.timeLeft)}</span>`:'';document.getElementById('app').innerHTML=`<div class="app-shell"><div class="practice-head"><button class="back" onclick="go('home')">← יציאה</button><span class="badge">${q.category} · ${q.topic}${q.difficulty?` · קושי ${q.difficulty}/5`:``}</span>${timer}</div><div class="progress" style="background:#e6e9f0;margin:0 auto 16px;max-width:760px"><div style="width:${progress}%;background:#5965e0"></div></div><div class="practice-card"><div class="small">שאלה ${practice.lessonId==='warmup'?(practice.warmupStart||0)+practice.index+1:practice.index+1} מתוך ${practice.lessonId==='warmup'?20:practice.list.length}</div><div class="question">${formatMathHtml(q.prompt)}</div><div class="answers">${answers}</div>${feedback}</div></div>`}
 function nextQuestion(){if(practice.index<practice.list.length-1){practice.index++;practice.answeredCurrent=false;lastChoice=null;renderQuestion()}else finishPractice()}
 function finishPractice(){
   clearInterval(psychoTimer);
