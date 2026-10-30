@@ -66,4 +66,6 @@ for(const q of shuffled){
 }
 assert.equal(feedback({}), '');
 assert(html.includes('${answerSpecificFeedback(q)}${analogyTip}'),'Feedback must be visible after answering');
+assert(html.includes('verbalStrategyTip(q)+verbalQuickStrategy(q)+quantitativeStrategyTip(q)'),'Quick verbal method must appear in feedback');
+assert(html.includes('function verbalQuickStrategy(q){'),'Quick verbal strategy helper must exist');
 console.log('PASS verbal_quality_20261030: 3 questions, difficulty 2/3/4, unique answers, full distractor feedback, stable shuffling, balanced positions, active bank, offline/version integration.');
