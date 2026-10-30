@@ -291,7 +291,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261030-57";
+const PSYCHO101_BUILD_VERSION="20261030-58";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4456,6 +4456,7 @@ const wordBank = [
 <script src="./percent_fractions_20261025.js?v=20261025-52"></script>
 <script src="./probability_conditioned_20261026.js?v=20261026-54"></script>
 <script src="./algebra_comparisons_20261028.js?v=20261028-55"></script>
+<script src="./handshakes_counting_20261030.js?v=20261030-58"></script>
 <script src="./verbal_quality_20261030.js?v=20261030-57"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
 <script>
@@ -4773,6 +4774,7 @@ questions.quantitative.push(...(window.PSYCHO101_POWERS_SUM_20261022?.quantitati
 questions.quantitative.push(...(window.PSYCHO101_PERCENT_FRACTIONS_20261025?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_PROBABILITY_20261026?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_INEQUALITIES_20261028?.quantitative||[]));
+questions.quantitative.push(...(window.PSYCHO101_HANDSHAKES_20261030?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_TIMED_SHORTCUTS_20261021?.quantitative||[]));
 for(const q of questions.quantitative){
   const annotated=window.PSYCHO101_SHORT_METHODS_20261021?.[q.id];
