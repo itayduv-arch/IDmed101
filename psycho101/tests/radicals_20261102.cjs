@@ -1,0 +1,41 @@
+'use strict';
+/* Regression tests for the user-supplied square-root question, 2 Nov 2026. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.join(__dirname,'..'),window={};
+vm.runInNewContext(fs.readFileSync(path.join(root,'radicals_20261102.js'),'utf8'),{window});
+const questions=window.PSYCHO101_RADICALS_20261102?.quantitative||[];
+assert.equal(questions.length,12,'One source question + eleven variants');
+const expected=["6√2","4√2","5√3","3√2","8√2","5√5","12","7√2","4","√3","9√2","2√2"];
+const values=[2*Math.sqrt(18),2*Math.sqrt(8),Math.sqrt(12)+Math.sqrt(27),Math.sqrt(50)-Math.sqrt(8),2*Math.sqrt(18)+Math.sqrt(8),Math.sqrt(45)+Math.sqrt(20),Math.sqrt(18)*Math.sqrt(8),3*Math.sqrt(2)+2*Math.sqrt(8),Math.sqrt(48)/Math.sqrt(3),Math.sqrt(27)-Math.sqrt(12),Math.sqrt(8)+Math.sqrt(18)+Math.sqrt(32),Math.sqrt(72)-2*Math.sqrt(8)];
+const positions=[0,0,0,0],ids=new Set();
+for(const [i,q] of questions.entries()){
+  assert(!ids.has(q.id),'Repeated id');ids.add(q.id);
+  assert.equal(q.category,'כמותי',q.id);
+  assert.equal(q.topic,'חזקות ושורשים',q.id);
+  assert.equal(q.answers.length,4,q.id);
+  assert.equal(new Set(q.answers).size,4,q.id);
+  assert(q.correct>=0&&q.correct<4,q.id);
+  positions[q.correct]++;
+  const match=q.answers[q.correct].match(/^<span class="math-ltr" dir="ltr">(.+)<\/span>$/);
+  assert(match,q.id+' missing LTR expression');
+  assert.equal(match[1],expected[i],q.id+' wrong answer text');
+  const numerical=match[1].replace(/√(\d+)/g,'Math.sqrt($1)').replace(/(\d+)Math/g,'$1*Math');
+  assert(Math.abs(new Function('return '+numerical)()-values[i])<1e-9,q.id+' incorrect arithmetic');
+  for(const field of ['prompt','explanation','strategy','whenToUse','trap','provenance'])assert(q[field]?.length,q.id+' missing '+field);
+  assert(Array.isArray(q.fastSteps)&&q.fastSteps.length>=2,q.id+' missing quick steps');
+  for(const field of [q.prompt,q.explanation,...q.answers])assert.equal((field.match(/<span/g)||[]).length,(field.match(/<\/span>/g)||[]).length,q.id+' unbalanced span');
+}
+assert.deepEqual(positions,[3,3,3,3],'Answer distribution');
+assert.equal(questions[0].provenance,'user-provided-image-2026-11-02');
+assert.deepEqual(Array.from(questions[0].answers.map(x=>x.replace(/<[^>]+>/g,''))),['6','9','6√2','18']);
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const worker=fs.readFileSync(path.join(root,'..','sw.js'),'utf8');
+assert(html.includes('./radicals_20261102.js?v=20261102-59'),'Question script not loaded');
+assert(html.includes('window.PSYCHO101_RADICALS_20261102?.quantitative'),'Questions not assembled');
+assert(html.indexOf('radicals_20261102.js')<html.indexOf('const questions={'),'Incorrect script order');
+assert(worker.includes("'./psycho101/radicals_20261102.js'"),'New questions missing offline cache');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261102-59');
+console.log('PASS: radical questions, numeric answers, quick methods, RTL markup, balanced choices, integration and offline caching');
