@@ -32,7 +32,7 @@ for(const [i,q] of questions.entries()){
   for(const field of ['explanation','strategy','whenToUse','trap','skill','provenance'])assert(q[field]?.length,q.id+' missing '+field);
   assert(q.difficulty>=2&&q.difficulty<=4,q.id+' difficulty range');
   assert(Array.isArray(q.fastSteps)&&q.fastSteps.length>=2,q.id+' quick steps');
-  for(const s of [q.prompt,...q.answers])assert.equal((s.match(/<span/g)||[]).length,(s.match(/<\\/span>/g)||[]).length,q.id+' broken RTL markup');
+  for(const s of [q.prompt,...q.answers])assert.equal((s.match(/<span/g)||[]).length,s.split('</span>').length-1,q.id+' broken RTL markup');
 }
 assert.deepEqual(distribution,[3,3,3,3],'Correct answer placements should be balanced');
 assert.equal(questions[0].provenance,'user-provided-image-2026-11-08');
