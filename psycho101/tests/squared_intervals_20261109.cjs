@@ -59,7 +59,7 @@ for(let i=0;i<questions.length;i++){
   assert(q.fastSteps?.length>=2,'Fast steps '+q.id);
   for(const option of q.answers){
     assert(option.startsWith('<span class="math-ltr" dir="ltr">')&&option.endsWith('</span>'),'RTL option '+q.id);
-    assert.equal((option.match(/<span/g)||[]).length,(option.match(/<\\/span>/g)||[]).length,'Broken LTR span '+q.id);
+    assert.equal((option.match(/<span/g)||[]).length,option.split('</span>').length-1,'Broken LTR span '+q.id);
   }
 }
 assert.deepEqual(freq,[3,3,3,3],'Balanced answer distribution');
