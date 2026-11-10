@@ -289,11 +289,12 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 </style>
 <link rel="stylesheet" href="./time_attack_20261110.css?v=20261110-64">
 <link rel="stylesheet" href="./home_hub_20261110.css?v=20261110-65">
+<link rel="stylesheet" href="./leaderboard_20261110.css?v=20261110-66">
 </head>
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261110-65";
+const PSYCHO101_BUILD_VERSION="20261110-66";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4466,7 +4467,7 @@ const wordBank = [
 <script src="./verbal_quality_20261030.js?v=20261030-57"></script>
 <script src="./verbal_quality_20261106.js?v=20261106-61"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
-<script src="./time_attack_20261110.js?v=20261110-64"></script>
+<script src="./time_attack_20261110.js?v=20261110-66"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -5605,24 +5606,110 @@ async function pushLeaderboard(){
     if(error)throw error;
   }catch(e){console.error("Leaderboard push failed",e)}
 }
-async function loadLeaderboard(){
+const PSYCHO_RANK_MODES=[
+  ['mixed','הכול ביחד'],['mul','כפל וחילוק'],['powers','חזקות ושורשים'],
+  ['fractions','אחוזים ושברים'],['mental','חשבון זריז']
+];
+let leaderboardTab='weekly',leaderboardRankMode='mixed',leaderboardRankDuration=60,leaderboardRequestId=0;
+function weekStartIsrael(){
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const p=k=>Number(parts.find(x=>x.type===k)?.value);
+  const date=new Date(Date.UTC(p('year'),p('month')-1,p('day')));
+  date.setUTCDate(date.getUTCDate()-date.getUTCDay());
+  return date.toISOString().slice(0,10);
+}
+function selectLeaderboardTab(tab){
+  if(!['weekly','bests','lifetime'].includes(tab))return;
+  leaderboardTab=tab;
+  if(view==='leaderboard')leaderboardView();
+}
+function selectLeaderboardMode(mode){
+  if(!PSYCHO_RANK_MODES.some(x=>x[0]===mode))return;
+  leaderboardRankMode=mode;
+  if(view==='leaderboard')leaderboardView();
+}
+function selectLeaderboardDuration(duration){
+  if(![45,60,90].includes(Number(duration)))return;
+  leaderboardRankDuration=Number(duration);
+  if(view==='leaderboard')leaderboardView();
+}
+async function loadLeaderboard(tab=leaderboardTab){
   try{
     const sb=await getSupabase();
+    if(tab==='weekly'){
+      const {data,error}=await sb.from('psycho101_ta_weekly')
+        .select('user_id,display_name,best_score,best_correct,week_start')
+        .eq('week_start',weekStartIsrael())
+        .order('best_score',{ascending:false}).order('best_correct',{ascending:false}).limit(100);
+      if(error)throw error;return data||[];
+    }
+    if(tab==='bests'){
+      const {data,error}=await sb.from('psycho101_ta_bests')
+        .select('user_id,display_name,best_score,best_correct,mode,duration')
+        .eq('mode',leaderboardRankMode).eq('duration',leaderboardRankDuration)
+        .order('best_score',{ascending:false}).order('best_correct',{ascending:false}).limit(100);
+      if(error)throw error;return data||[];
+    }
     const {data,error}=await sb.from('psycho101_leaderboard')
       .select('user_id,display_name,xp,streak,answered,correct,updated_at')
-      .limit(100);
+      .order('xp',{ascending:false}).limit(100);
     if(error)throw error;
     return (data||[]).sort(compareLeaderboard);
-  }catch(e){console.error("Leaderboard load failed",e);return[]}
+  }catch(e){console.error('Leaderboard load failed',e);throw e}
+}
+function leaderboardTabs(){
+  const tabs=[['weekly','השבוע'],['bests','שיאי Time Attack'],['lifetime','XP מצטבר']];
+  return '<div class="rank-tabs" role="group" aria-label="סוג דירוג">'+tabs.map(([id,label])=>
+    '<button type="button" class="rank-tab '+(leaderboardTab===id?'active':'')+'" aria-pressed="'+(leaderboardTab===id)+'" onclick="selectLeaderboardTab(\''+id+'\')">'+label+'</button>').join('')+'</div>';
+}
+function leaderboardFilters(){
+  if(leaderboardTab!=='bests')return '';
+  return '<div class="rank-filters"><label>סוג תרגול<select onchange="selectLeaderboardMode(this.value)">'+
+    PSYCHO_RANK_MODES.map(([id,name])=>'<option value="'+id+'" '+(id===leaderboardRankMode?'selected':'')+'>'+name+'</option>').join('')+
+    '</select></label><label>משך משחק<select onchange="selectLeaderboardDuration(this.value)">'+
+    [45,60,90].map(n=>'<option value="'+n+'" '+(n===leaderboardRankDuration?'selected':'')+'>'+n+' שניות</option>').join('')+
+    '</select></label></div>';
+}
+function leaderboardIntro(){
+  if(leaderboardTab==='weekly')return '<div class="rank-note"><strong>דירוג השבוע · החל מיום ראשון</strong><span>לכולם אותם תנאים - Time Attack מדורג, מסלול הכול ביחד, 60 שניות. רק התוצאה הטובה ביותר בכל שבוע נספרת. התשובות והניקוד נבדקים בשרת.</span></div>';
+  if(leaderboardTab==='bests')return '<div class="rank-note"><strong>שיאים מדורגים</strong><span>בחר נושא ומשך משחק כדי להשוות תוצאות באותם תנאים. מופיעות תוצאות שנבדקו בשרת בלבד.</span></div>';
+  return '<div class="rank-note"><strong>XP מצטבר · התקדמות בלמידה</strong><span>הניקוד המצטבר משקף פעילות לאורך זמן והוא אינו ציון מאומת או מדד ישיר ליכולת. מוצגים עד 100 משתמשים.</span></div>';
+}
+function leaderboardRow(r,i,me){
+  const isMe=r.user_id===me,score=leaderboardTab==='lifetime'?(r.xp||0):(r.best_score||0);
+  const line=leaderboardTab==='lifetime'?'דיוק '+leaderboardAccuracy(r)+'% · רצף '+(r.streak||0)+' · '+(r.answered||0)+' שאלות':
+    (r.best_correct||0)+' תשובות נכונות';
+  const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
+  return '<div class="leader-row '+(isMe?'leader-me':'')+'"><div class="leader-rank">'+rank+'</div>'+
+    '<div><div class="leader-name">'+escapeHtml(r.display_name||'משתמש')+(isMe?' · אתה':'')+'</div>'+
+    '<div class="leader-sub">'+line+'</div></div><div class="leader-xp">'+score+(leaderboardTab==='lifetime'?' XP':' נק׳')+'</div></div>';
 }
 async function leaderboardView(){
-  document.getElementById('app').innerHTML=`<div class="app-shell">${topbar()}<div class="section-title">🏆 Leaderboard</div><div class="card"><div class="empty">טוען דירוג...</div></div>${nav('leaderboard')}</div>`;
-  const rows=await loadLeaderboard(),me=state.user?.id,medals=['🥇','🥈','🥉'];
-  const html=rows.length?rows.map((r,i)=>{
-    const acc=leaderboardAccuracy(r);
-    return `<div class="leader-row ${r.user_id===me?'leader-me':''}"><div class="leader-rank">${medals[i]||'#'+(i+1)}</div><div><div class="leader-name">${escapeHtml(r.display_name)}${r.user_id===me?' · אתה':''}</div><div class="leader-sub">דיוק ${acc}% · 🔥 ${r.streak||0} · ${r.answered||0} שאלות</div></div><div class="leader-xp">${r.xp||0} XP</div></div>`;
-  }).join(''):'<div class="empty">עדיין אין אף אחד בדירוג. תהיה הראשון 🏆</div>';
-  document.getElementById('app').innerHTML=`<div class="app-shell">${topbar()}<div class="section-title">🏆 Leaderboard</div><div class="leader-legend"><span class="quick-chip">1. XP</span><span class="quick-chip">2. דיוק</span><span class="quick-chip">3. רצף</span><span class="quick-chip">4. שאלות שנענו</span></div><div class="card">${html}</div><div class="section-title">הזמן חברים</div><div class="card share-card"><div class="emoji">👥</div><p>כל מי שמקבל את הקישור יכול להשתמש באפליקציה. כדי להופיע בדירוג צריך חשבון וכינוי.</p><button class="primary-btn" onclick="shareApp()">שתף את IDpsycho101</button></div>${nav('leaderboard')}</div>`;
+  const token=++leaderboardRequestId,activeTab=leaderboardTab;
+  const shell=body=>'<div class="app-shell">'+topbar()+'<div class="section-title">🏆 דירוגים</div>'+
+    leaderboardTabs()+leaderboardIntro()+leaderboardFilters()+body+
+    '<section class="rank-bottom"><h3>רוצה לעלות בדירוג?</h3>'+
+    '<p>שחק סבב מדורג ב־Time Attack. טבלת השבוע מיועדת למסלול הכול ביחד במשך 60 שניות.</p>'+
+    '<button class="primary-btn" onclick="go(\'time-attack\')">כניסה ל־Time Attack</button>'+
+    '<button class="secondary-btn" onclick="shareApp()">הזמן חברים</button></section>'+nav('leaderboard')+'</div>';
+  document.getElementById('app').innerHTML=shell('<div class="card"><div class="empty">טוען את הדירוג...</div></div>');
+  let rows,error=null;
+  try{rows=await loadLeaderboard(activeTab);}catch(e){error=e;rows=[]}
+  if(token!==leaderboardRequestId||view!=='leaderboard'||activeTab!==leaderboardTab)return;
+  const me=state.user?.id;
+  let body='';
+  if(error){
+    body='<div class="card"><div class="empty">לא ניתן לטעון את הדירוג כרגע. בדוק חיבור ונסה שוב.</div><button class="secondary-btn" onclick="leaderboardView()">נסה שוב</button></div>';
+  }else if(rows.length){
+    const myIndex=rows.findIndex(r=>r.user_id===me);
+    body=(myIndex>=0?'<div class="rank-my-position">המקום שלך בדירוג הזה · <strong>#'+(myIndex+1)+'</strong></div>':'')+
+      '<div class="card">'+rows.map((r,i)=>leaderboardRow(r,i,me)).join('')+'</div>';
+  }else{
+    body='<div class="card"><div class="empty">'+(activeTab==='weekly'?'עוד אין תוצאות לסבב השבועי. אפשר להיות הראשון!':
+      activeTab==='bests'?'עוד לא פורסמו תוצאות מדורגות במסלול הזה.':
+      'עדיין אין משתתפים בדירוג המצטבר.')+'</div></div>';
+  }
+  document.getElementById('app').innerHTML=shell(body);
 }
 async function saveDisplayName(){
   const input=document.getElementById('display-name'),msg=document.getElementById('display-name-msg'),name=input?.value?.trim();
@@ -5788,7 +5875,21 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='path-daily')app.innerHTML=dailyPath();else if(view==='path-quant')app.innerHTML=quantitativePath();else if(view==='path-verbal')app.innerHTML=verbalPath();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28)});else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='path-daily')app.innerHTML=dailyPath();else if(view==='path-quant')app.innerHTML=quantitativePath();else if(view==='path-verbal')app.innerHTML=verbalPath();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},getIdentity:()=>state.user&&state.displayName?state.user:null,
+saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28),
+beginRanked:async(mode,duration)=>{
+ if(!state.user||!state.displayName)throw new Error('יש להתחבר ולהגדיר כינוי בחשבון.');
+ const sb=await getSupabase();
+ const {data,error}=await sb.functions.invoke('psycho101-ranked-time-attack',{body:{action:'start',mode,duration}});
+ if(error||!data?.ranked)throw new Error('פתיחת הסבב נכשלה. ודא שאתה מחובר לאינטרנט ונסה שוב.');
+ return data;
+},
+finishRanked:async(sessionId,answers)=>{
+ const sb=await getSupabase();
+ const {data,error}=await sb.functions.invoke('psycho101-ranked-time-attack',{body:{action:'finish',session_id:sessionId,answers}});
+ if(error)throw new Error('לא ניתן היה לאמת את התוצאה. בדוק חיבור ונסה סבב חדש.');
+ return data;
+}});else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
