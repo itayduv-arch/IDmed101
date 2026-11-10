@@ -173,8 +173,8 @@
     host.innerHTML=phase==='playing'?playMarkup():phase==='result'?resultMarkup():setupMarkup();
     if(phase==='playing')bindGame();
   }
-  function setMode(next){if(phase!=='setup'||!MODE_MAP[next])return;mode=next;render();}
-  function setDuration(next){if(phase!=='setup'||!DURATIONS.includes(next))return;duration=next;render();}
+  function setMode(next){if(phase!=='setup'||preparing||!MODE_MAP[next])return;mode=next;render();}
+  function setDuration(next){if(phase!=='setup'||preparing||!DURATIONS.includes(next))return;duration=next;render();}
   function groupLabel(group){return MODE_MAP[group] ? MODE_MAP[group].name : group==='mul'?'כפל וחילוק':group==='fractions'?'אחוזים ושברים':group==='mental'?'חישוב זריז':'חזקות ושורשים';}
   function nextFromDeck(){
     if(!game.deck.length)game.deck=buildDeck(mode);
@@ -182,7 +182,7 @@
     return {...q,groupLabel:groupLabel(q.group)};
   }
   function start(session=null){
-    if(!host)return;
+    if(!host||(preparing&&!session))return;
     stopTimers();serial++;preparing=false;
     const now=Date.now();
     const indexed=new Map(generateBank().map(q=>[q.id,q]));
