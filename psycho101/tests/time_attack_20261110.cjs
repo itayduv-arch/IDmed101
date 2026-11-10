@@ -71,7 +71,7 @@ const form={addEventListener(){}};
 doc.elements['ta-input']=input;
 doc.elements['ta-form']=form;
 doc.elements['ta-skip']={addEventListener(){}};
-doc.elements['ta-score']={textContent:''};
+doc.elements['ta-score']={textContent:'',classList:{remove(){},add(){}},offsetWidth:1};
 const host={innerHTML:'',querySelector(){return null;}};
 engine.render(host,{
   topbar:()=>'',nav:()=>'',getRecords:()=>stored,
