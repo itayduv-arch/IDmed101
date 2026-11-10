@@ -228,7 +228,9 @@
         (wasSkipped?'דילגת. ':'לא הפעם. ')+'התשובה היא '+q.answer;
     }
     if(!good)g.misses.push({prompt:q.plain,answer:q.answer,typed:wasSkipped?'':typed,tip:q.tip});
+    const prompt=document.getElementById('ta-question');if(prompt){prompt.classList.remove('ta-flip');prompt.classList.add('ta-out');}
     updateHud();
+    if(good){const score=document.getElementById('ta-score');if(score){score.classList.remove('ta-score-pop');void score.offsetWidth;score.classList.add('ta-score-pop');}}
     const token=serial;
     pending=setTimeout(function(){pending=0;if(token===serial&&phase==='playing')advance();},good?330:650);
   }
@@ -269,7 +271,7 @@
     const g=game;
     g.current=nextFromDeck();g.locked=false;
     const prompt=document.getElementById('ta-question');
-    if(prompt){prompt.innerHTML=g.current.prompt;prompt.classList.remove('ta-flip');void prompt.offsetWidth;prompt.classList.add('ta-flip');}
+    if(prompt){prompt.innerHTML=g.current.prompt;prompt.classList.remove('ta-flip','ta-out');void prompt.offsetWidth;prompt.classList.add('ta-flip');}
     const kind=document.getElementById('ta-kind');if(kind)kind.textContent=g.current.groupLabel;
     const count=document.getElementById('ta-count');if(count)count.textContent='שאלה '+(g.answered+1);
     const input=document.getElementById('ta-input');
