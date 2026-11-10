@@ -31,7 +31,7 @@
   function generateBank(){
     const all=[];
     function add(group,prompt,answer,tip){
-      all.push({id:all.length,group,prompt,answer,tip,plain:prompt.replace(/<[^>]*>/g,'')});
+      all.push({id:all.length,group,prompt,answer,tip,plain:prompt.replace(/<sup>(.*?)<\/sup>/g,'^$1').replace(/<[^>]*>/g,'')});
     }
     for(let a=2;a<=12;a++)for(let b=a;b<=12;b++){
       add('mul',a+' × '+b,a*b,'אפשר לפרק כפל למכפלה ידועה וקלה יותר.');
@@ -65,8 +65,8 @@
     for(let n=12;n<=96;n+=4)add('mental','חצי מ־'+n,n/2,'חלק את המספר ב־2.');
     for(let n=12;n<=72;n+=6)add('mental','פי 1.5 מ־'+n,n*1.5,'פי 1.5 = המספר ועוד חצי ממנו.');
     for(let n=12;n<=45;n+=3)add('mental',n+' × 11',n*11,'כפל ב־11 הוא כפל ב־10 ועוד המספר.');
-    for(let n=15;n<=75;n+=5)add('mental',n+' + '+(100-n+12),112,'נסה להשלים קודם ל־100 ואז להוסיף 12.');
-    for(let minutes of [15,20,30,45,90,120,150])add('mental',minutes+' דקות = כמה שעות?',minutes/60,
+    for(let n=15;n<=75;n+=5){const extra=[7,12,19,25][Math.floor(n/5)%4];add('mental',n+' + '+(100-n+extra),100+extra,'נסה להשלים קודם ל־100 ואז להוסיף את היתר.');}
+    for(let minutes of [15,30,45,60,75,90,105,120,150])add('mental',minutes+' דקות = כמה שעות?',minutes/60,
       '60 דקות הן שעה אחת. אפשר לענות במספר עשרוני.');
     for(let hours of [0.25,0.5,0.75,1.5,2,2.5,3])add('mental',hours+' שעות = כמה דקות?',hours*60,'שעה אחת היא 60 דקות.');
     for(let km of [0.5,1.5,2,2.5,3,4.5])add('mental',km+' ק"מ = כמה מטרים?',km*1000,'קילומטר אחד הוא 1,000 מטרים.');
@@ -130,7 +130,7 @@
       '<div><small>נכונות</small><strong id="ta-correct">0</strong></div>'+
       '<div><small>רצף</small><strong id="ta-streak">0</strong></div></div>'+
       '<section class="ta-arena" id="ta-arena"><div class="ta-label"><span id="ta-kind">'+esc(g.current.groupLabel)+'</span><span id="ta-count">שאלה 1</span></div>'+
-      '<div class="ta-question-frame"><div id="ta-question" class="ta-question ta-flip" dir="ltr">'+g.current.prompt+'</div></div>'+
+      '<div class="ta-question-frame"><div id="ta-question" class="ta-question ta-flip" dir="ltr" aria-live="polite">'+g.current.prompt+'</div></div>'+
       '<p class="ta-instruction">הקלד את התוצאה המספרית</p>'+
       '<form id="ta-form" autocomplete="off"><label class="ta-input-label" for="ta-input">התשובה שלך</label>'+
       '<div class="ta-answer-row"><input id="ta-input" type="text" inputmode="decimal" enterkeyhint="go" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="ta-feedback" placeholder="הקלד מספר" />'+
