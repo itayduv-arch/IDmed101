@@ -287,11 +287,12 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
+<link rel="stylesheet" href="./time_attack_20261110.css?v=20261110-64">
 </head>
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261109-63";
+const PSYCHO101_BUILD_VERSION="20261110-64";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4464,6 +4465,7 @@ const wordBank = [
 <script src="./verbal_quality_20261030.js?v=20261030-57"></script>
 <script src="./verbal_quality_20261106.js?v=20261106-61"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
+<script src="./time_attack_20261110.js?v=20261110-64"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -4798,7 +4800,7 @@ for(const q of questions.quantitative){
 
 
 
-function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
+function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},timeAttackRecords:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
@@ -4912,6 +4914,8 @@ function home(){
       <div class="duo-progress"><div style="width:${goal}%"></div></div>
     </div>
 
+    <button type="button" class="ta-launch" onclick="go(\'time-attack\')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · תרגול שליפה מהיר</strong><small>לוח הכפל, חזקות, שורשים ואחוזים · מקלידים תשובה נגד השעון</small></span><span class="ta-launch-arrow">←</span></button>
+
     <div class="section-heading"><div><h3>המסלול שלך</h3><span>השאלות נבחרות לפי הצלחה, רמת קושי וטעויות קודמות</span></div><span>תרגול אישי</span></div>
     <div class="lesson-path">
       ${quickLessonNode('warmup','⚡','חימום יומי אישי','10 כמותי · 10 מילולי · מתחדש כל יום','20 שאלות','orange')}
@@ -4932,6 +4936,8 @@ function home(){
 function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startQuickLesson('${id}')}"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
 function topicOptions(type){return [...new Set(auditedExamPool(type).map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
 function practiceMenu(){return`<div class="app-shell">${topbar()}
+  <div class="section-title">חדש · אימון בזק</div>
+  <button type="button" class="ta-launch" onclick="go(\'time-attack\')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · שליפה מהירה</strong><small>תשובות בהקלדה, טיימר מונפש, רצפים ושיא אישי</small></span><span class="ta-launch-arrow">←</span></button>
   <div class="section-title">שיעורים קצרים</div>
   <div class="lesson-path">
     ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות ברמת הבחינה: 10 כמותי ו־10 מילולי','20')}
@@ -5691,7 +5697,7 @@ function accountView(){const configured=cloudConfigured(),logged=!!state.user;re
 <div class="section-title">שיתוף</div><button class="secondary-btn" onclick="shareApp()">שתף את IDpsycho101</button>
 <div class="section-title">גיבוי ידני</div><div class="actions"><button class="secondary-btn" onclick="exportProgress()">ייצא התקדמות</button><label class="file-label">ייבא התקדמות<input hidden type="file" accept="application/json" onchange="importProgress(event)"></label></div>
 </div>${nav('')}</div>`}
-function go(next){clearInterval(psychoTimer);view=next;practice=null;lastChoice=null;render()}
+function go(next){if(view==='time-attack'&&next!=='time-attack')window.PSYCHO101_TIME_ATTACK?.leave();clearInterval(psychoTimer);view=next;practice=null;lastChoice=null;render()}
 function resetData(){if(confirm('לאפס את כל נתוני התרגול במכשיר זה?')){state=defaultState();saveLocal();render()}}
 function exportProgress(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='psycho101-progress.json';a.click();URL.revokeObjectURL(url)}
 function importProgress(ev){const f=ev.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const imported=JSON.parse(r.result);state={...defaultState(),...imported};saveLocal();alert('ההתקדמות יובאה בהצלחה');render()}catch{alert('הקובץ אינו קובץ התקדמות תקין')}};r.readAsText(f)}
@@ -5726,6 +5732,18 @@ const rp=remote.dailyWarmup?.date===today?remote.dailyWarmup:null;
 const lc=warmupAnsweredCount(lp),rc=warmupAnsweredCount(rp);
 const selected=(lp&&rp)?(lc>=rc?lp:rp):(lp||rp);
 out.dailyWarmup=selected?{...selected,answers:{...(rp?.answers||{}),...(lp?.answers||{})},bonusClaimed:Boolean(lp?.bonusClaimed||rp?.bonusClaimed)}:null;
+const lTA=local.timeAttackRecords||{},rTA=remote.timeAttackRecords||{};
+out.timeAttackRecords={};
+for(const key of new Set([...Object.keys(lTA),...Object.keys(rTA)])){
+ const l=lTA[key],r=rTA[key];
+ if(!l)out.timeAttackRecords[key]=r;
+ else if(!r)out.timeAttackRecords[key]=l;
+ else{
+   const recent=(l.lastAt||'')>=(r.lastAt||'')?l:r;
+   const record=(l.bestScore||0)>=(r.bestScore||0)?l:r;
+   out.timeAttackRecords[key]={...recent,bestScore:record.bestScore,bestCorrect:record.bestCorrect,played:Math.max(l.played||0,r.played||0)};
+ }
+}
 out.displayName=local.displayName||remote.displayName||"";out.user=local.user;return out}
 async function syncNow(silent=false){try{const row=await cloudPull();if(row?.state)state=mergeStates(state,row.state);await cloudPush();if(!silent)alert('הסנכרון הושלם');render()}catch(e){if(!silent)alert('הסנכרון נכשל. בדוק חיבור והגדרות ענן.')}}
 
@@ -5762,7 +5780,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28)});else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
