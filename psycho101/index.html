@@ -289,12 +289,12 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 </style>
 <link rel="stylesheet" href="./time_attack_20261110.css?v=20261110-66">
 <link rel="stylesheet" href="./home_hub_20261110.css?v=20261110-65">
-<link rel="stylesheet" href="./leaderboard_20261110.css?v=20261110-66">
+<link rel="stylesheet" href="./leaderboard_20261110.css?v=20261110-67">
 </head>
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261110-66";
+const PSYCHO101_BUILD_VERSION="20261110-67";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4802,10 +4802,10 @@ for(const q of questions.quantitative){
 
 
 
-function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},timeAttackRecords:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
+function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},timeAttackRecords:{},achievementsUnlocked:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
-function saveLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
+function saveLocal(){unlockPsychoAchievements();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
 function percent(a,b){return b?Math.round(a/b*100):0}
 function shuffle(a){const out=[...a];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
 function escapeHtml(s){return String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
@@ -5583,6 +5583,43 @@ async function shareApp(){
     else{await navigator.clipboard.writeText(url);alert("הקישור הועתק")}
   }catch(e){}
 }
+const PSYCHO_ACHIEVEMENTS=[
+  {id:'ten',symbol:'✓',name:'יצאת לדרך',description:'10 תשובות נכונות'},
+  {id:'fifty',symbol:'★',name:'חצי מאה',description:'50 תשובות נכונות'},
+  {id:'hundred',symbol:'🏅',name:'100 נכונות',description:'100 תשובות נכונות'},
+  {id:'accuracy',symbol:'◎',name:'עין חדה',description:'דיוק של 90% לפחות אחרי 50 שאלות'},
+  {id:'streak',symbol:'🔥',name:'התמדה',description:'7 ימי לימוד ברצף'},
+  {id:'speed',symbol:'⚡',name:'מהיר מחשבה',description:'200 נקודות בסבב Time Attack'}
+];
+function psychoAchievementProgress(){
+  const best=Math.max(0,...Object.values(state.timeAttackRecords||{}).map(r=>Number(r?.bestScore)||0));
+  const acc=percent(state.correct,state.answered);
+  return {ten:Math.min(10,state.correct||0),fifty:Math.min(50,state.correct||0),
+    hundred:Math.min(100,state.correct||0),accuracy:(state.answered||0)>=50&&acc>=90?1:0,
+    streak:Math.min(7,state.streak||0),speed:Math.min(200,best)};
+}
+function psychoAchievementTarget(id){return {ten:10,fifty:50,hundred:100,accuracy:1,streak:7,speed:200}[id]||1}
+function unlockPsychoAchievements(){
+  const prog=psychoAchievementProgress();
+  state.achievementsUnlocked=state.achievementsUnlocked||{};
+  for(const item of PSYCHO_ACHIEVEMENTS){
+    if(prog[item.id]>=psychoAchievementTarget(item.id)&&!state.achievementsUnlocked[item.id]){
+      state.achievementsUnlocked[item.id]=new Date().toISOString();
+    }
+  }
+}
+function psychoAchievementView(){
+  unlockPsychoAchievements();
+  const prog=psychoAchievementProgress(),won=state.achievementsUnlocked||{};
+  const total=PSYCHO_ACHIEVEMENTS.filter(item=>won[item.id]).length;
+  return '<section class="rank-achievements"><details><summary>ההישגים שלי · '+total+' מתוך '+PSYCHO_ACHIEVEMENTS.length+'</summary>'+
+    '<div class="rank-achievement-grid">'+PSYCHO_ACHIEVEMENTS.map(item=>{
+      const done=Boolean(won[item.id]),n=psychoAchievementTarget(item.id),v=prog[item.id];
+      return '<div class="rank-achievement '+(done?'completed':'')+'"><span class="rank-achievement-symbol">'+item.symbol+'</span>'+
+      '<strong>'+item.name+'</strong><small>'+item.description+'</small>'+
+      '<span class="rank-achievement-progress">'+(done?'הושלם':(item.id==='accuracy'?'עדיין לא הושג':v+' / '+n))+'</span></div>';
+    }).join('')+'</div></details></section>';
+}
 function leaderboardAccuracy(r){return r.answered?Math.round((r.correct||0)/r.answered*100):0}
 function compareLeaderboard(a,b){
   if((b.xp||0)!==(a.xp||0))return (b.xp||0)-(a.xp||0);
@@ -5691,7 +5728,7 @@ async function leaderboardView(){
     '<section class="rank-bottom"><h3>רוצה לעלות בדירוג?</h3>'+
     '<p>שחק סבב מדורג ב־Time Attack. טבלת השבוע מיועדת למסלול הכול ביחד במשך 60 שניות.</p>'+
     '<button class="primary-btn" onclick="go(\'time-attack\')">כניסה ל־Time Attack</button>'+
-    '<button class="secondary-btn" onclick="shareApp()">הזמן חברים</button></section>'+nav('leaderboard')+'</div>';
+    '<button class="secondary-btn" onclick="shareApp()">הזמן חברים</button></section>'+psychoAchievementView()+nav('leaderboard')+'</div>';
   document.getElementById('app').innerHTML=shell('<div class="card"><div class="empty">טוען את הדירוג...</div></div>');
   let rows,error=null;
   try{rows=await loadLeaderboard(activeTab);}catch(e){error=e;rows=[]}
@@ -5702,7 +5739,17 @@ async function leaderboardView(){
     body='<div class="card"><div class="empty">לא ניתן לטעון את הדירוג כרגע. בדוק חיבור ונסה שוב.</div><button class="secondary-btn" onclick="leaderboardView()">נסה שוב</button></div>';
   }else if(rows.length){
     const myIndex=rows.findIndex(r=>r.user_id===me);
-    body=(myIndex>=0?'<div class="rank-my-position">המקום שלך בדירוג הזה · <strong>#'+(myIndex+1)+'</strong></div>':'')+
+    let competitor='';
+    if(myIndex===0)competitor='מקום ראשון! שמור על היתרון שלך.';
+    else if(myIndex>0){
+      const rival=rows[myIndex-1],mine=rows[myIndex];
+      const value=r=>activeTab==='lifetime'?(r.xp||0):(r.best_score||0);
+      const gap=Math.max(1,value(rival)-value(mine)+1);
+      competitor='היעד הבא - לעקוף את '+escapeHtml(rival.display_name||'המתחרה שמעליך')+
+        ' · נדרשות לפחות עוד '+gap+(activeTab==='lifetime'?' נקודות XP':' נקודות במשחק');
+    }
+    body=(myIndex>=0?'<div class="rank-my-position"><div>המקום שלך בדירוג הזה · <strong>#'+(myIndex+1)+'</strong>'+
+      (competitor?'<small>'+competitor+'</small>':'')+'</div></div>':'')+
       '<div class="card">'+rows.map((r,i)=>leaderboardRow(r,i,me)).join('')+'</div>';
   }else{
     body='<div class="card"><div class="empty">'+(activeTab==='weekly'?'עוד אין תוצאות לסבב השבועי. אפשר להיות הראשון!':
@@ -5839,7 +5886,7 @@ for(const key of new Set([...Object.keys(lTA),...Object.keys(rTA)])){
    out.timeAttackRecords[key]={...recent,bestScore:record.bestScore,bestCorrect:record.bestCorrect,played:Math.max(l.played||0,r.played||0)};
  }
 }
-out.displayName=local.displayName||remote.displayName||"";out.user=local.user;return out}
+out.achievementsUnlocked={...(remote.achievementsUnlocked||{}),...(local.achievementsUnlocked||{})};out.displayName=local.displayName||remote.displayName||"";out.user=local.user;return out}
 async function syncNow(silent=false){try{const row=await cloudPull();if(row?.state)state=mergeStates(state,row.state);await cloudPush();if(!silent)alert('הסנכרון הושלם');render()}catch(e){if(!silent)alert('הסנכרון נכשל. בדוק חיבור והגדרות ענן.')}}
 
 const THEME_KEY='idpsycho101-theme';
