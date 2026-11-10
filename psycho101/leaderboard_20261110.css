@@ -1,0 +1,38 @@
+/* Psycho101 rankings: three distinct, readable competitive views */
+.rank-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0 14px}
+.rank-tab{min-height:48px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:9px 7px;font-size:13px;font-weight:800;cursor:pointer;transition:border-color .16s,background .16s,transform .16s}
+.rank-tab.active{border:2px solid var(--primary);background:var(--primary-soft);color:var(--primary)}
+.rank-tab:hover{border-color:var(--primary)}
+.rank-tab:active{transform:scale(.98)}
+.rank-note{display:flex;flex-direction:column;gap:7px;margin:0 0 16px;padding:16px 17px;background:var(--primary-soft);border-radius:17px;color:var(--text);line-height:1.55}
+.rank-note strong{font-size:14px}
+.rank-note span{font-size:12px;color:var(--muted)}
+.rank-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.rank-filters label{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--muted);font-weight:750}
+.rank-filters select{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:12px;padding:12px 9px;font:inherit;font-size:14px;min-width:0}
+.rank-my-position{display:flex;align-items:center;gap:9px;justify-content:space-between;padding:13px 15px;margin:0 0 12px;background:var(--primary-soft);border-radius:15px;font-size:14px;color:var(--text)}
+.rank-my-position strong{color:var(--primary);font-size:19px}
+.rank-bottom{padding:19px;margin:17px 0 8px;border:1px solid var(--border);border-radius:19px;background:var(--panel)}
+.rank-bottom h3{margin:0 0 7px;font-size:17px}
+.rank-bottom p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 13px}
+.rank-bottom button{margin:4px 0}
+.ta-ranked-start{display:block;width:100%;margin-top:10px;border:2px solid var(--primary);background:var(--primary-soft);color:var(--primary);border-radius:15px;padding:15px 12px;font-size:15px;font-weight:900;cursor:pointer;transition:transform .17s,filter .17s}
+.ta-ranked-start:hover{filter:brightness(1.07);transform:translateY(-2px)}
+.ta-ranked-start:disabled{opacity:.6;cursor:progress;transform:none}
+.ta-ranked-locked{border-color:var(--border);color:var(--muted);background:var(--panel)}
+.ta-ranked-note{margin-top:10px;font-size:12px;line-height:1.6;color:var(--muted)}
+.ta-ranked-state{padding:13px 15px;border-radius:13px;background:var(--primary-soft);color:var(--muted);font-size:12px;line-height:1.6;margin:10px 0 16px}
+.ta-ranked-state.is-verified{color:var(--success)}
+.ta-ranked-state.is-error{color:var(--danger)}
+.rank-tab:focus-visible,.ta-ranked-start:focus-visible,.rank-filters select:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+@media(max-width:560px){
+ .rank-tabs{gap:5px}
+ .rank-tab{font-size:11px;min-height:45px;padding:8px 4px}
+ .rank-note{padding:13px}
+ .rank-filters{gap:9px}
+ .rank-filters select{font-size:12px;padding:11px 5px}
+ .leader-row{gap:8px}
+ .leader-xp{font-size:12px}
+ .leader-sub{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.rank-tab,.ta-ranked-start{transition:none!important}}
