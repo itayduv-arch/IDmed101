@@ -288,11 +288,12 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 <link rel="stylesheet" href="./time_attack_20261110.css?v=20261110-64">
+<link rel="stylesheet" href="./home_hub_20261110.css?v=20261110-65">
 </head>
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261110-64";
+const PSYCHO101_BUILD_VERSION="20261110-65";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4886,84 +4887,91 @@ function refreshGreeting(){
   const el=document.getElementById("dynamic-greeting");
   if(el)el.innerHTML=getTimeGreeting();
 }
+function hubTile(page,glyph,title,detail,meta){
+  return '<button type="button" class="psy-hub-tile" onclick="go(\''+page+'\')">'+
+    '<span class="psy-hub-symbol" aria-hidden="true">'+glyph+'</span>'+
+    '<span class="psy-hub-tile-copy"><strong>'+title+'</strong><small>'+detail+'</small></span>'+
+    '<span class="psy-hub-tile-bottom"><span>'+meta+'</span><span aria-hidden="true">←</span></span></button>';
+}
+function hubTiles(){
+  return '<div class="psy-hub-grid">'+
+    hubTile('path-daily','◎','תרגול יומי','חימום אישי, שאלות מעורבות וחיזוק נקודות חלשות','המסלול המומלץ')+
+    hubTile('path-quant','∑','חשיבה כמותית','אחוזים, שברים, חזקות, יסודות ותרגול על זמן','בחר נושא')+
+    hubTile('path-verbal','א','חשיבה מילולית','אנלוגיות, היגיון ואוצר מילים','בחר נושא')+
+    hubTile('time-attack','⚡','Time Attack','שליפה מהירה בהקלדה עם שעון, ניקוד ושיאים','משחק מהירות')+
+    '</div>';
+}
 function home(){
   updateStreak();saveLocal();
-  const goal=Math.min(100,percent(state.todayAnswered,state.dailyGoal));
-  const weak=Object.entries(state.topicStats).filter(([,s])=>s.answered).map(([t,s])=>({t,a:percent(s.correct,s.answered)})).sort((a,b)=>a.a-b.a)[0];
-  const recommended=Object.entries(state.skillRatings||{}).filter(([,v])=>(v.answered||0)>=3).sort((a,b)=>(a[1].level||3)-(b[1].level||3))[0]?.[0]?.split('|')[1]||weak?.t||'חימום';
-  return`<div class="app-shell">${topbar()}
-    <section class="psy-home-hero">
-      <div>
-        <div class="hero-eyebrow">IDpsycho101 · כמה דקות ביום</div>
-        <h1 id="dynamic-greeting">${getTimeGreeting()}</h1>
-        <p>שיעורים קצרים, פשוטים ומדורגים. ממשיכים קצת בכל יום ובונים מהירות וביטחון.</p>
-        <button class="hero-action" onclick="startQuickLesson('warmup')">לחימום היומי של 20 שאלות ▶</button>
-      </div>
-      <div class="hero-orb ${state.streak>1?'streak-pulse':''}"><div><strong>🔥 ${state.streak}</strong><span>רצף ימים</span></div></div>
-    </section>
-
-    <div class="friendly-stats">
-      <div class="friendly-stat"><strong>${state.xp}</strong><span>XP</span></div>
-      <div class="friendly-stat"><strong>${percent(state.correct,state.answered)}%</strong><span>דיוק</span></div>
-      <div class="friendly-stat"><strong>🔥 ${state.streak}</strong><span>רצף</span></div>
-      <div class="friendly-stat"><strong>${dueCount()}</strong><span>מילים לחזרה</span></div>
-    </div>
-
-    <div class="daily-goal-card">
-      <div class="daily-goal-row"><span>🎯 היעד היומי</span><span>${state.todayAnswered}/${state.dailyGoal}</span></div>
-      <div class="duo-progress"><div style="width:${goal}%"></div></div>
-    </div>
-
-    <button type="button" class="ta-launch" onclick="go('time-attack')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · תרגול שליפה מהיר</strong><small>לוח הכפל, חזקות, שורשים ואחוזים · מקלידים תשובה נגד השעון</small></span><span class="ta-launch-arrow">←</span></button>
-
-    <div class="section-heading"><div><h3>המסלול שלך</h3><span>השאלות נבחרות לפי הצלחה, רמת קושי וטעויות קודמות</span></div><span>תרגול אישי</span></div>
-    <div class="lesson-path">
-      ${quickLessonNode('warmup','⚡','חימום יומי אישי','10 כמותי · 10 מילולי · מתחדש כל יום','20 שאלות','orange')}
-      ${quickLessonNode('percent','%','אחוזים חכמים','קיצורי שברים, חילוק וכפל + שאלות הפוכות','10 שאלות','blue')}
-      ${quickLessonNode('fractions','½','שברים ויחסים','חלק מתוך שלם ויחסים פשוטים','8 שאלות','purple')}
-      ${quickLessonNode('words','א','העשרת מילים','תרגול לשוני משלים, לא הדמיית שאלות הבחינה','8 שאלות','blue')}
-      ${quickLessonNode('analogies','↔','אנלוגיות','לזהות את הקשר בין זוגות','8 שאלות','purple')}
-      ${quickLessonNode('daily','⭐','שיעור יומי מעורב','שאלות חשיבה פסיכומטרית לפי הרמה שלך','10 שאלות','')}
-    </div>
-
-    <div class="friendly-card">
-      <div class="topic-row"><span>הנושא שכדאי לחזק</span><strong>${escapeHtml(recommended)}</strong></div>
-      <div class="topic-row"><span>למדת היום</span><strong>${state.todayAnswered} שאלות</strong></div><div class="topic-row"><span>חימום יומי</span><strong>${warmupAnsweredCount(state.dailyWarmup)}/20 · 10 כמותי, 10 מילולי</strong></div>
-    </div>
-    ${nav('home')}
-  </div>`
+  const completed=warmupAnsweredCount(state.dailyWarmup);
+  const goal=Math.min(100,Math.round(100*completed/20));
+  return '<div class="app-shell">'+topbar()+
+    '<section class="psy-hub-welcome"><div class="psy-hub-welcome-copy">'+
+    '<span class="psy-hub-kicker">המסלול שלך לפסיכומטרי</span>'+
+    '<h1 id="dynamic-greeting">'+getTimeGreeting()+'</h1>'+
+    '<p>בוחרים תחום אחד ומתחילים. כל אפשרויות התרגול מחכות בפנים.</p></div>'+
+    '<div class="psy-hub-daily-status"><span>החימום של היום</span><strong>'+completed+' <span>/ 20</span></strong>'+
+    '<div class="psy-hub-progress" role="progressbar" aria-label="התקדמות בחימום היומי" aria-valuemin="0" aria-valuemax="20" aria-valuenow="'+completed+'"><div style="width:'+goal+'%"></div></div></div></section>'+
+    '<div class="psy-hub-heading"><h2>מה מתרגלים?</h2><span>4 אפשרויות</span></div>'+
+    hubTiles()+
+    '<div class="psy-hub-foot"><span>רצף הלמידה שלך · '+state.streak+' ימים</span>'+
+    '<button type="button" onclick="go(\'progress\')">לצפייה בהתקדמות ←</button></div>'+
+    nav('home')+'</div>';
+}
+function hubAction(glyph,title,description,action,meta){
+  return '<button type="button" class="psy-hub-action" onclick="'+ '="'+action+'">'+
+    '<span class="psy-hub-action-icon" aria-hidden="true">'+glyph+'</span>'+
+    '<span class="psy-hub-action-copy"><strong>'+title+'</strong><small>'+description+'</small></span>'+
+    '<span class="psy-hub-action-meta">'+meta+'</span></button>';
+}
+function hubCategoryShell(title,description,actions,extra){
+  return '<div class="app-shell">'+topbar()+
+    '<div class="psy-hub-category-head"><button class="back" type="button" onclick="go(\'practice-menu\')">← כל התחומים</button>'+
+    '<h1>'+title+'</h1><p>'+description+'</p></div>'+
+    '<div class="psy-hub-actions">'+actions+'</div>'+(extra||'')+
+    nav('practice')+'</div>';
+}
+function dailyPath(){
+  const warm=warmupAnsweredCount(state.dailyWarmup);
+  const actions=
+    hubAction('◎','חימום יומי','20 שאלות אישיות בכמותי ובמילולי',"startQuickLesson('warmup')",warm===20?'הושלם היום':'המשך '+warm+'/20')+
+    hubAction('★','שיעור מעורב','10 שאלות נבחרות לפי הרמה שלך',"startQuickLesson('daily')",'10 שאלות')+
+    hubAction('↗','חיזוק התחום החלש','שאלות מהתחום שבו כדאי להשתפר',"startWeakestTopic()",'תרגול מותאם')+
+    hubAction('∞','תרגול מגוון','חמש שאלות כמותיות וחמש מילוליות',"startMixed()",'10 שאלות');
+  return hubCategoryShell('תרגול יומי','לא צריך להחליט מה ללמוד - מתחילים באפשרות הראשונה, או בוחרים מסלול אישי אחר.',actions);
+}
+function quantitativePath(){
+  const actions=
+    hubAction('xⁿ','חזקות ושורשים','חוקי חזקות, שורשים וקיצורי דרך',"startQuickLesson('powers')",'8 שאלות')+
+    hubAction('%','אחוזים','פתרון מהיר בעזרת שברים והצבות',"startQuickLesson('percent')",'10 שאלות')+
+    hubAction('½','שברים ויחסים','חלק מתוך שלם, יחסים והשוואת שברים',"startQuickLesson('fractions')",'8 שאלות')+
+    hubAction('∑','יסודות הכמותי','חיזוק חשבון ונוסחאות בסיסיות',"startQuickLesson('fundamentals')",'8 שאלות')+
+    hubAction('⏱','אימון כמותי על זמן','20 שאלות עם תחקור מפורט בסיום',"startTimedQuant()",'20 דקות');
+  const extra='<section class="psy-hub-custom"><h2>מחפש נושא מסוים?</h2>'+
+    '<label for="hub-quant-topic">בחר נושא מהמאגר</label>'+
+    '<select id="hub-quant-topic"><option value="all">כל הנושאים הכמותיים</option>'+topicOptions('quantitative')+'</select>'+
+    '<button type="button" class="secondary-btn" onclick="startFocused(\'quantitative\',\'hub-quant-topic\')">התחל תרגול בנושא שבחרתי</button></section>';
+  return hubCategoryShell('חשיבה כמותית','בחר נושא לחיזוק. תרגול שליפה עם הקלדת תשובה נמצא ב־Time Attack.',actions,extra);
+}
+function verbalPath(){
+  const actions=
+    hubAction('↔','אנלוגיות','זיהוי קשרים בין מילים',"startQuickLesson('analogies')",'8 שאלות')+
+    hubAction('◉','היגיון והסקה','מה מתחייב, מה מחזק ומה מחליש',"startQuickLesson('logic')",'8 שאלות')+
+    hubAction('א','אוצר מילים','פירושים ומילים בהקשר',"startQuickLesson('words')",'8 שאלות');
+  const extra='<section class="psy-hub-custom"><h2>תרגול ממוקד</h2>'+
+    '<label for="hub-verbal-topic">בחר נושא מהמאגר</label>'+
+    '<select id="hub-verbal-topic"><option value="all">כל הנושאים המילוליים</option>'+topicOptions('verbal')+'</select>'+
+    '<button type="button" class="secondary-btn" onclick="startFocused(\'verbal\',\'hub-verbal-topic\')">התחל תרגול בנושא שבחרתי</button></section>';
+  return hubCategoryShell('חשיבה מילולית','בחר מיומנות אחת ותרגל אותה. אוצר המילים הוא תרגול העשרה משלים.',actions,extra);
 }
 function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLessonStats?.[id],m=String(meta).match(/\d+/),target=m?Number(m[0]):0;let shown=s?.answered?(target&&s.answered>=target?`✓ ${s.correct||0}/${s.answered}`:`${s.answered}/${target||s.answered} היום`):meta;if(id==='warmup'){const finished=warmupAnsweredCount(state.dailyWarmup);shown=finished===20?'✓ 20/20':finished?`${finished}/20 היום`:'20 שאלות'}return`<div class="lesson-node" ${tone?`data-tone="${tone}"`:''} onclick="startQuickLesson('${id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startQuickLesson('${id}')}"><div class="lesson-icon">${icon}</div><div class="lesson-main"><h3>${title}</h3><p>${desc}</p></div><div class="lesson-meta">${shown}</div></div>`}
 function topicOptions(type){return [...new Set(auditedExamPool(type).map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
-function practiceMenu(){return`<div class="app-shell">${topbar()}
-  <div class="section-title">חדש · אימון בזק</div>
-  <button type="button" class="ta-launch" onclick="go('time-attack')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · שליפה מהירה</strong><small>תשובות בהקלדה, טיימר מונפש, רצפים ושיא אישי</small></span><span class="ta-launch-arrow">←</span></button>
-  <div class="section-title">שיעורים קצרים</div>
-  <div class="lesson-path">
-    ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות ברמת הבחינה: 10 כמותי ו־10 מילולי','20')}
-    ${quickLessonNode('fundamentals','🔧','חיזוק יסודות','חישוב, נוסחאות והבנת מילים — תרגול הכנה ולא שאלות בחינה','8')}
-    ${quickLessonNode('percent','%','אחוזים','ללמוד אחוזים דרך חלוקה וכפל: 25%=÷4, 12.5%=÷8 ועוד','10')}
-    ${quickLessonNode('fractions','½','שברים ויחסים','חצי, רבע, יחס 2:3 ועוד','8')}
-    ${quickLessonNode('powers','xⁿ','חזקות ושורשים','חוקי חזקות, שורשים, ומעריכים שליליים ושבריים','8')}
-    ${quickLessonNode('words','א','העשרת אוצר מילים','למידת מילים בהקשר וגם הגדרות — הכנה משלימה','8')}
-    ${quickLessonNode('analogies','↔','אנלוגיות','קשרים קצרים בין מילים','8')}
-    ${quickLessonNode('logic','◉','היגיון קצר','מה מתחייב? מה מחזק?','8')}
-    ${quickLessonNode('daily','★','מעורב','10 שאלות מכל הסוגים','10')}
-  </div>
-  <div class="section-title">אימון מהירות כמותי</div>
-  <div class="card"><strong>⏱ 20 שאלות כמותיות ב־20 דקות</strong>
-  <p class="small">אימון נגד השעון, ללא הצגת פתרון אחרי כל לחיצה. בסיום תקבל תחקור עם הדרך הקצרה, טעות נפוצה והסבר. זהו אימון הכנה ואינו פרק רשמי של מאל״ו.</p>
-  <button class="primary-btn" onclick="startTimedQuant()">התחל אימון כמותי על זמן</button></div>
-  <div class="section-title">תרגול ממוקד</div>
-  <div class="card">
-    <p class="small">רוצה לעבוד דווקא על נושא מסוים? אפשר לבחור כאן. רוב הזמן עדיף פשוט ללחוץ על “המשך ללמוד”.</p>
-    <select id="quant-topic" style="width:100%;padding:11px;margin:8px 0;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--text)"><option value="all">כמותי — כל הנושאים</option>${topicOptions('quantitative')}</select>
-    <button class="secondary-btn" onclick="startFocused('quantitative','quant-topic')">תרגול כמותי קצר</button>
-    <select id="verbal-topic" style="width:100%;padding:11px;margin:12px 0 8px;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--text)"><option value="all">מילולי — כל הנושאים</option>${topicOptions('verbal')}</select>
-    <button class="secondary-btn" onclick="startFocused('verbal','verbal-topic')">תרגול מילולי קצר</button>
-  </div>
-  ${nav('practice')}
-</div>`}
+function practiceMenu(){
+  return '<div class="app-shell">'+topbar()+
+    '<section class="psy-hub-category-head"><h1>בוחרים תחום לתרגול</h1>'+
+    '<p>בחר אחד מארבעת התחומים. הנושאים והמסלולים יופיעו רק אחרי הבחירה.</p></section>'+
+    hubTiles()+nav('practice')+'</div>';
+}
 function wordsDashboard(){const due=dueCount(),unseen=unseenCount(),mastered=masteredCount(),seen=wordBank.length-unseen;return`<div class="app-shell">${topbar()}<div class="section-title">אוצר המילים שלך</div><div class="word-dashboard"><div class="stat"><strong>${wordBank.length}</strong><span>במאגר</span></div><div class="stat"><strong>${seen}</strong><span>נלמדו</span></div><div class="stat"><strong>${due}</strong><span>לחזרה</span></div><div class="stat"><strong>${mastered}</strong><span>שליטה גבוהה</span></div></div><div class="section-title">חזרה חכמה</div><div class="card"><p class="small">תשובה נכונה מעלה את המילה שלב וקובעת חזרה רחוקה יותר. טעות מחזירה אותה לשלב הראשון, כך שמילים חלשות חוזרות מוקדם יותר.</p><button class="primary-btn" onclick="startPractice('words')">התחל שיעור של 8 מילים</button></div><div class="section-title">רמות קושי במאגר</div><div class="card">${[1,2,3,4].map(l=>`<div class="topic-row"><span>רמה ${l}</span><strong>${wordBank.filter(w=>w.level===l).length}</strong></div>`).join('')}</div>${nav('words')}</div>`}
 
 function quickNumericQuestion(id,topic,prompt,correct,distractors,explanation,seed=0){
@@ -5780,7 +5788,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
     }catch(e){}
   });
 }
-function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28)});else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
+function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='path-daily')app.innerHTML=dailyPath();else if(view==='path-quant')app.innerHTML=quantitativePath();else if(view==='path-verbal')app.innerHTML=verbalPath();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28)});else if(view==='words-dashboard')app.innerHTML=wordsDashboard();else if(view==='question')renderQuestion();else if(view==='errors')app.innerHTML=errorsView();else if(view==='progress')app.innerHTML=progressView();else if(view==='account'){app.innerHTML=accountView();setTimeout(refreshPsychoPushStatus,0);}else if(view==='summary')app.innerHTML=summary();else if(view==='timed-review')app.innerHTML=timedReview();else if(view==='warmup-complete')app.innerHTML=warmupComplete();else if(view==='leaderboard')leaderboardView()}
 
 (()=>{ensureDailyState();render();if(navigator.onLine&&cloudConfigured()){(async()=>{await hydrateCloudUser();if(state.user)await syncNow(true);const dailyChanged=ensureDailyState();if(dailyChanged&&state.user){try{await cloudPush()}catch{}}render()})().catch(()=>{})}})();
 function refreshDailyStateOnResume(){if(ensureDailyState()&&typeof render==='function')render()}
