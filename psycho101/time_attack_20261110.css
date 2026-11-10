@@ -126,3 +126,7 @@
 @media(prefers-reduced-motion:reduce){
   .ta-shell *,.ta-shell *:before,.ta-shell *:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+.ta-question.ta-out{animation:ta-question-out .25s ease-in forwards}
+.ta-score-strip strong.ta-score-pop{animation:ta-score-bounce .3s cubic-bezier(.2,.8,.3,1.25)}
+@keyframes ta-question-out{to{opacity:0;transform:translateY(-11px) scale(.95);filter:blur(2px)}}
+@keyframes ta-score-bounce{40%{transform:scale(1.27)}to{transform:scale(1)}}
