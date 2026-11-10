@@ -36,3 +36,16 @@
  .leader-sub{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.rank-tab,.ta-ranked-start{transition:none!important}}
+
+.rank-my-position>div{display:flex;flex-direction:column;gap:5px}
+.rank-my-position small{font-size:12px;line-height:1.5;color:var(--muted);font-weight:650}
+.rank-achievements{background:var(--panel);border:1px solid var(--border);border-radius:18px;margin:15px 0;padding:15px}
+.rank-achievements summary{font-weight:900;font-size:15px;cursor:pointer;padding:4px 2px;list-style-position:inside}
+.rank-achievement-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:15px}
+.rank-achievement{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:13px 9px;border:1px dashed var(--border);border-radius:15px;opacity:.75}
+.rank-achievement.completed{border-style:solid;border-color:var(--primary);background:var(--primary-soft);opacity:1}
+.rank-achievement-symbol{font-size:22px;display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--primary-soft);color:var(--primary)}
+.rank-achievement strong{font-size:13px}
+.rank-achievement small{font-size:11px;line-height:1.4;color:var(--muted);flex:1}
+.rank-achievement-progress{font-size:11px;font-weight:850;color:var(--primary);margin-top:4px}
+@media(max-width:560px){.rank-achievement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
