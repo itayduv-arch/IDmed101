@@ -12,7 +12,7 @@
   const RING=2*Math.PI*34;
   const MODE_MAP=Object.fromEntries(MODES.map(m=>[m.id,m]));
   let mode='mixed', duration=60, phase='setup', host=null, hooks=null, game=null;
-  let raf=0, pending=0, serial=0, newBest=false;
+  let raf=0, pending=0, serial=0, newBest=false, preparing=false;
 
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
   function shuffle(items){
@@ -86,7 +86,7 @@
     if(raf){cancelAnimationFrame(raf);raf=0;}
     if(pending){clearTimeout(pending);pending=0;}
   }
-  function leave(){stopTimers();serial++;game=null;phase='setup';host=null;}
+  function leave(){stopTimers();serial++;preparing=false;game=null;phase='setup';host=null;}
   function records(){try{return hooks&&hooks.getRecords?hooks.getRecords()||{}:{}}catch{return {};}}
   function recordKey(){return mode+'-'+duration;}
   function recordInfo(){
@@ -111,7 +111,9 @@
         '" aria-pressed="'+(duration===n)+'" onclick="PSYCHO101_TIME_ATTACK.setDuration('+n+')">'+n+' שניות</button>').join('')+'</div>'+
       '<div class="ta-ready"><div><span>השיא שלך במסלול הזה</span><strong>'+ (best?best.bestScore+' נקודות':'עוד אין שיא')+
       '</strong></div><span class="ta-ready-pill">⚡ '+MODE_MAP[mode].name+'</span></div>'+
-      '<button type="button" class="ta-start" onclick="PSYCHO101_TIME_ATTACK.start()">מתחילים! <span>←</span></button>'+
+      '<button type="button" class="ta-start" onclick="PSYCHO101_TIME_ATTACK.start()">אימון רגיל <span>←</span></button>'+ 
+      (hooks?.getIdentity?.()?'<button type="button" class="ta-ranked-start" id="ta-ranked-start" onclick="PSYCHO101_TIME_ATTACK.startRanked()">🏆 סבב מדורג · תוצאה נבדקת בשרת</button>':'<button type="button" class="ta-ranked-start ta-ranked-locked" onclick="go(\'account\')">התחבר וקבע כינוי כדי להשתתף בדירוג</button>')+
+      '<div class="ta-ranked-note" id="ta-ranked-note">הדירוג השבועי מבוסס על מסלול הכול ביחד, 60 שניות. משחקים אחרים נחשבים בשיאי המסלולים.</div>'+
       '<p class="ta-note">אפשר לענות עם Enter או עם כפתור השליחה. הטיימר ממשיך גם אם מחליפים אפליקציה. זהו תרגול שליפה, לא סימולציה רשמית.</p>'+
       '</section>'+(hooks&&hooks.nav?hooks.nav('practice'):'')+'</div>';
   }
@@ -154,8 +156,10 @@
       '<div class="ta-result-grid"><div><strong>'+g.correct+'</strong><span>תשובות נכונות</span></div>'+
       '<div><strong>'+accuracy+'%</strong><span>דיוק</span></div><div><strong>'+g.peak+'</strong><span>רצף שיא</span></div>'+
       '<div><strong>'+g.wrong+g.skipped+'</strong><span>טעויות + דילוגים</span></div></div>'+
-      '<p class="ta-record-note">השיא במסלול הזה · '+(best?best.bestScore:0)+' נקודות</p>'+
-      '<div class="ta-result-actions"><button class="ta-start" type="button" onclick="PSYCHO101_TIME_ATTACK.start()">עוד סבב ↻</button>'+
+      '<p class="ta-record-note">השיא האישי במסלול הזה · '+(best?best.bestScore:0)+' נקודות</p>'+ 
+      (g.ranked?'<div class="ta-ranked-state '+(g.validation?.ranked?'is-verified':g.validation?.error?'is-error':'')+'">'+(g.validation?.ranked?'✓ התוצאה אומתה בשרת'+(g.validation.weekly?' ונכנסה לדירוג השבועי':' ונכנסה לשיאי המסלול'):g.validation?.error?'הציון נשמר אישית, אך לא נכנס לדירוג · '+esc(g.validation.error):'מאמת את התוצאה בשרת...')+'</div>':'<div class="ta-ranked-state">זה היה אימון רגיל. כדי להופיע בדירוג בחר סבב מדורג.</div>')+
+      '<div class="ta-result-actions"><button class="ta-start" type="button" onclick="PSYCHO101_TIME_ATTACK.backToSetup()">עוד סבב ↻</button>'+ 
+      '<button class="ta-secondary" type="button" onclick="go(\'leaderboard\')">לצפייה בדירוגים</button>'+
       '<button class="ta-secondary" type="button" onclick="PSYCHO101_TIME_ATTACK.backToSetup()">החלף מסלול</button>'+
       '<button class="ta-secondary" type="button" onclick="go(\'practice-menu\')">חזרה לתרגול</button></div></section>'+
       (list?'<section class="ta-panel ta-review"><h2>מה כדאי לשלוף מהר יותר</h2>'+list+'</section>':'')+
@@ -177,18 +181,41 @@
     const q=game.deck.shift();
     return {...q,groupLabel:groupLabel(q.group)};
   }
-  function start(){
+  function start(session=null){
     if(!host)return;
-    stopTimers();serial++;
+    stopTimers();serial++;preparing=false;
     const now=Date.now();
-    game={deck:buildDeck(mode),deadline:now+duration*1000,score:0,correct:0,wrong:0,skipped:0,
-      streak:0,peak:0,answered:0,locked:false,misses:[],current:null};
+    const indexed=new Map(generateBank().map(q=>[q.id,q]));
+    const deck=session?.question_ids?.map(id=>indexed.get(id));
+    if(session&&(!Array.isArray(deck)||deck.length<50||deck.some(q=>!q))){throw new Error('התרגילים של הסבב אינם זמינים.')}
+    game={deck:session?deck:buildDeck(mode),deadline:now+(session?session.remaining_ms:duration*1000),
+      startedAt:now,sessionId:session?.session_id||null,ranked:Boolean(session),submissions:[],validation:null,
+      score:0,correct:0,wrong:0,skipped:0,streak:0,peak:0,answered:0,locked:false,misses:[],current:null};
     game.current=nextFromDeck();
     phase='playing';newBest=false;
     render();
     const input=document.getElementById('ta-input');
     if(input){try{input.focus({preventScroll:true});}catch{input.focus();}}
     tick();
+  }
+  async function startRanked(){
+    if(!host||phase!=='setup'||preparing)return;
+    if(!hooks?.getIdentity?.()||!hooks?.beginRanked)return;
+    const token=++serial;preparing=true;
+    const btn=document.getElementById('ta-ranked-start'),note=document.getElementById('ta-ranked-note');
+    if(btn){btn.disabled=true;btn.textContent='פותח סבב תחרותי...';}
+    if(note)note.textContent='יוצר סבב בשרת כדי לאמת את הניקוד.';
+    try{
+      const session=await hooks.beginRanked(mode,duration);
+      if(token!==serial||phase!=='setup')return;
+      if(!session?.ranked||!session?.session_id)throw new Error('לא התקבלה הרשאת סבב מדורג.');
+      start(session);
+    }catch(e){
+      if(token!==serial||phase!=='setup')return;
+      const msg=document.getElementById('ta-ranked-note');
+      if(msg)msg.textContent='לא ניתן להתחיל סבב מדורג · '+String(e?.message||'תקלה בחיבור לשרת');
+      if(btn){btn.disabled=false;btn.textContent='🏆 נסה שוב להתחיל סבב מדורג';}
+    }finally{if(token===serial&&phase==='setup')preparing=false;}
   }
   function bindGame(){
     const form=document.getElementById('ta-form');
@@ -255,6 +282,7 @@
     if(Date.now()>=g.deadline){finish();return;}
     const correct=!wasSkipped&&isCorrect(value,g.current.answer);
     g.locked=true;g.answered++;
+    if(g.ranked)g.submissions.push({i:g.answered-1,id:g.current.id,value:wasSkipped?null:String(value),elapsedMs:Math.max(0,Math.round(Date.now()-g.startedAt))});
     if(correct){
       g.correct++;g.streak++;g.peak=Math.max(g.peak,g.streak);
       g.score+=10+Math.min(g.streak-1,5)*2;
@@ -293,10 +321,26 @@
     try{if(hooks&&hooks.saveRecords)hooks.saveRecords(updated);}catch{}
     render();
     if(newBest&&hooks&&hooks.celebrate)hooks.celebrate();
+    if(game.ranked&&hooks?.finishRanked){
+      const finished=game;
+      Promise.resolve().then(()=>hooks.finishRanked(finished.sessionId,finished.submissions)).then(res=>{
+        if(game!==finished||phase!=='result')return;
+        if(res?.ranked){
+          finished.validation=res;
+          finished.score=Number(res.score)||0;
+          finished.correct=Number(res.correct)||0;
+        }else finished.validation={error:res?.reason||'התוצאה לא התקבלה לדירוג'};
+        render();
+      }).catch(err=>{
+        if(game!==finished||phase!=='result')return;
+        finished.validation={error:String(err?.message||'לא ניתן לאמת את התוצאה כעת')};
+        render();
+      });
+    }
   }
   function backToSetup(){stopTimers();serial++;game=null;phase='setup';render();}
   window.PSYCHO101_TIME_ATTACK={
-    render,setMode,setDuration,start,submit,skip:skipQuestion,leave,backToSetup,
+    render,setMode,setDuration,start,startRanked,submit,skip:skipQuestion,leave,backToSetup,
     generateBank,buildDeck,normalizeAnswer,isCorrect
   };
   document.addEventListener('visibilitychange',function(){
