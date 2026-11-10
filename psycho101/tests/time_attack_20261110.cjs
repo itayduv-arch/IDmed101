@@ -106,7 +106,7 @@ assert(html.includes('time_attack_20261110.css?v=20261110-66'));
 assert(html.includes("view==='time-attack'"));
 assert(html.includes('window.PSYCHO101_TIME_ATTACK.render'));
 assert(html.includes('timeAttackRecords'));
-assert(html.includes('onclick="go(\'time-attack\')"'));
+assert(html.includes("hubTile('time-attack'"),'Time Attack not reachable from 4-card home');
 for(const file of ['sw.js','psycho101/sw.js']){
   const worker=fs.readFileSync(path.join(root,'..',file),'utf8');
   assert(worker.includes('time_attack_20261110.js'),file+' script not offline');
