@@ -4914,7 +4914,7 @@ function home(){
       <div class="duo-progress"><div style="width:${goal}%"></div></div>
     </div>
 
-    <button type="button" class="ta-launch" onclick="go(\'time-attack\')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · תרגול שליפה מהיר</strong><small>לוח הכפל, חזקות, שורשים ואחוזים · מקלידים תשובה נגד השעון</small></span><span class="ta-launch-arrow">←</span></button>
+    <button type="button" class="ta-launch" onclick="go('time-attack')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · תרגול שליפה מהיר</strong><small>לוח הכפל, חזקות, שורשים ואחוזים · מקלידים תשובה נגד השעון</small></span><span class="ta-launch-arrow">←</span></button>
 
     <div class="section-heading"><div><h3>המסלול שלך</h3><span>השאלות נבחרות לפי הצלחה, רמת קושי וטעויות קודמות</span></div><span>תרגול אישי</span></div>
     <div class="lesson-path">
@@ -4937,7 +4937,7 @@ function quickLessonNode(id,icon,title,desc,meta,tone=''){const s=state.dailyLes
 function topicOptions(type){return [...new Set(auditedExamPool(type).map(q=>q.topic))].sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
 function practiceMenu(){return`<div class="app-shell">${topbar()}
   <div class="section-title">חדש · אימון בזק</div>
-  <button type="button" class="ta-launch" onclick="go(\'time-attack\')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · שליפה מהירה</strong><small>תשובות בהקלדה, טיימר מונפש, רצפים ושיא אישי</small></span><span class="ta-launch-arrow">←</span></button>
+  <button type="button" class="ta-launch" onclick="go('time-attack')"><span class="ta-launch-icon">⚡</span><span class="ta-launch-copy"><strong>TIME ATTACK · שליפה מהירה</strong><small>תשובות בהקלדה, טיימר מונפש, רצפים ושיא אישי</small></span><span class="ta-launch-arrow">←</span></button>
   <div class="section-title">שיעורים קצרים</div>
   <div class="lesson-path">
     ${quickLessonNode('warmup','⚡','חימום יומי','20 שאלות ברמת הבחינה: 10 כמותי ו־10 מילולי','20')}
