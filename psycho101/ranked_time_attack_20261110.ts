@@ -20,7 +20,7 @@ function weekStart(date=new Date()){
   const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jerusalem",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
   const get=x=>Number(parts.find(p=>p.type===x)?.value);
   const day=new Date(Date.UTC(get("year"),get("month")-1,get("day")));
-  day.setUTCDate(day.getUTCDate()-(day.getUTCDay()+6)%7);
+  day.setUTCDate(day.getUTCDate()-day.getUTCDay());
   return day.toISOString().slice(0,10);
 }
 function numeric(v){
