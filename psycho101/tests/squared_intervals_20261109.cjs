@@ -75,5 +75,5 @@ const rootSw=fs.readFileSync(path.join(root,'..','sw.js'),'utf8');
 const localSw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 assert(rootSw.includes("'./psycho101/squared_intervals_20261109.js'"));
 assert(localSw.includes("'./squared_intervals_20261109.js'"));
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261110-67');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261111-68');
 console.log('PASS: 12 interval-squaring questions, endpoints, options, RTL, integration and offline cache');
