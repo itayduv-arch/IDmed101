@@ -2,11 +2,13 @@
 (function(){
   'use strict';
   const MODES=[
-    {id:'mixed',name:'הכול ביחד',icon:'⚡',desc:'תרגילי שליפה מכל הנושאים'},
+    {id:'mixed',name:'כמותי מעורב',icon:'⚡',desc:'שילוב של כל הנושאים הכמותיים'},
     {id:'mul',name:'לוח הכפל',icon:'×',desc:'כפל וחילוק עד 12'},
     {id:'powers',name:'חזקות ושורשים',icon:'²',desc:'ריבועים, חזקות ושורשים מוכרים'},
     {id:'fractions',name:'אחוזים ושברים',icon:'%',desc:'המרות וחישובי אחוזים בעל פה'},
-    {id:'mental',name:'חישוב זריז',icon:'+',desc:'השלמה ל־100, סכומים ויחידות'}
+    {id:'mental',name:'חישוב זריז',icon:'+',desc:'השלמה ל־100, סכומים ויחידות'},
+    {id:'words_core',name:'מילים חשובות',icon:'א',desc:'אוצר מילים שימושי שחייבים לשלוף'},
+    {id:'words_advanced',name:'מילים קשות',icon:'אב',desc:'מילים וביטויים מאתגרים מהמאגר'}
   ];
   const DURATIONS=[45,60,90];
   const RING=2*Math.PI*34;
@@ -28,6 +30,18 @@
     return Number.isFinite(n)?n:null;
   }
   function isCorrect(value,expected){const n=normalizeAnswer(value);return n!==null&&Math.abs(n-expected)<1e-8;}
+  function normalizeHebrew(value){
+    return String(value==null?'':value).normalize('NFKC').replace(/[\u0591-\u05C7]/g,'')
+      .replace(/["'״׳.,!?;:()[\]{}–—־]/g,' ').replace(/\s+/g,' ').trim().toLowerCase().slice(0,120);
+  }
+  function isWord(q){return q?.group==='words_core'||q?.group==='words_advanced';}
+  function correctAnswer(value,q){
+    if(!isWord(q))return isCorrect(value,q.answer);
+    const entered=normalizeHebrew(value);
+    return Boolean(entered&&q.accepted?.some(x=>normalizeHebrew(x)===entered));
+  }
+  function wordBank(){return (window.PSYCHO101_TIME_ATTACK_WORDS||[]).map(x=>({...x,plain:x.word,prompt:esc(x.prompt),tip:x.tip,accepted:[...x.accepted]}));}
+  function allCards(){return [...generateBank(),...wordBank()];}
   function generateBank(){
     const all=[];
     function add(group,prompt,answer,tip){
@@ -73,7 +87,7 @@
     return all;
   }
   function buildDeck(selected){
-    const bank=generateBank();
+    const bank=allCards();
     if(selected!=='mixed')return shuffle(bank.filter(q=>q.group===selected));
     const groups=['mul','powers','fractions','mental'].map(group=>shuffle(bank.filter(q=>q.group===group)));
     const deck=[];
@@ -102,9 +116,9 @@
     const best=recordInfo();
     return '<div class="app-shell ta-shell">'+(hooks&&hooks.topbar?hooks.topbar():'')+
       '<section class="ta-hero"><div class="ta-eyebrow"><span class="ta-spark"></span> SPEED LAB / TIME ATTACK</div>'+
-      '<h1>כמה מהר אתה שולף?</h1><p>בלי תשובות אמריקאיות. רק אתה, המקלדת והשעון. מתרגלים עובדות שחייבים לדעת בעל פה.</p>'+
+      '<h1>כמה מהר אתה שולף?</h1><p>כמותי או מילולי - בוחרים תחום, מקלידים תשובה ומתחרים נגד השעון.</p>'+
       '<div class="ta-demo" aria-hidden="true"><span>7 × 8</span><span class="ta-demo-arrow">←</span><span>56</span><span>2<sup>6</sup> = 64</span></div></section>'+
-      '<section class="ta-panel"><div class="ta-section-head"><h2>בחר מסלול</h2><span>5 סוגי תרגול</span></div>'+
+      '<section class="ta-panel"><div class="ta-section-head"><h2>בחר מסלול</h2><span>כמותי ומילולי</span></div>'+
       '<div class="ta-mode-grid">'+modeButtons()+'</div>'+
       '<div class="ta-section-head"><h2>משך הסבב</h2><span>נגד השעון</span></div>'+
       '<div class="ta-duration-row">'+DURATIONS.map(n=>'<button type="button" class="ta-duration '+(duration===n?'is-active':'')+
@@ -113,7 +127,7 @@
       '</strong></div><span class="ta-ready-pill">⚡ '+MODE_MAP[mode].name+'</span></div>'+
       '<button type="button" class="ta-start" onclick="PSYCHO101_TIME_ATTACK.start()">אימון רגיל <span>←</span></button>'+ 
       (hooks?.getIdentity?.()?'<button type="button" class="ta-ranked-start" id="ta-ranked-start" onclick="PSYCHO101_TIME_ATTACK.startRanked()">🏆 סבב מדורג · תוצאה נבדקת בשרת</button>':'<button type="button" class="ta-ranked-start ta-ranked-locked" onclick="go(\'account\')">התחבר וקבע כינוי כדי להשתתף בדירוג</button>')+
-      '<div class="ta-ranked-note" id="ta-ranked-note">הדירוג השבועי מבוסס על מסלול הכול ביחד, 60 שניות. משחקים אחרים נחשבים בשיאי המסלולים.</div>'+
+      '<div class="ta-ranked-note" id="ta-ranked-note">לכל נושא דירוג שבועי נפרד בסבב מדורג של 60 שניות, ושיא אישי לכל משך משחק.</div>'+
       '<p class="ta-note">אפשר לענות עם Enter או עם כפתור השליחה. הטיימר ממשיך גם אם מחליפים אפליקציה. זהו תרגול שליפה, לא סימולציה רשמית.</p>'+
       '</section>'+(hooks&&hooks.nav?hooks.nav('practice'):'')+'</div>';
   }
@@ -132,10 +146,10 @@
       '<div><small>נכונות</small><strong id="ta-correct">0</strong></div>'+
       '<div><small>רצף</small><strong id="ta-streak">0</strong></div></div>'+
       '<section class="ta-arena" id="ta-arena"><div class="ta-label"><span id="ta-kind">'+esc(g.current.groupLabel)+'</span><span id="ta-count">שאלה 1</span></div>'+
-      '<div class="ta-question-frame"><div id="ta-question" class="ta-question ta-flip" dir="ltr" aria-live="polite">'+g.current.prompt+'</div></div>'+
-      '<p class="ta-instruction">הקלד את התוצאה המספרית</p>'+
+      '<div class="ta-question-frame"><div id="ta-question" class="ta-question ta-flip '+(isWord(g.current)?'ta-verbal-question':'')+'" dir="'+(isWord(g.current)?'rtl':'ltr')+'" aria-live="polite">'+g.current.prompt+'</div></div>'+
+      '<p class="ta-instruction">'+(isWord(g.current)?'מה פירוש המילה? כתוב מילה נרדפת או פירוש קצר':'הקלד את התוצאה המספרית')+'</p>'+
       '<form id="ta-form" autocomplete="off"><label class="ta-input-label" for="ta-input">התשובה שלך</label>'+
-      '<div class="ta-answer-row"><input id="ta-input" type="text" inputmode="decimal" enterkeyhint="go" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="ta-feedback" placeholder="הקלד מספר" />'+
+      '<div class="ta-answer-row"><input id="ta-input" type="text" inputmode="'+(isWord(g.current)?'text':'decimal')+'" enterkeyhint="go" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="ta-feedback" dir="'+(isWord(g.current)?'rtl':'ltr')+'" placeholder="'+(isWord(g.current)?'כתוב פירוש':'הקלד מספר')+'" />'+
       '<button type="submit" class="ta-submit">שלח <span>↵</span></button></div></form>'+
       '<div id="ta-feedback" class="ta-feedback" aria-live="polite" aria-atomic="true">תשובה נכונה בונה רצף ומגדילה את הניקוד</div>'+
       '<button type="button" class="ta-skip" id="ta-skip">דלג על השאלה ←</button></section>'+
@@ -185,7 +199,7 @@
     if(!host||(preparing&&!session))return;
     stopTimers();serial++;preparing=false;
     const now=Date.now();
-    const indexed=new Map(generateBank().map(q=>[q.id,q]));
+    const indexed=new Map(allCards().map(q=>[q.id,q]));
     const deck=session?.question_ids?.map(id=>indexed.get(id));
     if(session&&(!Array.isArray(deck)||deck.length<50||deck.some(q=>!q))){throw new Error('התרגילים של הסבב אינם זמינים.')}
     game={deck:session?deck:buildDeck(mode),deadline:now+(session?session.remaining_ms:duration*1000),
@@ -267,9 +281,9 @@
     if(Date.now()>=game.deadline){finish();return false;}
     const input=document.getElementById('ta-input');
     const value=input?input.value:'',numeric=normalizeAnswer(value);
-    if(numeric===null){
+    if(isWord(game.current)?!normalizeHebrew(value):numeric===null){
       const msg=document.getElementById('ta-feedback');
-      if(msg){msg.className='ta-feedback is-bad';msg.textContent='הקלד מספר תקין. אפשר גם להשתמש בנקודה עשרונית.';}
+      if(msg){msg.className='ta-feedback is-bad';msg.textContent=isWord(game.current)?'כתוב פירוש קצר למילה, או דלג.':'הקלד מספר תקין. אפשר גם להשתמש בנקודה עשרונית.';}
       return false;
     }
     answer(value,false);
@@ -280,7 +294,7 @@
     const g=game;
     if(phase!=='playing'||!g||g.locked)return;
     if(Date.now()>=g.deadline){finish();return;}
-    const correct=!wasSkipped&&isCorrect(value,g.current.answer);
+    const correct=!wasSkipped&&correctAnswer(value,g.current);
     g.locked=true;g.answered++;
     if(g.ranked)g.submissions.push({i:g.answered-1,id:g.current.id,value:wasSkipped?null:String(value),elapsedMs:Math.max(0,Math.round(Date.now()-g.startedAt))});
     if(correct){
@@ -299,11 +313,12 @@
     const g=game;
     g.current=nextFromDeck();g.locked=false;
     const prompt=document.getElementById('ta-question');
-    if(prompt){prompt.innerHTML=g.current.prompt;prompt.classList.remove('ta-flip','ta-out');void prompt.offsetWidth;prompt.classList.add('ta-flip');}
+    if(prompt){prompt.innerHTML=g.current.prompt;prompt.dir=isWord(g.current)?'rtl':'ltr';prompt.classList.toggle('ta-verbal-question',isWord(g.current));prompt.classList.remove('ta-flip','ta-out');void prompt.offsetWidth;prompt.classList.add('ta-flip');}
     const kind=document.getElementById('ta-kind');if(kind)kind.textContent=g.current.groupLabel;
     const count=document.getElementById('ta-count');if(count)count.textContent='שאלה '+(g.answered+1);
     const input=document.getElementById('ta-input');
-    if(input){input.value='';if(document.activeElement!==input)input.focus();}
+    if(input){input.value='';input.dir=isWord(g.current)?'rtl':'ltr';input.setAttribute('inputmode',isWord(g.current)?'text':'decimal');input.placeholder=isWord(g.current)?'כתוב פירוש':'הקלד מספר';if(document.activeElement!==input)input.focus();}
+    const instruction=document.querySelector?.('.ta-instruction');if(instruction)instruction.textContent=isWord(g.current)?'מה פירוש המילה? כתוב מילה נרדפת או פירוש קצר':'הקלד את התוצאה המספרית';
     const arena=document.getElementById('ta-arena');if(arena)arena.classList.remove('ta-good','ta-bad');
     const msg=document.getElementById('ta-feedback');
     if(msg){msg.className='ta-feedback';msg.textContent=g.streak>=3?'מצוין! עוד '+(3-Math.min(3,g.streak%3))+' לרצף הבא':'ממשיך. תן לתשובות להגיע אוטומטית.';}
@@ -341,7 +356,7 @@
   function backToSetup(){stopTimers();serial++;game=null;phase='setup';render();}
   window.PSYCHO101_TIME_ATTACK={
     render,setMode,setDuration,start,startRanked,submit,skip:skipQuestion,leave,backToSetup,
-    generateBank,buildDeck,normalizeAnswer,isCorrect
+    generateBank,buildDeck,normalizeAnswer,isCorrect,normalizeHebrew,correctAnswer,allCards
   };
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden&&phase==='playing'&&game){
