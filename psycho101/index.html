@@ -287,14 +287,14 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="./time_attack_20261110.css?v=20261110-66">
+<link rel="stylesheet" href="./time_attack_20261110.css?v=20261111-68">
 <link rel="stylesheet" href="./home_hub_20261110.css?v=20261110-65">
-<link rel="stylesheet" href="./leaderboard_20261110.css?v=20261110-67">
+<link rel="stylesheet" href="./leaderboard_20261110.css?v=20261111-68">
 </head>
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261110-67";
+const PSYCHO101_BUILD_VERSION="20261111-68";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4467,7 +4467,8 @@ const wordBank = [
 <script src="./verbal_quality_20261030.js?v=20261030-57"></script>
 <script src="./verbal_quality_20261106.js?v=20261106-61"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
-<script src="./time_attack_20261110.js?v=20261110-66"></script>
+<script src="./time_attack_words_20261111.js?v=20261111-68"></script>
+<script src="./time_attack_20261110.js?v=20261111-68"></script>
 <script>
 const STORAGE_KEY="psycho101-state-v3";
 const CONFIG=window.PSYCHO101_CONFIG||{};
@@ -5644,8 +5645,9 @@ async function pushLeaderboard(){
   }catch(e){console.error("Leaderboard push failed",e)}
 }
 const PSYCHO_RANK_MODES=[
-  ['mixed','הכול ביחד'],['mul','כפל וחילוק'],['powers','חזקות ושורשים'],
-  ['fractions','אחוזים ושברים'],['mental','חשבון זריז']
+  ['mixed','כמותי מעורב'],['mul','כפל וחילוק'],['powers','חזקות ושורשים'],
+  ['fractions','אחוזים ושברים'],['mental','חשבון זריז'],
+  ['words_core','מילים חשובות'],['words_advanced','מילים קשות']
 ];
 let leaderboardTab='weekly',leaderboardRankMode='mixed',leaderboardRankDuration=60,leaderboardRequestId=0;
 function weekStartIsrael(){
@@ -5675,8 +5677,8 @@ async function loadLeaderboard(tab=leaderboardTab){
     const sb=await getSupabase();
     if(tab==='weekly'){
       const {data,error}=await sb.from('psycho101_ta_weekly')
-        .select('user_id,display_name,best_score,best_correct,week_start')
-        .eq('week_start',weekStartIsrael())
+        .select('user_id,display_name,best_score,best_correct,week_start,mode')
+        .eq('week_start',weekStartIsrael()).eq('mode',leaderboardRankMode)
         .order('best_score',{ascending:false}).order('best_correct',{ascending:false}).limit(100);
       if(error)throw error;return data||[];
     }
@@ -5700,15 +5702,15 @@ function leaderboardTabs(){
     '<button type="button" class="rank-tab '+(leaderboardTab===id?'active':'')+'" aria-pressed="'+(leaderboardTab===id)+'" onclick="selectLeaderboardTab(\''+id+'\')">'+label+'</button>').join('')+'</div>';
 }
 function leaderboardFilters(){
-  if(leaderboardTab!=='bests')return '';
-  return '<div class="rank-filters"><label>סוג תרגול<select onchange="selectLeaderboardMode(this.value)">'+
+  if(!['bests','weekly'].includes(leaderboardTab))return '';
+  return '<div class="rank-filters"><label>נושא הדירוג<select onchange="selectLeaderboardMode(this.value)">'+
     PSYCHO_RANK_MODES.map(([id,name])=>'<option value="'+id+'" '+(id===leaderboardRankMode?'selected':'')+'>'+name+'</option>').join('')+
-    '</select></label><label>משך משחק<select onchange="selectLeaderboardDuration(this.value)">'+
+    '</select></label>'+(leaderboardTab==='weekly'?'': '<label>משך משחק<select onchange="selectLeaderboardDuration(this.value)">'+
     [45,60,90].map(n=>'<option value="'+n+'" '+(n===leaderboardRankDuration?'selected':'')+'>'+n+' שניות</option>').join('')+
-    '</select></label></div>';
+    '</select></label>')+'</div>';
 }
 function leaderboardIntro(){
-  if(leaderboardTab==='weekly')return '<div class="rank-note"><strong>דירוג השבוע · החל מיום ראשון</strong><span>לכולם אותם תנאים - Time Attack מדורג, מסלול הכול ביחד, 60 שניות. רק התוצאה הטובה ביותר בכל שבוע נספרת. התשובות והניקוד נבדקים בשרת.</span></div>';
+  if(leaderboardTab==='weekly')return '<div class="rank-note"><strong>דירוג השבוע · החל מיום ראשון</strong><span>לכל נושא דירוג שבועי עצמאי - בסבב מדורג של 60 שניות. התוצאה הטובה ביותר בכל נושא נספרת פעם אחת בשבוע, אחרי אימות התשובות בשרת.</span></div>';
   if(leaderboardTab==='bests')return '<div class="rank-note"><strong>שיאים מדורגים</strong><span>בחר נושא ומשך משחק כדי להשוות תוצאות באותם תנאים. מופיעות תוצאות שנבדקו בשרת בלבד.</span></div>';
   return '<div class="rank-note"><strong>XP מצטבר · התקדמות בלמידה</strong><span>הניקוד המצטבר משקף פעילות לאורך זמן והוא אינו ציון מאומת או מדד ישיר ליכולת. מוצגים עד 100 משתמשים.</span></div>';
 }
@@ -5726,7 +5728,7 @@ async function leaderboardView(){
   const shell=body=>'<div class="app-shell">'+topbar()+'<div class="section-title">🏆 דירוגים</div>'+
     leaderboardTabs()+leaderboardIntro()+leaderboardFilters()+body+
     '<section class="rank-bottom"><h3>רוצה לעלות בדירוג?</h3>'+
-    '<p>שחק סבב מדורג ב־Time Attack. טבלת השבוע מיועדת למסלול הכול ביחד במשך 60 שניות.</p>'+
+    '<p>שחק סבב מדורג ב־Time Attack. לכל נושא כמותי או מילולי דירוג שבועי משלו; השתמש ב־60 שניות לדירוג השבוע.</p>'+
     '<button class="primary-btn" onclick="go(\'time-attack\')">כניסה ל־Time Attack</button>'+
     '<button class="secondary-btn" onclick="shareApp()">הזמן חברים</button></section>'+psychoAchievementView()+nav('leaderboard')+'</div>';
   document.getElementById('app').innerHTML=shell('<div class="card"><div class="empty">טוען את הדירוג...</div></div>');
