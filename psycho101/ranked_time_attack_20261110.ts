@@ -7,7 +7,7 @@ const fail=(reason,status=400)=>send({error:reason},status);
 const url=Deno.env.get("SUPABASE_URL")||"",anon=Deno.env.get("SUPABASE_ANON_KEY")||"",service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const authClient=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
-const modes=new Set(["mixed","mul","powers","fractions","mental"]),durations=new Set([45,60,90]);
+const modes=new Set(["mixed","mul","powers","fractions","mental","words_core","words_advanced"]),durations=new Set([45,60,90]);
 const scramble=input=>{const a=input.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 function idsFor(rows,mode){
   if(mode!=="mixed")return scramble(rows.filter(r=>r.group_name===mode)).slice(0,90).map(r=>r.id);
@@ -22,6 +22,16 @@ function weekStart(date=new Date()){
   const day=new Date(Date.UTC(get("year"),get("month")-1,get("day")));
   day.setUTCDate(day.getUTCDate()-day.getUTCDay());
   return day.toISOString().slice(0,10);
+}
+function normalizeHebrew(value){
+  if(value===null||value===undefined)return "";
+  return String(value).normalize("NFKC").replace(/[\u0591-\u05C7]/g,"")
+    .replace(/["'״׳.,!?;:()[\]{}–—־]/g," ")
+    .replace(/\s+/g," ").trim().toLowerCase().slice(0,120);
+}
+function verbalCorrect(value,accepted){
+  const normal=normalizeHebrew(value);
+  return normal.length>0&&Array.isArray(accepted)&&accepted.some(x=>normalizeHebrew(x)===normal);
 }
 function numeric(v){
   if(v===null||v===undefined)return null;
@@ -67,9 +77,9 @@ async function finish(user,p){
   if(elapsed>game.duration*1000+45000)return fail("round-expired",410);
   const answers=p.answers,ids=game.question_ids;
   if(!Array.isArray(answers)||!Array.isArray(ids)||answers.length>ids.length)return fail("invalid-answers");
-  const {data:items,error:lookupError}=await admin.from("psycho101_ta_questions").select("id,answer").in("id",ids);
+  const {data:items,error:lookupError}=await admin.from("psycho101_ta_questions").select("id,group_name,answer,accepted_answers").in("id",ids);
   if(lookupError)throw lookupError;
-  const bank=new Map((items||[]).map(q=>[q.id,Number(q.answer)]));
+  const bank=new Map((items||[]).map(q=>[q.id,q]));
   if(bank.size!==new Set(ids).size)return fail("question-bank-mismatch",503);
   let score=0,correct=0,streak=0,previous=-1000;
   for(let i=0;i<answers.length;i++){
@@ -77,8 +87,11 @@ async function finish(user,p){
     if(!x||!Number.isInteger(x.i)||x.i!==i||x.id!==ids[i]||!Number.isInteger(x.elapsedMs))return fail("answer-order-mismatch");
     if(x.elapsedMs<previous+200||x.elapsedMs<0||x.elapsedMs>game.duration*1000+1000)return fail("invalid-answer-timing");
     previous=x.elapsedMs;
-    const value=numeric(x.value);
-    if(value!==null&&Math.abs(value-bank.get(ids[i]))<1e-8){correct++;streak++;score+=10+Math.min(streak-1,5)*2;}
+    const question=bank.get(ids[i]);
+    const good=question.group_name==="words_core"||question.group_name==="words_advanced"?
+      verbalCorrect(x.value,question.accepted_answers):
+      (numeric(x.value)!==null&&Math.abs(numeric(x.value)-Number(question.answer))<1e-8);
+    if(good){correct++;streak++;score+=10+Math.min(streak-1,5)*2;}
     else streak=0;
   }
   const now=new Date().toISOString();
@@ -97,15 +110,15 @@ async function finish(user,p){
     },{onConflict:"user_id,mode,duration"});
     if(writeError)throw writeError;
   }
-  const weekly=game.mode==="mixed"&&game.duration===60;
+  const weekly=game.duration===60;
   if(weekly){
     const week_start=weekStart();
-    const {data:old,error:weekError}=await admin.from("psycho101_ta_weekly").select("best_score,best_correct").eq("user_id",user.id).eq("week_start",week_start).maybeSingle();
+    const {data:old,error:weekError}=await admin.from("psycho101_ta_weekly").select("best_score,best_correct").eq("user_id",user.id).eq("week_start",week_start).eq("mode",game.mode).maybeSingle();
     if(weekError)throw weekError;
     if(better(score,correct,old)){
       const {error:writeError}=await admin.from("psycho101_ta_weekly").upsert({
         week_start,user_id:user.id,display_name:name,best_score:score,best_correct:correct,mode:game.mode,duration:game.duration,updated_at:now
-      },{onConflict:"week_start,user_id"});
+      },{onConflict:"week_start,user_id,mode"});
       if(writeError)throw writeError;
     }
   }
