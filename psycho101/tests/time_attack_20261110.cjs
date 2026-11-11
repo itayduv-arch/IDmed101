@@ -82,7 +82,7 @@ assert(host.innerHTML.includes('בחר מסלול'));
 engine.setMode('mul');
 engine.start();
 assert(host.innerHTML.includes('id="ta-form"')&&host.innerHTML.includes('role="timer"'));
-const initial=host.innerHTML.match(/class="ta-question ta-flip"[^>]*>([^<]+)<\/div>/);
+const initial=host.innerHTML.match(/class="ta-question ta-flip[^"]*"[^>]*>([^<]+)<\/div>/);
 assert(initial,'Initial question not rendered');
 const current=initial[1].match(/^(\d+) ([×÷]) (\d+)$/);
 assert(current,'Unexpected initial multiplication/division expression');
