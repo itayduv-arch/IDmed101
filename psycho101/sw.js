@@ -1,5 +1,6 @@
-const CACHE_NAME='idpsycho101-v49';
+const CACHE_NAME='idpsycho101-v50';
 const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js','./advanced_expansion_20260922.js','./daily_expansion_20260930.js','./daily_expansion_20260930b.js','./daily_expansion_20261001.js','./daily_expansion_20261003.js','./daily_expansion_20261004.js','./daily_expansion_20261005.js','./daily_expansion_20261007.js','./powers_sum_20261022.js','./percent_fractions_20261025.js','./factorials_20261103.js','./powers_compare_20261108.js',
+'./time_attack_words_20261111.js',
 './time_attack_20261110.js','./time_attack_20261110.css','./home_hub_20261110.css',
 './leaderboard_20261110.css','./squared_intervals_20261109.js','./verbal_quality_20261106.js'];
 
