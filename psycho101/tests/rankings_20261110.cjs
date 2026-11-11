@@ -52,5 +52,5 @@ for(const f of ['sw.js','psycho101/sw.js']){
   const worker=fs.readFileSync(path.resolve(root,'..',f),'utf8');
   assert(worker.includes('leaderboard_20261110.css'),f+' missing offline style');
 }
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261110-67');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261111-68');
 console.log('PASS: Israel Sunday reset, numeric input, authenticated server scoring, result replay controls, 3 ranking tabs, achievements, offline caches');
