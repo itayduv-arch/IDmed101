@@ -108,9 +108,11 @@
     return r&&Number.isFinite(r.bestScore)?r:null;
   }
   function modeButtons(){
-    return MODES.map(m=>'<button type="button" class="ta-mode '+(mode===m.id?'is-active':'')+
+    const renderGroup=list=>list.map(m=>'<button type="button" class="ta-mode '+(mode===m.id?'is-active':'')+
       '" aria-pressed="'+(mode===m.id)+'" onclick="PSYCHO101_TIME_ATTACK.setMode(\''+m.id+'\')">'+
       '<span class="ta-mode-icon" aria-hidden="true">'+m.icon+'</span><strong>'+m.name+'</strong><small>'+m.desc+'</small></button>').join('');
+    return '<h3 class="ta-track-heading">כמותי</h3><div class="ta-mode-grid">'+renderGroup(MODES.filter(m=>!m.id.startsWith('words_')))+'</div>'+
+      '<h3 class="ta-track-heading">מילולי · אוצר מילים</h3><div class="ta-mode-grid">'+renderGroup(MODES.filter(m=>m.id.startsWith('words_')))+'</div>';
   }
   function setupMarkup(){
     const best=recordInfo();
@@ -119,7 +121,7 @@
       '<h1>כמה מהר אתה שולף?</h1><p>כמותי או מילולי - בוחרים תחום, מקלידים תשובה ומתחרים נגד השעון.</p>'+
       '<div class="ta-demo" aria-hidden="true"><span>7 × 8</span><span class="ta-demo-arrow">←</span><span>56</span><span>2<sup>6</sup> = 64</span></div></section>'+
       '<section class="ta-panel"><div class="ta-section-head"><h2>בחר מסלול</h2><span>כמותי ומילולי</span></div>'+
-      '<div class="ta-mode-grid">'+modeButtons()+'</div>'+
+      modeButtons()+
       '<div class="ta-section-head"><h2>משך הסבב</h2><span>נגד השעון</span></div>'+
       '<div class="ta-duration-row">'+DURATIONS.map(n=>'<button type="button" class="ta-duration '+(duration===n?'is-active':'')+
         '" aria-pressed="'+(duration===n)+'" onclick="PSYCHO101_TIME_ATTACK.setDuration('+n+')">'+n+' שניות</button>').join('')+'</div>'+
@@ -147,7 +149,7 @@
       '<div><small>רצף</small><strong id="ta-streak">0</strong></div></div>'+
       '<section class="ta-arena" id="ta-arena"><div class="ta-label"><span id="ta-kind">'+esc(g.current.groupLabel)+'</span><span id="ta-count">שאלה 1</span></div>'+
       '<div class="ta-question-frame"><div id="ta-question" class="ta-question ta-flip '+(isWord(g.current)?'ta-verbal-question':'')+'" dir="'+(isWord(g.current)?'rtl':'ltr')+'" aria-live="polite">'+g.current.prompt+'</div></div>'+
-      '<p class="ta-instruction">'+(isWord(g.current)?'מה פירוש המילה? כתוב מילה נרדפת או פירוש קצר':'הקלד את התוצאה המספרית')+'</p>'+
+      '<p class="ta-instruction">'+(isWord(g.current)?'כתוב פירוש קצר מתוך המשמעויות המקובלות. אפשר גם לדלג.':'הקלד את התוצאה המספרית')+'</p>'+
       '<form id="ta-form" autocomplete="off"><label class="ta-input-label" for="ta-input">התשובה שלך</label>'+
       '<div class="ta-answer-row"><input id="ta-input" type="text" inputmode="'+(isWord(g.current)?'text':'decimal')+'" enterkeyhint="go" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="ta-feedback" dir="'+(isWord(g.current)?'rtl':'ltr')+'" placeholder="'+(isWord(g.current)?'כתוב פירוש':'הקלד מספר')+'" />'+
       '<button type="submit" class="ta-submit">שלח <span>↵</span></button></div></form>'+
@@ -318,7 +320,7 @@
     const count=document.getElementById('ta-count');if(count)count.textContent='שאלה '+(g.answered+1);
     const input=document.getElementById('ta-input');
     if(input){input.value='';input.dir=isWord(g.current)?'rtl':'ltr';input.setAttribute('inputmode',isWord(g.current)?'text':'decimal');input.placeholder=isWord(g.current)?'כתוב פירוש':'הקלד מספר';if(document.activeElement!==input)input.focus();}
-    const instruction=document.querySelector?.('.ta-instruction');if(instruction)instruction.textContent=isWord(g.current)?'מה פירוש המילה? כתוב מילה נרדפת או פירוש קצר':'הקלד את התוצאה המספרית';
+    const instruction=document.querySelector?.('.ta-instruction');if(instruction)instruction.textContent=isWord(g.current)?'כתוב פירוש קצר מתוך המשמעויות המקובלות. אפשר גם לדלג.':'הקלד את התוצאה המספרית';
     const arena=document.getElementById('ta-arena');if(arena)arena.classList.remove('ta-good','ta-bad');
     const msg=document.getElementById('ta-feedback');
     if(msg){msg.className='ta-feedback';msg.textContent=g.streak>=3?'מצוין! עוד '+(3-Math.min(3,g.streak%3))+' לרצף הבא':'ממשיך. תן לתשובות להגיע אוטומטית.';}
