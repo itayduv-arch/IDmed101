@@ -58,5 +58,5 @@ const rootSw=fs.readFileSync(path.resolve(root,'..','sw.js'),'utf8');
 const localSw=fs.readFileSync(path.resolve(root,'sw.js'),'utf8');
 assert(rootSw.includes("'./psycho101/home_hub_20261110.css'"),'Root offline cache missing');
 assert(localSw.includes("'./home_hub_20261110.css'"),'Local offline cache missing');
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261111-68');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
 console.log('PASS: homepage only four category choices; nested paths, focus selectors, mobile CSS and offline caches');
