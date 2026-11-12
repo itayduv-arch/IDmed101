@@ -59,7 +59,7 @@ app.start();
 assert(host.innerHTML.includes('ta-verbal-question'),'Not RTL word question');
 assert(host.innerHTML.includes('id="ta-choices"'),'Meaning choices missing');
 assert(!host.innerHTML.includes('id="ta-input"'),'Verbal typing still shown');
-const match=host.innerHTML.match(/class="ta-question ta-flip ta-verbal-question"[^>]*>([^<]+)<\\/div>/);
+const match=host.innerHTML.match(/class="ta-question ta-flip ta-verbal-question"[^>]*>([^<]+)<\/div>/);
 assert(match,'Word not rendered');
 const q=words.find(w=>w.word===match[1]);
 assert(q,'Rendered word not in bank');
