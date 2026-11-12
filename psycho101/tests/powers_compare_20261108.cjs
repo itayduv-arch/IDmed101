@@ -47,5 +47,5 @@ const rootSw=fs.readFileSync(path.join(root,'..','sw.js'),'utf8');
 const localSw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 assert(rootSw.includes("'./psycho101/powers_compare_20261108.js'"));
 assert(localSw.includes("'./powers_compare_20261108.js'"));
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-70');
 console.log('PASS: power comparisons, balanced options, arithmetic, Hebrew RTL, integration and offline cache');
