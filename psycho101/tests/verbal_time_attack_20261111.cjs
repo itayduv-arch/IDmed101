@@ -83,5 +83,5 @@ for(const f of ['sw.js','psycho101/sw.js']){
  const src=fs.readFileSync(path.resolve(root,'..',f),'utf8');
  assert(src.includes('time_attack_words_20261111.js'),'Offline vocab bank missing: '+f);
 }
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-70');
 console.log('PASS: 189 Hebrew meaning questions, four unambiguous choices, answer verification and per-topic rankings');
