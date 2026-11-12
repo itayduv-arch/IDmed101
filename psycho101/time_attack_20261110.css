@@ -137,3 +137,19 @@
 .ta-playing .ta-answer-row input[dir=rtl]{direction:rtl;text-align:right;font-size:21px;padding-inline:14px}
 .ta-playing .ta-answer-row input[dir=rtl]::placeholder{font-size:15px}
 @media(max-width:530px){.ta-verbal-question{font-size:clamp(30px,8vw,47px)}}
+
+/* Verbal Time Attack: meaning recognition instead of brittle free-text matching */
+.ta-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0 13px;direction:rtl}
+.ta-choice{display:flex;align-items:center;gap:11px;min-height:76px;width:100%;text-align:right;border:1.5px solid var(--border);background:var(--panel);color:var(--text);border-radius:17px;padding:13px 14px;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;transition:background .14s,border-color .14s,transform .14s;overflow-wrap:anywhere}
+.ta-choice:not(:disabled):hover{border-color:var(--primary);transform:translateY(-2px);background:var(--primary-soft)}
+.ta-choice:not(:disabled):active{transform:scale(.985)}
+.ta-choice:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.ta-choice:disabled{cursor:default;opacity:.85}
+.ta-choice.is-correct{border-color:#239c70!important;background:rgba(35,156,112,.14)!important;color:var(--text);opacity:1}
+.ta-choice.is-incorrect{border-color:#d34d58!important;background:rgba(211,77,88,.14)!important;color:var(--text);opacity:1}
+.ta-choice-letter{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-size:15px;font-weight:900}
+.ta-choice.is-correct .ta-choice-letter{color:#166b50;background:rgba(35,156,112,.2)}
+.ta-choice.is-incorrect .ta-choice-letter{color:#a32939;background:rgba(211,77,88,.17)}
+.ta-verbal-question{direction:rtl;text-align:center}
+@media(max-width:650px){.ta-choices{grid-template-columns:1fr;gap:9px}.ta-choice{min-height:56px;padding:10px 12px;font-size:13px}.ta-choice-letter{width:29px;height:29px;flex-basis:29px}}
+@media(prefers-reduced-motion:reduce){.ta-choice{transition:none!important}}
