@@ -320,6 +320,7 @@
     if(Date.now()>=g.deadline){finish();return;}
     const correct=!wasSkipped&&correctAnswer(value,g.current);
     g.locked=true;g.answered++;
+    if(!wasSkipped&&hooks?.onAnswer){try{hooks.onAnswer(g.current,correct,false)}catch(e){console.error('Daily warmup tracking failed',e)}}
     if(g.ranked)g.submissions.push({i:g.answered-1,id:g.current.id,value:wasSkipped?null:String(value),elapsedMs:Math.max(0,Math.round(Date.now()-g.startedAt))});
     if(correct){
       g.correct++;g.streak++;g.peak=Math.max(g.peak,g.streak);
