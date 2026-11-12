@@ -102,7 +102,7 @@ assert.equal(stored['mul-60'].bestCorrect,1);
 assert.equal(celebrated,1);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.includes('time_attack_20261110.js?v=20261112-69'));
-assert(html.includes('time_attack_20261110.css?v=20261111-68'));
+assert(html.includes('time_attack_20261110.css?v=20261112-69'));
 assert(html.includes("view==='time-attack'"));
 assert(html.includes('window.PSYCHO101_TIME_ATTACK.render'));
 assert(html.includes('timeAttackRecords'));
