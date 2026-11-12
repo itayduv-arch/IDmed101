@@ -19,14 +19,13 @@ assert.equal(new Set(words.map(w=>w.id)).size,189);
 assert.equal(new Set(words.map(w=>w.word)).size,189);
 assert(words.every(w=>w.level>=2&&Array.isArray(w.accepted)&&w.accepted.length&&w.tip));
 assert(words.filter(w=>w.group==='words_advanced').every(w=>w.level>=3));
-const normalizeStart=server.indexOf('function normalizeHebrew(value){');
-const normalizeEnd=server.indexOf('function numeric(v){',normalizeStart);
-assert(normalizeStart>=0&&normalizeEnd>normalizeStart);
-const check=vm.runInNewContext(server.slice(normalizeStart,normalizeEnd)+'\n({normalizeHebrew,verbalCorrect})',{String,Array});
-assert(check.verbalCorrect(' מעשה   מתוחכם ',['יצירה מוקפדת','מעשה מתוחכם']));
-assert(check.verbalCorrect('מַעֲשֶׂה מְתוּחְכָּם',['מעשה מתוחכם']));
-assert(!check.verbalCorrect('לא קשור',['מעשה מתוחכם']));
-assert(!check.verbalCorrect('', ['מעשה מתוחכם']));
+const checkStart=server.indexOf('function verbalCorrect(value,choices,correctMeaning){');
+const checkEnd=server.indexOf('function numeric(v){',checkStart);
+assert(checkStart>=0&&checkEnd>checkStart);
+const check=vm.runInNewContext(server.slice(checkStart,checkEnd)+'\n({verbalCorrect})',{String,Array});
+assert(check.verbalCorrect('ברור',['ברור','עצוב','חזק','נמוך'],'ברור'));
+assert(!check.verbalCorrect('עצוב',['ברור','עצוב','חזק','נמוך'],'ברור'));
+assert(!check.verbalCorrect('אחר',['ברור','עצוב','חזק','נמוך'],'ברור'));
 vm.runInNewContext(game,{window,document:doc,navigator:{},Date:Time,Math,Number,Set,Object,String,Array,
  setTimeout,clearTimeout,requestAnimationFrame:()=>1,cancelAnimationFrame:()=>{}});
 const app=window.PSYCHO101_TIME_ATTACK,all=app.allCards();
@@ -36,12 +35,15 @@ assert.equal(app.buildDeck('words_advanced').length,74);
 assert.equal(app.buildDeck('mixed').length,514,'Quantitative mixed must not contain verbal words');
 for(const w of words){
  const q=all.find(x=>x.id===w.id);
- assert(q&&q.group===w.group);
- for(const alias of w.accepted){
-  assert(app.correctAnswer(alias,q),'Client rejected known synonym: '+w.word+' => '+alias);
-  assert(check.verbalCorrect(alias,w.accepted),'Server rejected known synonym: '+w.word+' => '+alias);
+ assert(q&&q.group===w.group&&q.choices.length===4);
+ assert.equal(new Set(q.choices).size,4);
+ assert(q.choices.includes(q.answer));
+ assert(app.correctAnswer(q.answer,q));
+ assert(check.verbalCorrect(q.answer,q.choices,q.answer));
+ for(const wrong of q.choices.filter(x=>x!==q.answer)){
+  assert(!app.correctAnswer(wrong,q));
+  assert(!check.verbalCorrect(wrong,q.choices,q.answer));
  }
- assert(!app.correctAnswer('טרנזיסטור',q));
 }
 const input={value:'',focus(){}};
 doc.elements['ta-input']=input;
@@ -55,13 +57,14 @@ assert(host.innerHTML.includes('מילים חשובות')&&host.innerHTML.includ
 app.setMode('words_advanced');
 app.start();
 assert(host.innerHTML.includes('ta-verbal-question'),'Not RTL word question');
-assert(host.innerHTML.includes('inputmode="text"'),'Missing mobile text keyboard');
-const match=host.innerHTML.match(/class="ta-question ta-flip ta-verbal-question"[^>]*>([^<]+)<\/div>/);
+assert(host.innerHTML.includes('id="ta-choices"'),'Meaning choices missing');
+assert(!host.innerHTML.includes('id="ta-input"'),'Verbal typing still shown');
+const match=host.innerHTML.match(/class="ta-question ta-flip ta-verbal-question"[^>]*>([^<]+)<\\/div>/);
 assert(match,'Word not rendered');
 const q=words.find(w=>w.word===match[1]);
 assert(q,'Rendered word not in bank');
-input.value=q.accepted[0];
-app.submit({preventDefault(){}});
+const wordChoices=app.allCards().find(w=>w.word===q.word).choices;
+app.choose(wordChoices.indexOf(q.definition));
 assert.equal(doc.elements['ta-score'].textContent,10);
 now+=61000;doc.handlers.visibilitychange();
 assert.equal(records['words_advanced-60'].bestScore,10);
@@ -71,11 +74,11 @@ assert(html.includes(".eq('week_start',weekStartIsrael()).eq('mode',leaderboardR
 assert(html.includes("if(!['bests','weekly'].includes(leaderboardTab))"));
 assert(server.includes('const weekly=game.duration===60'));
 assert(server.includes('onConflict:"week_start,user_id,mode"'));
-assert(server.includes('verbalCorrect(x.value,question.accepted_answers)'));
+assert(server.includes('verbalCorrect(x.value,question.choices,question.answer_label)'));
 assert(server.includes('const bank=new Map((items||[]).map(q=>[q.id,q]))'));
 for(const f of ['sw.js','psycho101/sw.js']){
  const src=fs.readFileSync(path.resolve(root,'..',f),'utf8');
  assert(src.includes('time_attack_words_20261111.js'),'Offline vocab bank missing: '+f);
 }
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261111-68');
-console.log('PASS: 189 Hebrew words, curated synonyms, RTL typing, server verification, mode-specific weekly leagues and offline bank');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
+console.log('PASS: 189 Hebrew meaning questions, four unambiguous choices, answer verification and per-topic rankings');
