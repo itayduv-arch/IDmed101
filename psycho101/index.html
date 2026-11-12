@@ -294,7 +294,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261112-69";
+const PSYCHO101_BUILD_VERSION="20261112-70";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4803,7 +4803,7 @@ for(const q of questions.quantitative){
 
 
 
-function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},timeAttackRecords:{},achievementsUnlocked:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
+function defaultState(){return{version:9,xp:0,streak:0,answered:0,correct:0,errors:[],topicStats:{},wordStats:{},skillRatings:{},questionPerformance:{},timeAttackRecords:{},achievementsUnlocked:{},dailyWarmup:null,dailyGoal:20,todayAnswered:0,todayCorrect:0,dailyCreditIds:[],dailyCreditBase:0,dailyCreditVersion:0,dailyDate:null,dailyResetFixVersion:5,dailyLessonStats:{},dailyTopicStats:{},lastStudyDate:null,user:null,lastSync:null,simulationHistory:[],lessonStats:{},displayName:""}}
 function loadState(){try{return{...defaultState(),...JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}}catch{return defaultState()}}
 let state=loadState(),view="home",practice=null,lastChoice=null,deferredInstallPrompt=null,psychoTimer=null;
 function saveLocal(){unlockPsychoAchievements();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));debouncedCloudSave()}
@@ -4858,7 +4858,48 @@ function localDateKey(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth(
 function nowDate(){return localDateKey()}
 function dayNumber(key){if(!key)return null;const [y,m,d]=String(key).split('-').map(Number);return Math.floor(new Date(y,m-1,d,12,0,0).getTime()/DAY)}
 function daysBetween(a,b){if(!a||!b)return null;return dayNumber(b)-dayNumber(a)}
-function ensureDailyState(){const today=nowDate();let changed=false;if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<5){state.todayAnswered=0;state.dailyLessonStats={};state.dailyTopicStats={};state.dailyDate=today;state.dailyResetFixVersion=5;changed=true}if(state.lastStudyDate){const gap=daysBetween(state.lastStudyDate,today);if(gap>1&&state.streak!==0){state.streak=0;changed=true}}if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return changed}
+function ensureDailyState(){
+  const today=nowDate();let changed=false;
+  if(state.dailyDate!==today||(state.dailyResetFixVersion||0)<5){
+    state.todayAnswered=0;state.todayCorrect=0;state.dailyCreditIds=[];state.dailyCreditBase=0;state.dailyCreditVersion=1;
+    state.dailyLessonStats={};state.dailyTopicStats={};state.dailyDate=today;state.dailyResetFixVersion=5;changed=true;
+  }else if((state.dailyCreditVersion||0)<1){
+    // Keep questions answered today before this release, including progress outside the old warmup plan.
+    const legacy=state.dailyWarmup?.date===today?state.dailyWarmup:null;
+    const known=Object.keys(legacy?.answers||{}).filter(id=>legacy.ids?.includes(id));
+    state.dailyCreditIds=known.map(id=>'exam:'+id);
+    state.dailyCreditBase=Math.max(0,(state.todayAnswered||0)-known.length);
+    state.todayCorrect=Object.values(state.dailyTopicStats||{}).reduce((n,v)=>n+(v.correct||0),0);
+    state.dailyCreditVersion=1;changed=true;
+  }
+  if(state.lastStudyDate){
+    const gap=daysBetween(state.lastStudyDate,today);
+    if(gap>1&&state.streak!==0){state.streak=0;changed=true}
+  }
+  if(changed)localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  return changed;
+}
+function creditDailyAnswer(key,good){
+  ensureDailyState();
+  if(!key)return false;
+  state.dailyCreditIds=Array.isArray(state.dailyCreditIds)?state.dailyCreditIds:[];
+  const normalized=String(key);
+  if(state.dailyCreditIds.includes(normalized))return false;
+  state.dailyCreditIds.push(normalized);
+  state.todayAnswered=Math.max(0,state.todayAnswered||0)+1;
+  if(good)state.todayCorrect=Math.max(0,state.todayCorrect||0)+1;
+  return true;
+}
+function creditAndSaveDailyAnswer(key,good){
+  registerStudyDay();
+  const credited=creditDailyAnswer(key,good);
+  if(credited&&warmupAnsweredCount(state.dailyWarmup)>=20){
+    const plan=dailyWarmupPlan();
+    if(!plan.bonusClaimed){plan.bonusClaimed=true;state.xp+=20;}
+  }
+  saveLocal();
+  return credited;
+}
 function updateStreak(){ensureDailyState()}
 function registerStudyDay(){ensureDailyState();const today=nowDate();if(state.lastStudyDate===today)return;const gap=state.lastStudyDate?daysBetween(state.lastStudyDate,today):null;if(gap===1)state.streak=Math.max(1,state.streak||0)+1;else state.streak=1;state.lastStudyDate=today}
 function topicStat(topic){return state.topicStats[topic]||{answered:0,correct:0}}
@@ -4936,7 +4977,7 @@ function hubCategoryShell(title,description,actions,extra){
 function dailyPath(){
   const warm=warmupAnsweredCount(state.dailyWarmup);
   const actions=
-    hubAction('◎','חימום יומי','20 שאלות אישיות בכמותי ובמילולי',"startQuickLesson('warmup')",warm===20?'הושלם היום':'המשך '+warm+'/20')+
+    hubAction('◎','חימום יומי','20 שאלות מכל מסלולי התרגול, גם אם יוצאים באמצע',"startQuickLesson('warmup')",warm===20?'הושלם היום':'המשך '+warm+'/20')+
     hubAction('★','שיעור מעורב','10 שאלות נבחרות לפי הרמה שלך',"startQuickLesson('daily')",'10 שאלות')+
     hubAction('↗','חיזוק התחום החלש','שאלות מהתחום שבו כדאי להשתפר',"startWeakestTopic()",'תרגול מותאם')+
     hubAction('∞','תרגול מגוון','חמש שאלות כמותיות וחמש מילוליות',"startMixed()",'10 שאלות');
@@ -5235,7 +5276,14 @@ function adaptivePick(pool,count,context='practice',excluded=new Set(),existingT
   }
   return selected;
 }
-function warmupAnsweredCount(plan){return plan?.date===nowDate()&&Array.isArray(plan.ids)?plan.ids.filter(id=>Object.prototype.hasOwnProperty.call(plan.answers||{},id)).length:0}
+function warmupPlanAnswerCount(plan){
+  return plan?.date===nowDate()&&Array.isArray(plan.ids)?
+    plan.ids.filter(id=>Object.prototype.hasOwnProperty.call(plan.answers||{},id)).length:0;
+}
+function warmupAnsweredCount(plan){
+  const own=warmupPlanAnswerCount(plan);
+  return Math.min(20,Math.max(own,state.dailyDate===nowDate()?(state.todayAnswered||0):0));
+}
 function makeWarmupPlan(){
   const seen=new Set(),topics={},quant=[],verbal=[];
   function take(target,pool,n){
@@ -5268,8 +5316,8 @@ function dailyWarmupPlan(){
   return state.dailyWarmup;
 }
 function warmupComplete(){
-  const p=state.dailyWarmup,correct=Object.entries(p?.answers||{}).filter(([id,ok])=>p.ids?.includes(id)&&ok).length;
-  return `<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center"><div class="finish-emoji">🏆</div><h2>החימום היומי הושלם!</h2><p>ענית על 20 שאלות: 10 כמותיות ו־10 מילוליות.</p><div class="psy-score-ring" style="--score:${percent(correct,20)}%"><strong>${percent(correct,20)}%</strong></div><p class="small">${correct} תשובות נכונות · מקצה מותאם חדש ייפתח ביום המקומי הבא.</p><button class="primary-btn" onclick="go('practice-menu')">להמשך תרגול מותאם</button><button class="secondary-btn" onclick="go('progress')">לניתוח ההתקדמות שלי</button></div>${nav('practice')}</div>`;
+  const total=Math.max(20,state.todayAnswered||0),correct=Math.min(total,state.todayCorrect||0);
+  return `<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center"><div class="finish-emoji">🏆</div><h2>היעד היומי הושלם!</h2><p>צברת לפחות 20 שאלות בתרגולים שלך היום, גם בלי לסיים אימון אחד ברצף.</p><div class="psy-score-ring" style="--score:${percent(correct,total)}%"><strong>${percent(correct,total)}%</strong></div><p class="small">${correct} תשובות נכונות מתוך ${total} שאלות שנצברו היום · המונה יתאפס ביום המקומי הבא.</p><button class="primary-btn" onclick="go('practice-menu')">להמשך תרגול מותאם</button><button class="secondary-btn" onclick="go('progress')">לניתוח ההתקדמות שלי</button></div>${nav('practice')}</div>`;
 }
 
 // Remap answer positions per practice session. Never modify the canonical question bank.
@@ -5311,7 +5359,7 @@ function startQuickLesson(id){
   let list=[];
   if(id==='warmup'){
     const plan=dailyWarmupPlan(),bank=new Map([...questions.quantitative,...questions.verbal].map(q=>[q.id,q]));
-    list=plan.ids.filter(qid=>!Object.prototype.hasOwnProperty.call(plan.answers||{},qid)).map(qid=>bank.get(qid)).filter(Boolean);
+    list=plan.ids.filter(qid=>!Object.prototype.hasOwnProperty.call(plan.answers||{},qid)&&!state.dailyCreditIds?.includes('exam:'+qid)).map(qid=>bank.get(qid)).filter(Boolean).slice(0,Math.max(0,20-warmupAnsweredCount(plan)));
     if(!list.length){practice=null;view='warmup-complete';render();return}
     list=preparePracticeChoices(list,'warmup|'+plan.date);
     practice={list,index:0,answeredCurrent:false,sessionCorrect:0,timed:false,kind:'quick',lessonId:id,warmupStart:20-list.length,rewarded:false};
@@ -5415,13 +5463,11 @@ function answerQuestion(choice){
   if(practice.lessonId==='warmup'&&state.dailyWarmup?.date===nowDate()){
     state.dailyWarmup.answers=state.dailyWarmup.answers||{};
     state.dailyWarmup.answers[q.id]=good;
-    if(warmupAnsweredCount(state.dailyWarmup)===20&&!state.dailyWarmup.bonusClaimed){
-      state.dailyWarmup.bonusClaimed=true;
-      state.xp+=20;
-      practice.warmupBonus=20;
-    }
   }
-  state.answered++;state.todayAnswered++;state.xp+=good?10:3;
+  state.answered++;state.xp+=good?10:3;
+  const hadWarmupBonus=Boolean(state.dailyWarmup?.bonusClaimed);
+  creditAndSaveDailyAnswer('exam:'+q.id,good);
+  if(!hadWarmupBonus&&state.dailyWarmup?.bonusClaimed)practice.warmupBonus=20;
   if(good){state.correct++;practice.sessionCorrect++}
   const t=topicStat(q.topic);
   state.topicStats[q.topic]={answered:t.answered+1,correct:t.correct+(good?1:0)};
@@ -5551,9 +5597,8 @@ function summary(){
   const sim=practice?.timed;
   const quantTimed=practice?.kind==='quant-timed';
   const warm=practice?.lessonId==='warmup'&&state.dailyWarmup?.date===nowDate();
-  const warmCorrect=warm?Object.entries(state.dailyWarmup.answers||{}).filter(([id,good])=>state.dailyWarmup.ids.includes(id)&&good).length:0;
-  const summaryCount=warm?20:(practice?.list.length||0);
-  const summaryCorrect=warm?warmCorrect:(practice?.sessionCorrect||0);
+  const summaryCount=warm?Math.max(20,state.todayAnswered||0):(practice?.list.length||0);
+  const summaryCorrect=warm?Math.min(summaryCount,state.todayCorrect||0):(practice?.sessionCorrect||0);
   const accuracy=percent(summaryCorrect,summaryCount);
   return`<div class="app-shell">${topbar()}<div class="practice-card psy-summary" style="text-align:center">
     <div class="finish-emoji">${sim?'🏁':accuracy>=80?'🏆':'🎉'}</div>
@@ -5860,7 +5905,14 @@ let cloudTimer=null;function debouncedCloudSave(){clearTimeout(cloudTimer);if(cl
 function syncPayload(){const copy=JSON.parse(JSON.stringify(state));delete copy.user;delete copy.lastSync;return copy}
 async function cloudPush(){if(!state.user)return;const sb=await getSupabase();const{error}=await sb.from('psycho101_progress').upsert({user_id:state.user.id,state:syncPayload(),updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;state.lastSync=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));await pushLeaderboard()}
 async function cloudPull(){if(!state.user)return null;const sb=await getSupabase();const{data,error}=await sb.from('psycho101_progress').select('state,updated_at').eq('user_id',state.user.id).maybeSingle();if(error)throw error;return data||null}
-function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||0,remote.streak||0);const today=nowDate(),localDailyOk=local.dailyDate===today&&(local.dailyResetFixVersion||0)>=5,remoteDailyOk=remote.dailyDate===today&&(remote.dailyResetFixVersion||0)>=5;out.dailyDate=today;out.dailyResetFixVersion=5;if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);else if(localDailyOk)out.todayAnswered=local.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remote.todayAnswered||0;else out.todayAnswered=0;const lLessons=localDailyOk?(local.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remote.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}const lTopics=localDailyOk?(local.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remote.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={};for(const topic of new Set([...Object.keys(remote.topicStats||{}),...Object.keys(local.topicStats||{})])){const a=local.topicStats?.[topic]||{answered:0,correct:0},b=remote.topicStats?.[topic]||{answered:0,correct:0};out.topicStats[topic]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lessonStats={...(remote.lessonStats||{})};for(const [id,s] of Object.entries(local.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}const localLast=local.lastStudyDate||null,remoteLast=remote.lastStudyDate||null;out.lastStudyDate=[localLast,remoteLast].filter(Boolean).sort().pop()||null;if(localLast&&remoteLast){if(localLast>remoteLast)out.streak=local.streak||0;else if(remoteLast>localLast)out.streak=remote.streak||0;else out.streak=Math.max(local.streak||0,remote.streak||0)}else if(localLast)out.streak=local.streak||0;else if(remoteLast)out.streak=remote.streak||0;if(out.lastStudyDate&&daysBetween(out.lastStudyDate,today)>1)out.streak=0;// Reconcile adaptive data across devices without lowering accumulated totals.
+function mergeStates(local,remote){if(!remote)return local;const out={...defaultState(),...remote,...local};out.answered=Math.max(local.answered||0,remote.answered||0);out.correct=Math.max(local.correct||0,remote.correct||0);out.xp=Math.max(local.xp||0,remote.xp||0);out.streak=Math.max(local.streak||0,remote.streak||0);const today=nowDate(),localDailyOk=local.dailyDate===today&&(local.dailyResetFixVersion||0)>=5,remoteDailyOk=remote.dailyDate===today&&(remote.dailyResetFixVersion||0)>=5;out.dailyDate=today;out.dailyResetFixVersion=5;if(localDailyOk&&remoteDailyOk)out.todayAnswered=Math.max(local.todayAnswered||0,remote.todayAnswered||0);else if(localDailyOk)out.todayAnswered=local.todayAnswered||0;else if(remoteDailyOk)out.todayAnswered=remote.todayAnswered||0;else out.todayAnswered=0;
+out.dailyCreditVersion=1;
+const lIds=localDailyOk?(local.dailyCreditIds||[]):[],rIds=remoteDailyOk?(remote.dailyCreditIds||[]):[];
+out.dailyCreditIds=Array.from(new Set([...rIds,...lIds].filter(id=>typeof id==='string')));
+out.dailyCreditBase=Math.max(localDailyOk?(local.dailyCreditBase||0):0,remoteDailyOk?(remote.dailyCreditBase||0):0);
+out.todayAnswered=Math.max(out.todayAnswered,out.dailyCreditBase+out.dailyCreditIds.length);
+out.todayCorrect=Math.max(localDailyOk?(local.todayCorrect||0):0,remoteDailyOk?(remote.todayCorrect||0):0);
+const lLessons=localDailyOk?(local.dailyLessonStats||{}):{},rLessons=remoteDailyOk?(remote.dailyLessonStats||{}):{};out.dailyLessonStats={};for(const id of new Set([...Object.keys(lLessons),...Object.keys(rLessons)])){const a=lLessons[id]||{answered:0,correct:0},b=rLessons[id]||{answered:0,correct:0};out.dailyLessonStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}const lTopics=localDailyOk?(local.dailyTopicStats||{}):{},rTopics=remoteDailyOk?(remote.dailyTopicStats||{}):{};out.dailyTopicStats={};for(const id of new Set([...Object.keys(lTopics),...Object.keys(rTopics)])){const a=lTopics[id]||{answered:0,correct:0},b=rTopics[id]||{answered:0,correct:0};out.dailyTopicStats[id]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}out.wordStats={...(remote.wordStats||{}),...(local.wordStats||{})};for(const word of new Set([...Object.keys(remote.wordStats||{}),...Object.keys(local.wordStats||{})])){const a=local.wordStats?.[word],b=remote.wordStats?.[word];if(!a)out.wordStats[word]=b;else if(!b)out.wordStats[word]=a;else out.wordStats[word]=(new Date(a.lastReviewed||0)>=new Date(b.lastReviewed||0))?a:b}out.topicStats={};for(const topic of new Set([...Object.keys(remote.topicStats||{}),...Object.keys(local.topicStats||{})])){const a=local.topicStats?.[topic]||{answered:0,correct:0},b=remote.topicStats?.[topic]||{answered:0,correct:0};out.topicStats[topic]={answered:Math.max(a.answered||0,b.answered||0),correct:Math.max(a.correct||0,b.correct||0)}}out.errors=[...(remote.errors||[])];for(const e of(local.errors||[])){const ix=out.errors.findIndex(x=>x.id===e.id);if(ix<0)out.errors.push(e);else if((e.count||1)>(out.errors[ix].count||1))out.errors[ix]=e}const sims=[...(remote.simulationHistory||[]),...(local.simulationHistory||[])];const seen=new Set();out.simulationHistory=sims.filter(s=>{const k=(s.date||'')+'|'+(s.score||0);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-20);out.lessonStats={...(remote.lessonStats||{})};for(const [id,s] of Object.entries(local.lessonStats||{})){const r=out.lessonStats[id]||{completed:0,bestAccuracy:0};out.lessonStats[id]={completed:Math.max(r.completed||0,s.completed||0),bestAccuracy:Math.max(r.bestAccuracy||0,s.bestAccuracy||0)}}const localLast=local.lastStudyDate||null,remoteLast=remote.lastStudyDate||null;out.lastStudyDate=[localLast,remoteLast].filter(Boolean).sort().pop()||null;if(localLast&&remoteLast){if(localLast>remoteLast)out.streak=local.streak||0;else if(remoteLast>localLast)out.streak=remote.streak||0;else out.streak=Math.max(local.streak||0,remote.streak||0)}else if(localLast)out.streak=local.streak||0;else if(remoteLast)out.streak=remote.streak||0;if(out.lastStudyDate&&daysBetween(out.lastStudyDate,today)>1)out.streak=0;// Reconcile adaptive data across devices without lowering accumulated totals.
 out.questionPerformance={...(remote.questionPerformance||{})};
 for(const [id,item] of Object.entries(local.questionPerformance||{})){
   const prev=out.questionPerformance[id];
@@ -5873,7 +5925,7 @@ for(const [key,item] of Object.entries(local.skillRatings||{})){
 }
 const lp=local.dailyWarmup?.date===today?local.dailyWarmup:null;
 const rp=remote.dailyWarmup?.date===today?remote.dailyWarmup:null;
-const lc=warmupAnsweredCount(lp),rc=warmupAnsweredCount(rp);
+const lc=warmupPlanAnswerCount(lp),rc=warmupPlanAnswerCount(rp);
 const selected=(lp&&rp)?(lc>=rc?lp:rp):(lp||rp);
 out.dailyWarmup=selected?{...selected,answers:{...(rp?.answers||{}),...(lp?.answers||{})},bonusClaimed:Boolean(lp?.bonusClaimed||rp?.bonusClaimed)}:null;
 const lTA=local.timeAttackRecords||{},rTA=remote.timeAttackRecords||{};
@@ -5926,6 +5978,7 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
 }
 function render(){const app=document.getElementById('app');if(view==='home')app.innerHTML=home();else if(view==='practice-menu')app.innerHTML=practiceMenu();else if(view==='path-daily')app.innerHTML=dailyPath();else if(view==='path-quant')app.innerHTML=quantitativePath();else if(view==='path-verbal')app.innerHTML=verbalPath();else if(view==='time-attack')window.PSYCHO101_TIME_ATTACK.render(app,{topbar,nav,getRecords:()=>state.timeAttackRecords||{},getIdentity:()=>state.user&&state.displayName?state.user:null,
 saveRecords:records=>{state.timeAttackRecords=records;saveLocal()},celebrate:()=>psyConfetti(28),
+onAnswer:(q,good,skipped)=>{if(!skipped&&q?.id!==undefined)creditAndSaveDailyAnswer('time-attack:'+q.id,good);},
 beginRanked:async(mode,duration)=>{
  if(!state.user||!state.displayName)throw new Error('יש להתחבר ולהגדיר כינוי בחשבון.');
  const sb=await getSupabase();
