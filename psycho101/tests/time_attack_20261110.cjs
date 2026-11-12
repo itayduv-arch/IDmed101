@@ -112,5 +112,5 @@ for(const file of ['sw.js','psycho101/sw.js']){
   assert(worker.includes('time_attack_20261110.js'),file+' script not offline');
   assert(worker.includes('time_attack_20261110.css'),file+' style not offline');
 }
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261111-68');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
 console.log('PASS: 514 checked math facts, numeric typing, score lock, countdown deadline, personal best, navigation, mobile/offline assets');
