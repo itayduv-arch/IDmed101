@@ -101,7 +101,7 @@ assert.equal(stored['mul-60'].bestScore,10);
 assert.equal(stored['mul-60'].bestCorrect,1);
 assert.equal(celebrated,1);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(html.includes('time_attack_20261110.js?v=20261112-69'));
+assert(html.includes('time_attack_20261110.js?v=20261112-70'));
 assert(html.includes('time_attack_20261110.css?v=20261112-69'));
 assert(html.includes("view==='time-attack'"));
 assert(html.includes('window.PSYCHO101_TIME_ATTACK.render'));
@@ -112,5 +112,5 @@ for(const file of ['sw.js','psycho101/sw.js']){
   assert(worker.includes('time_attack_20261110.js'),file+' script not offline');
   assert(worker.includes('time_attack_20261110.css'),file+' style not offline');
 }
-assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-69');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version,'20261112-70');
 console.log('PASS: 514 checked math facts, numeric typing, score lock, countdown deadline, personal best, navigation, mobile/offline assets');
