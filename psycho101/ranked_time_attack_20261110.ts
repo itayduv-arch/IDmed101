@@ -29,9 +29,9 @@ function normalizeHebrew(value){
     .replace(/["'״׳.,!?;:()[\]{}–—־]/g," ")
     .replace(/\s+/g," ").trim().toLowerCase().slice(0,120);
 }
-function verbalCorrect(value,accepted){
-  const normal=normalizeHebrew(value);
-  return normal.length>0&&Array.isArray(accepted)&&accepted.some(x=>normalizeHebrew(x)===normal);
+function verbalCorrect(value,choices,correctMeaning){
+  return typeof value==="string"&&Array.isArray(choices)&&choices.length===4&&
+    choices.includes(value)&&value===correctMeaning;
 }
 function numeric(v){
   if(v===null||v===undefined)return null;
@@ -77,7 +77,7 @@ async function finish(user,p){
   if(elapsed>game.duration*1000+45000)return fail("round-expired",410);
   const answers=p.answers,ids=game.question_ids;
   if(!Array.isArray(answers)||!Array.isArray(ids)||answers.length>ids.length)return fail("invalid-answers");
-  const {data:items,error:lookupError}=await admin.from("psycho101_ta_questions").select("id,group_name,answer,accepted_answers").in("id",ids);
+  const {data:items,error:lookupError}=await admin.from("psycho101_ta_questions").select("id,group_name,answer,accepted_answers,answer_label,choices").in("id",ids);
   if(lookupError)throw lookupError;
   const bank=new Map((items||[]).map(q=>[q.id,q]));
   if(bank.size!==new Set(ids).size)return fail("question-bank-mismatch",503);
@@ -89,7 +89,7 @@ async function finish(user,p){
     previous=x.elapsedMs;
     const question=bank.get(ids[i]);
     const good=question.group_name==="words_core"||question.group_name==="words_advanced"?
-      verbalCorrect(x.value,question.accepted_answers):
+      verbalCorrect(x.value,question.choices,question.answer_label):
       (numeric(x.value)!==null&&Math.abs(numeric(x.value)-Number(question.answer))<1e-8);
     if(good){correct++;streak++;score+=10+Math.min(streak-1,5)*2;}
     else streak=0;
