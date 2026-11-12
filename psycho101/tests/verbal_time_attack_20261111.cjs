@@ -63,8 +63,11 @@ const match=host.innerHTML.match(/class="ta-question ta-flip ta-verbal-question"
 assert(match,'Word not rendered');
 const q=words.find(w=>w.word===match[1]);
 assert(q,'Rendered word not in bank');
-const wordChoices=app.allCards().find(w=>w.word===q.word).choices;
-app.choose(wordChoices.indexOf(q.definition));
+const renderedButtons=host.innerHTML.split('class="ta-choice"').slice(1);
+assert.equal(renderedButtons.length,4);
+const selectedIndex=renderedButtons.findIndex(part=>part.includes('<span>'+q.definition.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>'));
+assert(selectedIndex>=0,'Correct definition not rendered');
+app.choose(selectedIndex);
 assert.equal(doc.elements['ta-score'].textContent,10);
 now+=61000;doc.handlers.visibilitychange();
 assert.equal(records['words_advanced-60'].bestScore,10);
