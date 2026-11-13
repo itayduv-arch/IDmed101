@@ -294,7 +294,7 @@ button:focus-visible,.answer:focus-visible,.nav-btn:focus-visible,.lesson-node:f
 <body>
   <div id="app"></div>
   <script>
-const PSYCHO101_BUILD_VERSION="20261112-70";
+const PSYCHO101_BUILD_VERSION="20261113-71";
 (async()=>{
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
@@ -4466,6 +4466,7 @@ const wordBank = [
 <script src="./squared_intervals_20261109.js?v=20261109-63"></script>
 <script src="./verbal_quality_20261030.js?v=20261030-57"></script>
 <script src="./verbal_quality_20261106.js?v=20261106-61"></script>
+<script src="./verbal_quality_20261113.js?v=20261113-71"></script>
 <script src="./short_method_annotations_20261021.js?v=20261021-49"></script>
 <script src="./time_attack_words_20261111.js?v=20261112-69"></script>
 <script src="./time_attack_20261110.js?v=20261112-70"></script>
@@ -4780,6 +4781,7 @@ questions.quantitative.push(...(window.PSYCHO101_DAILY_20261013?.quantitative||[
 questions.verbal.push(...(window.PSYCHO101_DAILY_20261013?.verbal||[]));
 questions.verbal.push(...(window.PSYCHO101_VERBAL_20261030?.verbal||[]));
 questions.verbal.push(...(window.PSYCHO101_VERBAL_20261106?.verbal||[]));
+questions.verbal.push(...(window.PSYCHO101_VERBAL_20261113?.verbal||[]));
 questions.quantitative.push(...(window.PSYCHO101_POWERS_20261014?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_POWERS_SUM_20261022?.quantitative||[]));
 questions.quantitative.push(...(window.PSYCHO101_PERCENT_FRACTIONS_20261025?.quantitative||[]));
