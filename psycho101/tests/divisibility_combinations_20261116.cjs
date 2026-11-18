@@ -24,7 +24,7 @@ for (const q of questions) {
   assert.ok(q.explanation && q.strategy && q.fastSteps.length === 2, q.id);
   // Explain the remainder with a concrete numerical example instead of ambiguous count notation.
   assert.match(q.explanation, /(?:למשל|לדוגמה)/, 'Missing short example: ' + q.id);
-  assert.doesNotMatch(q.explanation, /0\\+0\\+1=1/, 'Misleading notation: ' + q.id);
+  assert.ok(!q.explanation.includes('0+0+1=1'), 'Misleading notation: ' + q.id);
   assert.ok(q.explanation.includes(q.answers[q.correct]), 'Final answer missing from explanation: ' + q.id);
 }
 console.log('PASS: 12 questions, answer keys and clear worked examples validated');
