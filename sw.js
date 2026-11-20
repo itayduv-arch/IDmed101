@@ -1,4 +1,4 @@
-const CACHE_NAME='id101-flight-v43';
+const CACHE_NAME='id101-flight-v44';
 const SHELL=[
   './',
   './index.html',
@@ -51,7 +51,7 @@ const CORE=[
   './psycho101/equal_powers_equations_20261113.js',
   './psycho101/stock_percentage_20261115.js',
   './psycho101/divisibility_combinations_20261116.js',
-  './psycho101/triangle_inequality_20261117.js',
+  './psycho101/triangle_inequality_20261117.js','./psycho101/difference_squares_20261120.js','./psycho101/packaging_remainders_20261120.js',
   './idmed101/',
   './idmed101/recon_2026a.js',
   './idmed101/recon_2026b.js',
@@ -204,3 +204,4 @@ self.addEventListener('notificationclick',event=>{
     return self.clients.openWindow(target);
   })());
 });
+

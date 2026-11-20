@@ -37,7 +37,7 @@ const scriptRe=/<script\s+src="\.\/([^"]+\.js)(?:\?[^"]*)?"\s*><\/script>/g;
 const window={};let match;
 while((match=scriptRe.exec(html))!==null){
  const p=path.join(root,match[1]);
- if(fs.existsSync(p))vm.runInNewContext(fs.readFileSync(p,'utf8'),{window,console},{filename:p});
+ if(fs.existsSync(p))vm.runInNewContext(fs.readFileSync(p,'utf8'),{window,console,document:{addEventListener(){}}},{filename:p});
 }
 const qBegin=html.indexOf('const questions={'),qEnd=html.indexOf('function defaultState()',qBegin);
 const questions=new Function('window',html.slice(qBegin,qEnd)+'\nreturn questions;')(window);
@@ -63,3 +63,4 @@ for(const q of target){
  assert(formatMathHtml(q.prompt).includes(already),'The fixed question uses explicit LTR formulas');
 }
 console.log('PASS RTL mathematical rendering: '+checked+' prompt/explanation/answer fields, '+supers+' with superscripts, 3 legacy divisor questions clarified.');
+

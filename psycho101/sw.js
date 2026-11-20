@@ -1,8 +1,8 @@
-const CACHE_NAME='idpsycho101-v60';
+const CACHE_NAME='idpsycho101-v61';
 const CORE=['./','./index.html','./version.json','./manifest.webmanifest','./official_quant_expansion.js','./daily_expansion_20260918.js','./advanced_expansion_20260922.js','./daily_expansion_20260930.js','./daily_expansion_20260930b.js','./daily_expansion_20261001.js','./daily_expansion_20261003.js','./daily_expansion_20261004.js','./daily_expansion_20261005.js','./daily_expansion_20261007.js','./powers_sum_20261022.js','./percent_fractions_20261025.js','./factorials_20261103.js','./powers_compare_20261108.js',
 './time_attack_words_20261111.js',
 './time_attack_20261110.js','./time_attack_20261110.css','./home_hub_20261110.css',
-'./leaderboard_20261110.css','./stock_percentage_20261115.js','./squared_intervals_20261109.js','./verbal_quality_20261106.js','./verbal_quality_20261120.js','./analogies_20261114.js','./analogies_20261115.js','./equal_powers_equations_20261113.js','./divisibility_combinations_20261116.js','./triangle_inequality_20261117.js','./circle_area_change_20261118.js','./absolute_value_bounds_20261118.js'];
+'./leaderboard_20261110.css','./stock_percentage_20261115.js','./squared_intervals_20261109.js','./verbal_quality_20261106.js','./verbal_quality_20261120.js','./analogies_20261114.js','./analogies_20261115.js','./equal_powers_equations_20261113.js','./divisibility_combinations_20261116.js','./triangle_inequality_20261117.js','./difference_squares_20261120.js','./packaging_remainders_20261120.js','./circle_area_change_20261118.js','./absolute_value_bounds_20261118.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
@@ -42,3 +42,4 @@ self.addEventListener('fetch',event=>{
       .catch(()=>caches.match(event.request,{ignoreSearch:true}))
   );
 });
+
