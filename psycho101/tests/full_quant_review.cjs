@@ -5,7 +5,7 @@ const window={};const loaded=[];
 const re=/<script\s+src="\.\/([^"?]+\.js)(?:\?[^"]*)?"\s*><\/script>/g;
 let m;while((m=re.exec(html))!==null){
  const p=path.join(root,m[1]);assert(fs.existsSync(p),'Missing bank '+m[1]);
- vm.runInNewContext(fs.readFileSync(p,'utf8'),{window,console},{filename:m[1]});
+ vm.runInNewContext(fs.readFileSync(p,'utf8'),{window,console,document:{addEventListener(){}}},{filename:m[1]});
  loaded.push(m[1]);
 }
 const qStart=html.indexOf('const questions={'),qEnd=html.indexOf('function defaultState()',qStart);
@@ -16,7 +16,7 @@ assert(all.length>=419,'All current quantitative bank files must be loaded');
 for(const q of all){assert(!ids.has(q.id),'Duplicate ID: '+q.id);ids.add(q.id);}
 const fmtStart=html.indexOf('function formatMathHtml(input){'),fmtEnd=html.indexOf('function localDateKey(',fmtStart);
 const formatMathHtml=new Function(html.slice(fmtStart,fmtEnd)+';return formatMathHtml;')();
-function simplify(s){return String(s).replace(/<span\b[^>]*>/g,'').replace(/<\/span>/g,'');}
+function simplify(s){return String(s).replace(/<(?:span|bdi)\b[^>]*>/g,'').replace(/<\/(?:span|bdi)>/g,'');}
 const bad=[];let fields=0,superFields=0,eligible=0,badOptions=0;
 for(const q of all){
  for(const [label,value] of [['prompt',q.prompt],['explanation',q.explanation],...q.answers.map((a,i)=>['answer '+i,a])]){
@@ -77,3 +77,4 @@ for(const id of Object.keys(notes)){
 const specific=eligibleQuant.filter(q=>q.fastSteps?.length>=2);
 assert(specific.length>=50,'At least 50 eligible questions should have concrete fast solutions');
 console.log('PASS full quantitative audit: '+all.length+' questions, '+fields+' rendered fields, '+superFields+' superscript fields; '+eligible+' exam questions, '+foundations.length+' valid foundations; '+badOptions+' excluded duplicate-choice templates; '+specific.length+' exam problems with numeric fast steps; '+Object.keys(expected).length+' checked original answers.');
+
